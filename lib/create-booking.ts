@@ -1,5 +1,5 @@
 import { BookingSource } from "@/lib/generated/prisma/enums.ts"
-import type { Booking } from "@/lib/generated/prisma/client.ts"
+import { Booking, Prisma } from "@/lib/generated/prisma/client.ts"
 import { prisma } from "@/lib/prisma.ts"
 
 
@@ -17,12 +17,14 @@ export async function createBooking({
   startTime: number
   source: BookingSource
   groupId?: string
-}): Promise<Booking> {
-  const service = await prisma.service.findUniqueOrThrow({ where: { id: serviceId } });
+},
+  db: Prisma.TransactionClient = prisma
+): Promise<Booking> {
+  const service = await db.service.findUniqueOrThrow({ where: { id: serviceId } });
   const endTime = startTime + service.durationMinutes;
   const cancelToken = crypto.randomUUID();
 
-  return await prisma.booking.create({
+  return await db.booking.create({
     data: { clientId, serviceId, date, startTime, endTime, groupId, source, cancelToken }
   });
 }
