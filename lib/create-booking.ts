@@ -10,6 +10,7 @@ export async function createBooking(
         startTime,
         source,
         groupId,
+        reminderRequested = false,
         extraTimeMinutes = 0
     }: {
         clientId: string;
@@ -18,6 +19,7 @@ export async function createBooking(
         startTime: number;
         source: BookingSource;
         groupId?: string;
+        reminderRequested?: boolean;
         extraTimeMinutes?: number;
     },
     db: Prisma.TransactionClient = prisma
@@ -38,6 +40,7 @@ export async function createBooking(
             groupId,
             source,
             cancelToken,
+            reminderRequested,
         },
     });
 }
