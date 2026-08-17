@@ -28,7 +28,11 @@ export default function RootLayout({
             )}
         >
             <body>
-                <ThemeProvider>{children}</ThemeProvider>
+                <ThemeProvider>
+                    <div className="max-lg:mx-4">
+                        {children}
+                    </div>
+                </ThemeProvider>
             </body>
         </html>
     );

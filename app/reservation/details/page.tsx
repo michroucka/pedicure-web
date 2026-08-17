@@ -31,7 +31,7 @@ export default async function DetailsPage({ searchParams }: {
     const backHref = `/reservation?date=${date}&services=${services}`;
 
     return (
-        <div className="m-8 w-full max-w-md mx-auto">
+        <div className="max-w-md mx-auto">
             <StepIndicator currentStep={2} />
 
             {serviceIds.length === 1 ? (

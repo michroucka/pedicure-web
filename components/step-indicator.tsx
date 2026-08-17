@@ -4,7 +4,7 @@ const steps = ["Termín", "Údaje", "Potvrzení"]
 
 export function StepIndicator({ currentStep }: { currentStep: 1 | 2 | 3 }) {
     return (
-        <div className="mb-6">
+        <div className="mb-6 max-w-md mx-auto">
             <div className="flex gap-2">
                 {steps.map((_, i) => (
                     <div
