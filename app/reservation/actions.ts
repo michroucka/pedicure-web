@@ -9,12 +9,12 @@ import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 
 export async function submitBooking(
     context: { date: Date; serviceId: number; startTime: number },
-    formData: FormData
+    data: { name: string; phone: string; email: string; reminderRequested: boolean }
 ) {
-    const name = formData.get("name") as string;
-    const phone = formData.get("phone") as string;
-    const emailValue = formData.get("email") as string;
-    const email = emailValue ? String(emailValue) : undefined;
+    const name = data.name;
+    const phone = data.phone;
+    const email = data.email;
+    const reminderRequested = data.reminderRequested;
     const client = await findOrCreateClient(phone, name, email);
 
     const valid = await getAvailableSlots(context.date, [context.serviceId], client.extraTimeMinutes);
@@ -39,7 +39,8 @@ export async function submitBooking(
             date,
             startTime,
             source,
-            extraTimeMinutes: client.extraTimeMinutes
+            extraTimeMinutes: client.extraTimeMinutes,
+            reminderRequested,
         });
         redirect(`/reservation/confirmed?id=${booking.id}`);
     } catch (error) {
@@ -62,13 +63,12 @@ export async function submitBooking(
 
 export async function submitGroupBooking(
     context: { date: Date; serviceIds: number[]; startTime: number },
-    formData: FormData
+    data: { names: string[]; phone: string; email: string; reminderRequested: boolean }
 ) {
-    const phone = formData.get("phone") as string;
-    const emailValue = formData.get("email") as string;
-    const email = emailValue ? String(emailValue) : undefined;
-
-    const names = context.serviceIds.map((_, i) => formData.get(`name-${i}`) as string);
+    const phone = data.phone;
+    const email = data.email;
+    const reminderRequested = data.reminderRequested;
+    const names = context.serviceIds.map((_, i) => data.names[i]);
 
     const clients = await Promise.all(
         names.map((name) => findOrCreateClient(phone, name, email))
@@ -97,7 +97,8 @@ export async function submitGroupBooking(
             people,
             context.date,
             context.startTime,
-            "ONLINE"
+            "ONLINE",
+            reminderRequested,
         )
         redirect(`/reservation/confirmed?groupId=${bookings[0].groupId}`);
     } catch (error) {

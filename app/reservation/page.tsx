@@ -6,6 +6,7 @@ import { formatTime } from "@/lib/utils.ts";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { AlertCircle } from "lucide-react";
+import { StepIndicator } from "@/components/step-indicator.tsx";
 
 export default async function ReservationPage({
     searchParams,
@@ -29,6 +30,8 @@ export default async function ReservationPage({
 
     return (
         <div>
+            <StepIndicator currentStep={1} />
+
             <ReservationFilters services={availableServices} />
 
             {availableSlots.map((s) => {

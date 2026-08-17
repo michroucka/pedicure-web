@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { submitBooking, submitGroupBooking } from "@/app/reservation/actions.ts";
-import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { PhoneInput } from "@/components/phone-input.tsx";
-import { Button } from "@/components/ui/button.tsx";
+import { prisma } from "@/lib/prisma.ts";
+import { SoloBookingForm } from "@/components/solo-booking-form.tsx";
+import { GroupBookingForm } from "@/components/group-booking-form.tsx";
+import { StepIndicator } from "@/components/step-indicator.tsx";
 
 
 export default async function DetailsPage({ searchParams }: {
@@ -20,75 +20,40 @@ export default async function DetailsPage({ searchParams }: {
         redirect("/reservation");
     }
 
-    const boundSubmit = serviceIds.length === 1
-            ? submitBooking.bind(null, { date: new Date(date), serviceId: serviceIds[0], startTime: Number(slot) })
-            : submitGroupBooking.bind(null, { date: new Date(date), serviceIds, startTime: Number(slot) });
+    const availableServices = await prisma.service.findMany({
+        where: { id: { in: serviceIds } },
+    })
+
+    const serviceNames = serviceIds.map(
+        (id) => availableServices.find((s) => s.id === id)?.name ?? ""
+    )
+
+    const backHref = `/reservation?date=${date}&services=${services}`;
 
     return (
-        <div className="m-8 w-full max-w-md">
-            <form action={boundSubmit}>
-                <FieldGroup>
-                    <FieldSet>
-                        <FieldLegend>Kontaktní údaje</FieldLegend>
-                        {serviceIds.length > 1 && (
-                            <FieldLabel htmlFor="name-group">
-                                Jméno a Příjmení
-                            </FieldLabel>
-                        )}
-                        <FieldGroup id="name-group">
-                            {serviceIds.map((_, i) => (
-                                <Field key={i}>
-                                    <FieldLabel htmlFor={`name-${i}`}>
-                                        {serviceIds.length === 1
-                                            ? "Jméno a Příjmení"
-                                            : `Osoba ${i + 1}`}
-                                    </FieldLabel>
-                                    <Input
-                                        id={`name-${i}`}
-                                        name={`name-${i}`}
-                                        placeholder={"Jana Nováková"}
-                                        required
-                                    />
-                                </Field>
-                            ))}
-                            <Field>
-                                <FieldLabel htmlFor="phone">Telefon</FieldLabel>
-                                <PhoneInput
-                                    id="phone"
-                                    name="phone"
-                                    type="tel"
-                                    inputMode="tel"
-                                    placeholder="+420 123 456 789"
-                                    required
-                                />
-                            </Field>
-                            <Field>
-                                <FieldLabel htmlFor="email">Email</FieldLabel>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="jana.novakova@seznam.cz"
-                                    required
-                                />
-                            </Field>
-                        </FieldGroup>
-                    </FieldSet>
-                    <Field orientation="horizontal">
-                        <Button
-                            type="submit"
-                        >
-                            Submit
-                        </Button>
-                        <Button
-                            variant="outline"
-                            type="button"
-                        >
-                            Cancel
-                        </Button>
-                    </Field>
-                </FieldGroup>
-            </form>
+        <div className="m-8 w-full max-w-md mx-auto">
+            <StepIndicator currentStep={2} />
+
+            {serviceIds.length === 1 ? (
+                <SoloBookingForm
+                    boundSubmitAction={submitBooking.bind(null, {
+                        date: new Date(date),
+                        serviceId: serviceIds[0],
+                        startTime: Number(slot),
+                    })}
+                    backHref={backHref}
+                />
+            ) : (
+                <GroupBookingForm
+                    boundSubmitAction={submitGroupBooking.bind(null, {
+                        date: new Date(date),
+                        serviceIds,
+                        startTime: Number(slot),
+                    })}
+                    serviceNames={serviceNames}
+                    backHref={backHref}
+                />
+            )}
         </div>
     );
 }
