@@ -36,6 +36,8 @@ export function ReservationFilters({ services }: { services: Service[] }) {
     function updateParam(key: string, value: string) {
         const params = new URLSearchParams(searchParams);
         params.set(key, value);
+        params.delete("slot")
+        params.delete("error")
         router.push(`${pathname}?${params.toString()}`);
     }
 

@@ -65,6 +65,10 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - id, name, phone, email, extraTimeMinutes (default 0 — checkbox v adminu
   "tomuto klientovi to trvá déle", přičítá se ke každé service při výpočtu
   volných slotů pro tohoto klienta), note, createdAt
+- `email` je v DB nepovinné (telefonické/osobní rezervace zadané
+  pedikérkou nemusí email řešit) — ale online booking formulář ho
+  vyžaduje jako povinný, protože na něm stojí potvrzovací email, magic
+  link i připomínka
 
 **RecurringAvailability**
 - id, dayOfWeek, startTime, endTime

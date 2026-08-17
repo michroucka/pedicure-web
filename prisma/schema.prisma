@@ -26,6 +26,10 @@ model Client {
   id                String    @id @default(cuid())
   name              String
   phone             String
+  // Nullable in the DB because PHONE/IN_PERSON bookings entered by the
+  // pedikérka may not collect it. The online booking form enforces it
+  // as required on the client, since that flow depends on email for
+  // confirmation, magic links, and reminders.
   email             String?
   extraTimeMinutes  Int       @default(0)
   note              String?
