@@ -73,20 +73,21 @@ enum BookingSource {
 }
 
 model Booking {
-  id              String          @id @default(cuid())
-  clientId        String
-  client          Client          @relation(fields: [clientId], references: [id])
-  serviceId       Int
-  service         Service         @relation(fields: [serviceId], references: [id])
-  date            DateTime
-  startTime       Int
-  endTime         Int
-  status          BookingStatus   @default(CONFIRMED)
-  groupId         String?
-  source          BookingSource
-  cancelToken     String          @unique
-  reminderSent    Boolean         @default(false)
-  createdAt       DateTime        @default(now())
+  id                  String          @id @default(cuid())
+  clientId            String
+  client              Client          @relation(fields: [clientId], references: [id])
+  serviceId           Int
+  service             Service         @relation(fields: [serviceId], references: [id])
+  date                DateTime
+  startTime           Int
+  endTime             Int
+  status              BookingStatus   @default(CONFIRMED)
+  groupId             String?
+  source              BookingSource
+  cancelToken         String          @unique
+  reminderRequested   Boolean         @default(false)
+  reminderSent        Boolean         @default(false)
+  createdAt           DateTime        @default(now())
   @@unique([date, startTime])
 }
 

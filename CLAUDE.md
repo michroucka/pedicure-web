@@ -85,6 +85,9 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - source (`online` / `phone` / `in_person` — rezervace na příště domluvená
   přímo při návštěvě)
 - cancelToken (magic link)
+- reminderRequested (bool, default false — checkbox "poslat připomínku"
+  při vytváření rezervace; u skupinové rezervace jeden sdílený checkbox
+  za celou skupinu, ne per-osoba)
 - reminderSent (bool)
 - createdAt
 - Efektivní délka slotu = `service.durationMinutes + client.extraTimeMinutes`
