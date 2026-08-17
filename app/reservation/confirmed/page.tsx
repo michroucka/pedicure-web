@@ -1,12 +1,13 @@
-import { notFound } from "next/navigation"
-import { prisma } from "@/lib/prisma.ts"
-import { format } from "date-fns"
-import { cs } from "date-fns/locale"
-import { formatTime } from "@/lib/utils.ts"
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma.ts";
+import { format } from "date-fns";
+import { cs } from "date-fns/locale";
+import { formatTime } from "@/lib/utils.ts";
 
-
-export default async function ConfirmedPage({ searchParams }: {
-    searchParams: Promise<{ id?: string; }>
+export default async function ConfirmedPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ id?: string }>;
 }) {
     const { id } = await searchParams;
 
@@ -15,7 +16,7 @@ export default async function ConfirmedPage({ searchParams }: {
     const booking = await prisma.booking.findUnique({
         where: { id },
         include: { client: true, service: true },
-    })
+    });
 
     if (!booking) notFound();
 
@@ -29,5 +30,5 @@ export default async function ConfirmedPage({ searchParams }: {
                 {formatTime(booking.startTime)}–{formatTime(booking.endTime)}
             </p>
         </div>
-    )
+    );
 }
