@@ -14,6 +14,7 @@ import {
     FieldSeparator,
     FieldContent,
     FieldTitle,
+    FieldDescription,
 } from "@/components/ui/field.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { PhoneInput } from "@/components/phone-input.tsx";
@@ -150,8 +151,11 @@ export function GroupBookingForm({
                     <FieldContent>
                         <FieldTitle>
                             <BellRing className="size-4" />
-                            Poslat ráno v den rezervace e-mailem připomínku
+                            Ranní připomínka
                         </FieldTitle>
+                        <FieldDescription>
+                            Pošleme e-mailem ráno v den rezervace.
+                        </FieldDescription>
                     </FieldContent>
                 </Field>
             </FieldLabel>
