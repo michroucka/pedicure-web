@@ -1,12 +1,14 @@
-"use server"
+"use server";
 
-import {findOrCreateClient} from "@/lib/find-or-create-client.ts";
-import {createBooking} from "@/lib/create-booking.ts";
-import { redirect } from "next/navigation"
-import { Prisma } from "@/lib/generated/prisma/client"
+import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
+import { createBooking } from "@/lib/create-booking.ts";
+import { redirect } from "next/navigation";
+import { Prisma } from "@/lib/generated/prisma/client";
+import { createGroupBooking } from "@/lib/create-group-booking.ts";
+import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 
 export async function submitBooking(
-    context: { date: Date; serviceId: string; startTime: number },
+    context: { date: Date; serviceId: number; startTime: number },
     formData: FormData
 ) {
     const name = formData.get("name") as string;
@@ -15,30 +17,103 @@ export async function submitBooking(
     const email = emailValue ? String(emailValue) : undefined;
     const client = await findOrCreateClient(phone, name, email);
 
+    const valid = await getAvailableSlots(context.date, [context.serviceId], client.extraTimeMinutes);
+    if (!valid.includes(context.startTime)) {
+        const params = new URLSearchParams({
+            date: context.date.toISOString().slice(0, 10),
+            services: String(context.serviceId),
+            error: "slot_taken",
+        });
+        redirect(`/reservation?${params.toString()}`);
+    }
+
     const serviceId = context.serviceId;
     const date = context.date;
     const startTime = context.startTime;
     const source = "ONLINE";
-    let booking: Awaited<ReturnType<typeof createBooking>>;
+
     try {
-        booking = await createBooking({clientId: client.id, serviceId, date, startTime, source});
+        const booking = await createBooking({
+            clientId: client.id,
+            serviceId,
+            date,
+            startTime,
+            source,
+            extraTimeMinutes: client.extraTimeMinutes
+        });
+        redirect(`/reservation/confirmed?id=${booking.id}`);
     } catch (error) {
         if (
             error instanceof Prisma.PrismaClientKnownRequestError &&
             error.code === "P2002"
         ) {
-            console.error(error)
             const dateParam = date.toISOString().slice(0, 10);
             const params = new URLSearchParams({
                 date: dateParam,
-                service: serviceId,
+                services: String(serviceId),
                 error: "slot_taken",
-            })
-            redirect(`/reservation?${params.toString()}`)
+            });
+            redirect(`/reservation?${params.toString()}`);
         } else {
             throw error;
         }
     }
+}
 
-    redirect(`/reservation/confirmed?id=${booking.id}`);
+export async function submitGroupBooking(
+    context: { date: Date; serviceIds: number[]; startTime: number },
+    formData: FormData
+) {
+    const phone = formData.get("phone") as string;
+    const emailValue = formData.get("email") as string;
+    const email = emailValue ? String(emailValue) : undefined;
+
+    const names = context.serviceIds.map((_, i) => formData.get(`name-${i}`) as string);
+
+    const clients = await Promise.all(
+        names.map((name) => findOrCreateClient(phone, name, email))
+    )
+
+    const extraMinutes = clients.reduce((sum, c) => sum + c.extraTimeMinutes, 0);
+
+    const valid = await getAvailableSlots(context.date, context.serviceIds, extraMinutes);
+    if (!valid.includes(context.startTime)) {
+        const params = new URLSearchParams({
+            date: context.date.toISOString().slice(0, 10),
+            services: context.serviceIds.join(","),
+            error: "slot_taken",
+        });
+        redirect(`/reservation?${params.toString()}`);
+    }
+
+    const people = context.serviceIds.map((serviceId, i) => ({
+        clientId: clients[i].id,
+        extraTimeMinutes: clients[i].extraTimeMinutes,
+        serviceId,
+    }));
+
+    try {
+        const bookings = await createGroupBooking(
+            people,
+            context.date,
+            context.startTime,
+            "ONLINE"
+        )
+        redirect(`/reservation/confirmed?groupId=${bookings[0].groupId}`);
+    } catch (error) {
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002"
+        ) {
+            const dateParam = context.date.toISOString().slice(0, 10);
+            const params = new URLSearchParams({
+                date: dateParam,
+                services: context.serviceIds.join(","),
+                error: "slot_taken",
+            });
+            redirect(`/reservation?${params.toString()}`);
+        } else {
+            throw error;
+        }
+    }
 }
