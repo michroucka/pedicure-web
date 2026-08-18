@@ -1,8 +1,9 @@
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -14,7 +15,7 @@ const fontMono = Geist_Mono({
 export default function RootLayout({
     children,
 }: Readonly<{
-    children: React.ReactNode;
+    children: ReactNode;
 }>) {
     return (
         <html
@@ -29,7 +30,7 @@ export default function RootLayout({
         >
             <body>
                 <ThemeProvider>
-                    <div className="max-lg:mx-4">
+                    <div className="">
                         {children}
                     </div>
                 </ThemeProvider>

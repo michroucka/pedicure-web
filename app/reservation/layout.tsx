@@ -5,7 +5,7 @@ export default function ReservationLayout({
                                           }: {
     children: ReactNode;
 }) {
-    return <div className="mt-8">
+    return <div className="mt-8 max-lg:mx-4">
         {children}
     </div>;
 }
