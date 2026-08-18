@@ -42,6 +42,25 @@ export function formatTime(time: number) {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
+export function parseTime(time: string): number {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+}
+
+// Snaps a "HH:MM" value to the nearest 15-minute mark (remainder 0-7 rounds
+// down, 8-14 rounds up) — the time input's native `step` isn't honored
+// consistently across browsers, so we enforce it ourselves on blur.
+export function roundToQuarterHour(time: string): string {
+    if (!/^\d{2}:\d{2}$/.test(time)) return time;
+
+    const total = parseTime(time);
+    const remainder = total % 15;
+    const rounded =
+        remainder <= 7 ? total - remainder : total + (15 - remainder);
+
+    return formatTime(((rounded % 1440) + 1440) % 1440);
+}
+
 /**
  * Formats a phone number string into a human-readable form: optionally +XXX then groups of XXX.
  * Strips all non-digit characters (except a leading +).
@@ -49,24 +68,27 @@ export function formatTime(time: number) {
  * @returns {string} formatted phone number
  */
 export function formatPhoneNumber(value: string) {
-    let cleaned = value.replace(/[^\d+]/g, '');
+    let cleaned = value.replace(/[^\d+]/g, "");
 
     // + is only valid at the start
-    const hasPlus = cleaned.startsWith('+');
-    cleaned = cleaned.replace(/\+/g, '');
+    const hasPlus = cleaned.startsWith("+");
+    cleaned = cleaned.replace(/\+/g, "");
 
     if (hasPlus) {
         // +XXX XXX XXX XXX — max 3 digits for country code + 9 for the local number
         const limited = cleaned.slice(0, 12);
         if (limited.length <= 3) return `+${limited}`;
-        if (limited.length <= 6) return `+${limited.slice(0, 3)} ${limited.slice(3)}`;
-        if (limited.length <= 9) return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
+        if (limited.length <= 6)
+            return `+${limited.slice(0, 3)} ${limited.slice(3)}`;
+        if (limited.length <= 9)
+            return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
         return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6, 9)} ${limited.slice(9)}`;
     } else {
         // XXX XXX XXX — max 9 digits
         const limited = cleaned.slice(0, 9);
         if (limited.length <= 3) return limited;
-        if (limited.length <= 6) return `${limited.slice(0, 3)} ${limited.slice(3)}`;
+        if (limited.length <= 6)
+            return `${limited.slice(0, 3)} ${limited.slice(3)}`;
         return `${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
     }
 }
