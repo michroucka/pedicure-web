@@ -14,6 +14,27 @@ export function toDateOnly(date: Date): Date {
     );
 }
 
+export function toUtcMidnight(d: Date): Date {
+    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+}
+
+// Today's calendar date in Europe/Prague, as UTC midnight (matches toDateOnly's
+// convention). Independent of the server's own OS timezone.
+export function getCzechToday(): Date {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Prague",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).formatToParts(new Date());
+
+    const year = Number(parts.find((p) => p.type === "year")?.value);
+    const month = Number(parts.find((p) => p.type === "month")?.value);
+    const day = Number(parts.find((p) => p.type === "day")?.value);
+
+    return new Date(Date.UTC(year, month - 1, day));
+}
+
 export function formatTime(time: number) {
     const hours = Math.floor(time / 60);
     const minutes = time % 60;

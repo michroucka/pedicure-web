@@ -1,5 +1,5 @@
 import { prisma } from "./prisma.ts";
-import { toDateOnly } from "./utils.ts";
+import { toDateOnly, getCzechToday } from "./utils.ts";
 import {
     computeAvailableSlots,
     resolveDayTimeSlots,
@@ -23,6 +23,11 @@ export async function getAvailableSlots(
     });
 
     const day = toDateOnly(date);
+
+    if (day.getTime() <= getCzechToday().getTime()) {
+        return [];
+    }
+
     const dayOfWeek = day.getUTCDay();
 
     const [recurring, exceptions, bookings] = await Promise.all([
