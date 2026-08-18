@@ -35,6 +35,22 @@ export function getCzechToday(): Date {
     return new Date(Date.UTC(year, month - 1, day));
 }
 
+// Current time of day in Europe/Prague, as minutes since midnight. Used to
+// hide already-passed slots when admin actions allow booking/moving to today.
+export function getCzechNowMinutes(): number {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/Prague",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+    }).formatToParts(new Date());
+
+    const hour = Number(parts.find((p) => p.type === "hour")?.value);
+    const minute = Number(parts.find((p) => p.type === "minute")?.value);
+
+    return hour * 60 + minute;
+}
+
 export function formatTime(time: number) {
     const hours = Math.floor(time / 60);
     const minutes = time % 60;

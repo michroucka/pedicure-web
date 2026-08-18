@@ -1,43 +1,54 @@
 import { prisma } from "./prisma.ts";
-import { toDateOnly, getCzechToday } from "./utils.ts";
+import { toDateOnly, getCzechToday, getCzechNowMinutes } from "./utils.ts";
 import {
     computeAvailableSlots,
     resolveDayTimeSlots,
     type Exception,
     type TimeSlot,
 } from "./availability.ts";
-import type { Service } from "@/lib/generated/prisma/client";
+import type { Prisma, Service } from "@/lib/generated/prisma/client";
 
 export async function getAvailableSlots(
     date: Date,
     serviceIds: number[],
-    extraMinutes: number = 0
+    extraMinutes: number = 0,
+    options: {
+        // Public booking flow requires next-day minimum lead time; admin
+        // actions (manual add, move) may book/move into today.
+        allowToday?: boolean;
+        db?: Prisma.TransactionClient;
+    } = {}
 ): Promise<number[]> {
-    const services: Service[] = await prisma.service.findMany({
+    const db = options.db ?? prisma;
+
+    const services: Service[] = await db.service.findMany({
         where: { id: { in: serviceIds } },
     });
 
-    const minServiceDuration = await prisma.service.aggregate({
+    const minServiceDuration = await db.service.aggregate({
         where: { active: true },
         _min: { durationMinutes: true },
     });
 
     const day = toDateOnly(date);
+    const today = getCzechToday();
 
-    if (day.getTime() <= getCzechToday().getTime()) {
-        return [];
+    if (options.allowToday) {
+        if (day.getTime() < today.getTime()) return [];
+    } else {
+        if (day.getTime() <= today.getTime()) return [];
     }
 
     const dayOfWeek = day.getUTCDay();
 
     const [recurring, exceptions, bookings] = await Promise.all([
-        prisma.recurringAvailability.findMany({
+        db.recurringAvailability.findMany({
             where: { dayOfWeek },
         }),
-        prisma.availabilityException.findMany({
+        db.availabilityException.findMany({
             where: { date: day },
         }),
-        prisma.booking.findMany({
+        db.booking.findMany({
             where: { date: day, status: "CONFIRMED" },
         }),
     ]);
@@ -60,15 +71,20 @@ export async function getAvailableSlots(
 
     const dayWindows = resolveDayTimeSlots(recurringWindows, exceptionRanges);
 
-    const serviceDuration = services.reduce(
-        (sum, s) => sum + s.durationMinutes,
-        0
-    ) + extraMinutes;
+    const serviceDuration =
+        services.reduce((sum, s) => sum + s.durationMinutes, 0) + extraMinutes;
 
-    return computeAvailableSlots(
+    const result = computeAvailableSlots(
         dayWindows,
         bookedSlots,
         serviceDuration,
         minServiceDuration._min.durationMinutes ?? serviceDuration
     );
+
+    if (options.allowToday && day.getTime() === today.getTime()) {
+        const nowMinutes = getCzechNowMinutes();
+        return result.filter((s) => s >= nowMinutes);
+    }
+
+    return result;
 }
