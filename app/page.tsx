@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default function Page() {
@@ -16,7 +15,13 @@ export default function Page() {
                         className="mt-2"
                         asChild
                     >
-                        <Link href="/reservation">Button</Link>
+                        <Link href="/reservation">Rezervace</Link>
+                    </Button>
+                    <Button
+                        className="mt-2"
+                        asChild
+                    >
+                        <Link href="/admin">Admin</Link>
                     </Button>
                 </div>
                 <div className="font-mono text-xs text-muted-foreground">
