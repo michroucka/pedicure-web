@@ -5,9 +5,12 @@ import { useEffect, useState } from "react";
 import { getAvailableSlotsAction } from "@/app/reservation/actions.ts";
 import { formatTime } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button.tsx";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import { AlertCircle, CalendarX } from "lucide-react";
 
 export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void }) {
     const [availableSlots, setAvailableSlots] = useState<number[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     const router = useRouter();
     const pathname = usePathname();
@@ -22,17 +25,20 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
 
     const slotParam = searchParams.get("slot");
     const selectedSlot = slotParam ? Number(slotParam) : undefined;
+    const error = searchParams.get("error");
 
     useEffect(() => {
         if (!date) return;
         const selectedDate = date;
 
+        setIsLoading(true);
         async function load() {
             const slots = await getAvailableSlotsAction(
                 selectedDate,
                 currentServices
             );
             setAvailableSlots(slots);
+            setIsLoading(false);
         }
         load();
     }, [searchParams.get("services"), searchParams.get("date")]);
@@ -46,18 +52,41 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
     }
 
     return (
-        <div className="grid grid-cols-4 lg:grid-cols-5 gap-2">
-            {availableSlots.map((s) => (
-                <Button
-                    key={s}
-                    type="button"
-                    variant={s === selectedSlot ? "default" : "outline"}
-                    size="lg"
-                    onClick={() => selectSlot(s)}
+        <div>
+            {error === "slot_taken" && (
+                <Alert
+                    variant="warning"
+                    className="mb-4"
                 >
-                    {formatTime(s)}
-                </Button>
-            ))}
+                    <AlertCircle />
+                    <AlertTitle>Termín již není volný</AlertTitle>
+                    <AlertDescription>
+                        Tento termín je již obsazený. Vyberte prosím jiný čas.
+                    </AlertDescription>
+                </Alert>
+            )}
+            {!isLoading && availableSlots.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
+                    <CalendarX className="size-6" />
+                    Pro tento den už nejsou volné žádné termíny.
+                    <br />
+                    Vyberte prosím jiné datum.
+                </div>
+            ) : (
+                <div className="grid grid-cols-4 lg:grid-cols-5 gap-2">
+                    {availableSlots.map((s) => (
+                        <Button
+                            key={s}
+                            type="button"
+                            variant={s === selectedSlot ? "default" : "outline"}
+                            size="lg"
+                            onClick={() => selectSlot(s)}
+                        >
+                            {formatTime(s)}
+                        </Button>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }
