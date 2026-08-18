@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
+import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
 
 export async function submitBooking(
     context: { date: Date; serviceId: number; startTime: number },
@@ -117,4 +118,19 @@ export async function submitGroupBooking(
             throw error;
         }
     }
+}
+
+export async function getAvailableDaysAction(
+    range: { from: Date; to: Date },
+    serviceIds: number[]
+): Promise<Date[]> {
+    return getAvailableDaysInRange(range, serviceIds);
+}
+
+export async function getAvailableSlotsAction(
+    date: Date,
+    serviceIds: number[],
+    extraMinutes: number = 0
+): Promise<number[]> {
+    return getAvailableSlots(date, serviceIds, extraMinutes);
 }

@@ -3,14 +3,8 @@
 import { Service } from "@/lib/generated/prisma/client.ts";
 import { useRouter } from "next/navigation";
 import { usePathname, useSearchParams } from "next/navigation";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button.tsx";
-import { ChevronDownIcon, Plus, Trash2 } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar.tsx";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import {
     Select,
     SelectValue,
@@ -20,17 +14,20 @@ import {
     SelectContent,
     SelectGroup,
 } from "@/components/ui/select";
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
 import { useState } from "react";
 
-export function ReservationFilters({ services }: { services: Service[] }) {
+export function PersonsStep({
+    services,
+    onContinueAction,
+    onChangeAction,
+}: {
+    services: Service[];
+    onContinueAction: () => void;
+    onChangeAction: () => void;
+}) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-
-    const dateParam = searchParams.get("date");
-    const date = dateParam ? new Date(dateParam) : undefined;
 
     const currentServices =
         searchParams.get("services")?.split(",").filter(Boolean) ?? [];
@@ -38,15 +35,8 @@ export function ReservationFilters({ services }: { services: Service[] }) {
         Math.max(currentServices.length, 1)
     );
 
-    function updateParam(key: string, value: string) {
-        const params = new URLSearchParams(searchParams);
-        params.set(key, value);
-        params.delete("slot");
-        params.delete("error");
-        router.push(`${pathname}?${params.toString()}`);
-    }
-
     function updateService(index: number, value: string) {
+        onChangeAction?.();
         const current =
             searchParams.get("services")?.split(",").filter(Boolean) ?? [];
         const next = [...current];
@@ -63,54 +53,26 @@ export function ReservationFilters({ services }: { services: Service[] }) {
         } else {
             params.delete("services");
         }
+        params.delete("date");
         params.delete("slot");
         params.delete("error");
         router.push(`${pathname}?${params.toString()}`);
     }
 
     function removePerson(index: number) {
+        onChangeAction?.();
         updateService(index, "none");
         setPersonCount((c) => Math.max(c - 1, 1));
     }
 
     return (
         <div>
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant="outline"
-                        data-empty={!date}
-                        className="w-53 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
-                    >
-                        {date ? (
-                            format(date, "d. MMMM yyyy", { locale: cs })
-                        ) : (
-                            <span>Vyberte datum</span>
-                        )}
-                        <ChevronDownIcon />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                    className="w-auto p-0"
-                    align="start"
-                >
-                    <Calendar
-                        mode="single"
-                        locale={cs}
-                        selected={date}
-                        onSelect={(d) =>
-                            d && updateParam("date", format(d, "yyyy-MM-dd"))
-                        }
-                        defaultMonth={date}
-                    />
-                </PopoverContent>
-            </Popover>
-
             {Array.from({ length: personCount }).map((_, i) => (
                 <div
                     key={i}
-                    className="flex items-center gap-2"
+                    className="mb-2 flex items-center gap-2"
                 >
+                    <span className="w-16">{`Osoba ${i + 1}`}</span>
                     <Select
                         onValueChange={(v) => v && updateService(i, v)}
                         value={currentServices[i] ?? ""}
@@ -118,7 +80,7 @@ export function ReservationFilters({ services }: { services: Service[] }) {
                         <SelectTrigger className="w-full max-w-48">
                             <SelectValue placeholder="Vyberte službu" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper">
                             <SelectGroup>
                                 <SelectLabel>Služby</SelectLabel>
                                 {services.map((s) => (
@@ -144,16 +106,30 @@ export function ReservationFilters({ services }: { services: Service[] }) {
                     )}
                 </div>
             ))}
-            {personCount < 4 && (
+            <div className="mt-2 flex">
+                {personCount < 4 && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            onChangeAction?.();
+                            setPersonCount((c) => c + 1);
+                        }}
+                    >
+                        <Plus data-icon="inline-start" />
+                        Přidat osobu
+                    </Button>
+                )}
                 <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => setPersonCount((c) => c + 1)}
+                    className="ms-auto"
+                    disabled={currentServices.length < personCount}
+                    onClick={onContinueAction}
                 >
-                    <Plus data-icon="inline-start" />
-                    Přidat osobu
+                    <ChevronDown className="size-4" />
+                    Pokračovat
                 </Button>
-            )}
+            </div>
         </div>
     );
 }
