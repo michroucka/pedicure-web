@@ -65,6 +65,16 @@ export function PersonsStep({
         setPersonCount((c) => Math.max(c - 1, 1));
     }
 
+    function addPerson() {
+        onChangeAction?.();
+        const params = new URLSearchParams(searchParams);
+        params.delete("date");
+        params.delete("slot");
+        params.delete("error");
+        router.push(`${pathname}?${params.toString()}`);
+        setPersonCount((c) => c + 1);
+    }
+
     return (
         <div>
             {Array.from({ length: personCount }).map((_, i) => (
@@ -111,10 +121,7 @@ export function PersonsStep({
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => {
-                            onChangeAction?.();
-                            setPersonCount((c) => c + 1);
-                        }}
+                        onClick={addPerson}
                     >
                         <Plus data-icon="inline-start" />
                         Přidat osobu
