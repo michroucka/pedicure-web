@@ -164,6 +164,7 @@ export function AvailabilityForm({
                 type="submit"
                 disabled={isSaving}
                 className="mt-2"
+                size="lg"
             >
                 <Save className="size-4" />
                 {isSaving ? "Ukládám…" : "Uložit"}

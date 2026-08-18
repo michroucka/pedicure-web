@@ -120,6 +120,7 @@ export function PersonsStep({
                 {personCount < 4 && (
                     <Button
                         type="button"
+                        size="lg"
                         variant="outline"
                         onClick={addPerson}
                     >
@@ -129,6 +130,7 @@ export function PersonsStep({
                 )}
                 <Button
                     type="button"
+                    size="lg"
                     className="ms-auto"
                     disabled={currentServices.length < personCount}
                     onClick={onContinueAction}

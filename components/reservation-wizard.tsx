@@ -109,9 +109,10 @@ export function ReservationWizard({ services }: { services: Service[] }) {
                 </StepCard>
             )}
 
-            <div className="flex justify-between mt-4">
+            <div className="mt-4 mb-8 flex justify-between">
                 <Button
                     type="button"
+                    size="lg"
                     variant="outline"
                     onClick={cancelReservation}
                 >
@@ -120,7 +121,12 @@ export function ReservationWizard({ services }: { services: Service[] }) {
                 </Button>
                 <Button
                     type="button"
-                    disabled={serviceIds.length === 0 || !dateParam || selectedSlot === undefined}
+                    size="lg"
+                    disabled={
+                        serviceIds.length === 0 ||
+                        !dateParam ||
+                        selectedSlot === undefined
+                    }
                     onClick={goToDetails}
                 >
                     <Check className="size-4" />
@@ -128,5 +134,5 @@ export function ReservationWizard({ services }: { services: Service[] }) {
                 </Button>
             </div>
         </div>
-    )
+    );
 }

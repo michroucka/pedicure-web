@@ -122,6 +122,7 @@ export function ExceptionForm() {
                             <Button
                                 key={k}
                                 type="button"
+                                size="lg"
                                 variant={kind === k ? "default" : "outline"}
                                 onClick={() => updateKind(k)}
                             >
@@ -195,6 +196,7 @@ export function ExceptionForm() {
 
                     <Button
                         type="button"
+                        size="lg"
                         disabled={isPending}
                         onClick={submit}
                     >

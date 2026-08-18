@@ -123,6 +123,7 @@ export function SoloBookingForm({
                 <div className="flex justify-between">
                     <Button
                         variant="outline"
+                        size="lg"
                         type="button"
                         asChild
                     >
@@ -131,7 +132,10 @@ export function SoloBookingForm({
                             Zpět
                         </Link>
                     </Button>
-                    <Button type="submit">
+                    <Button
+                        type="submit"
+                        size="lg"
+                    >
                         <Check className="size-4" />
                         Potvrdit rezervaci
                     </Button>
