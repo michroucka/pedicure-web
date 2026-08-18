@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { getAvailableSlotsAction } from "@/app/reservation/actions.ts";
 import { formatTime } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button.tsx";
@@ -9,8 +9,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { AlertCircle, CalendarX } from "lucide-react";
 
 export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void }) {
-    const [availableSlots, setAvailableSlots] = useState<number[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [availableSlots, setAvailableSlots] = useState<number[]>();
+    const [isLoading, startTransition] = useTransition();
 
     const router = useRouter();
     const pathname = usePathname();
@@ -31,16 +31,13 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
         if (!date) return;
         const selectedDate = date;
 
-        setIsLoading(true);
-        async function load() {
+        startTransition(async () => {
             const slots = await getAvailableSlotsAction(
                 selectedDate,
                 currentServices
             );
             setAvailableSlots(slots);
-            setIsLoading(false);
-        }
-        load();
+        });
     }, [searchParams.get("services"), searchParams.get("date")]);
 
     function selectSlot(s: number) {
@@ -65,7 +62,7 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                     </AlertDescription>
                 </Alert>
             )}
-            {!isLoading && availableSlots.length === 0 ? (
+            {!isLoading && availableSlots?.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
                     <CalendarX className="size-6" />
                     Pro tento den už nejsou volné žádné termíny.
@@ -74,7 +71,7 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                 </div>
             ) : (
                 <div className="grid grid-cols-4 lg:grid-cols-5 gap-2">
-                    {availableSlots.map((s) => (
+                    {availableSlots?.map((s) => (
                         <Button
                             key={s}
                             type="button"
