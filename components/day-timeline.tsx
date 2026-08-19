@@ -1,23 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { cn, formatTime } from "@/lib/utils.ts";
+import { formatTime } from "@/lib/utils.ts";
 import { BookingDetailDialog } from "@/components/booking-detail-dialog.tsx";
-import type {
-    Booking,
-    Client,
-    Service,
-} from "@/lib/generated/prisma/client.ts";
-
-export type BookingItem = Booking & { client: Client; service: Service };
-
-const SERVICE_COLORS = [
-    "border-chart-1/25 border-l-chart-1",
-    "border-chart-2/25 border-l-chart-2",
-    "border-chart-3/25 border-l-chart-3",
-    "border-chart-4/25 border-l-chart-4",
-    "border-chart-5/25 border-l-chart-5",
-];
+import {
+    BookingCard,
+    SERVICE_COLORS,
+    type BookingItem,
+} from "@/components/booking-card.tsx";
+import type { Service } from "@/lib/generated/prisma/client.ts";
 
 const PX_PER_MIN = 1.5;
 
@@ -84,40 +75,17 @@ export function DayTimeline({
                 ))}
 
                 {bookings.map((b) => (
-                    <button
+                    <BookingCard
                         key={b.id}
-                        type="button"
-                        onClick={() => setSelected(b)}
-                        className={cn(
-                            "absolute right-1 left-1 flex cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-lg border border-l-4 bg-card px-2 py-1 text-left text-sm transition hover:opacity-90",
-                            colorByService.get(b.serviceId)
+                        booking={b}
+                        top={(b.startTime - gridStart) * PX_PER_MIN}
+                        height={Math.max(
+                            (b.endTime - b.startTime) * PX_PER_MIN,
+                            24
                         )}
-                        style={{
-                            top: (b.startTime - gridStart) * PX_PER_MIN,
-                            height:
-                                Math.max(
-                                    (b.endTime - b.startTime) * PX_PER_MIN,
-                                    24
-                                ),
-                        }}
-                    >
-                        <div className="min-w-0">
-                            <div className="truncate font-medium">
-                                {b.client.name}
-                            </div>
-                            <div className="truncate text-xs text-muted-foreground">
-                                {b.service.name}
-                            </div>
-                        </div>
-                        <div className="shrink-0 text-right text-xs">
-                            <div className="font-mono font-medium text-foreground">
-                                {formatTime(b.startTime)}
-                            </div>
-                            <div className="font-mono font-medium text-muted-foreground">
-                                {formatTime(b.endTime)}
-                            </div>
-                        </div>
-                    </button>
+                        colorClass={colorByService.get(b.serviceId)}
+                        onSelect={() => setSelected(b)}
+                    />
                 ))}
             </div>
 

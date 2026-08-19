@@ -38,7 +38,7 @@ import {
     getMoveSlotsAction,
     moveBookingAction,
 } from "@/app/admin/(dashboard)/actions.ts";
-import type { BookingItem } from "@/components/day-timeline.tsx";
+import type { BookingItem } from "@/components/booking-card.tsx";
 
 const SOURCE_LABELS: Record<string, string> = {
     ONLINE: "Online",
@@ -150,7 +150,9 @@ export function BookingDetailDialog({
                                 <Clock className="size-4 text-muted-foreground" />
                                 {formatTime(booking.startTime)} –{" "}
                                 {formatTime(booking.endTime)} ·
-                                <span className="text-muted-foreground -ms-1">{booking.service.name}</span>
+                                <span className="-ms-1 text-muted-foreground">
+                                    {booking.service.name}
+                                </span>
                             </div>
                             <div className="text-muted-foreground">
                                 {SOURCE_LABELS[booking.source]}

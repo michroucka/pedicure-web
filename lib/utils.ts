@@ -18,6 +18,22 @@ export function toUtcMidnight(d: Date): Date {
     return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
 }
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+// Pure UTC day arithmetic — unlike date-fns's addDays/startOfWeek, this never
+// touches the server's local timezone, so it's safe on already UTC-midnight
+// dates (toDateOnly/getCzechToday output).
+export function addUtcDays(date: Date, days: number): Date {
+    return new Date(date.getTime() + days * ONE_DAY_MS);
+}
+
+// Monday of the week containing `date` (date must be UTC midnight).
+export function startOfWeekUtc(date: Date): Date {
+    const dayOfWeek = date.getUTCDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    return addUtcDays(date, diff);
+}
+
 // Today's calendar date in Europe/Prague, as UTC midnight (matches toDateOnly's
 // convention). Independent of the server's own OS timezone.
 export function getCzechToday(): Date {
