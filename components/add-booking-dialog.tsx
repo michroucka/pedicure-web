@@ -33,6 +33,11 @@ import {
     Phone,
     Sparkles,
 } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip.tsx";
 import { formatPhoneNumber, formatTime, toUtcMidnight } from "@/lib/utils.ts";
 import {
     createManualBookingAction,
@@ -166,19 +171,22 @@ export function AddBookingDialog({
 
     return (
         <>
-            <Button
-                type="button"
-                size="lg"
-                variant="outline"
-                className="mx-4 mt-2 mb-4"
-                onClick={() => {
-                    reset();
-                    setOpen(true);
-                }}
-            >
-                <Plus className="size-4" />
-                Přidat rezervaci
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        type="button"
+                        size="icon-xl"
+                        className="fixed right-4 bottom-22 z-10 rounded-full shadow-lg"
+                        onClick={() => {
+                            reset();
+                            setOpen(true);
+                        }}
+                    >
+                        <Plus className="size-6" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">Přidat rezervaci</TooltipContent>
+            </Tooltip>
 
             <Dialog
                 open={open}
@@ -395,6 +403,7 @@ export function AddBookingDialog({
                     <DialogFooter>
                         <Button
                             type="button"
+                            size="lg"
                             disabled={isPending}
                             onClick={submit}
                         >
