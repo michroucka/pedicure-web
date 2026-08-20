@@ -1,5 +1,7 @@
 "use server";
 
+import { prisma } from "@/lib/prisma.ts";
+import { normalizePhoneForMatch } from "@/lib/utils.ts";
 import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { redirect } from "next/navigation";
@@ -7,6 +9,36 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
+
+// Builds the redirect back to the slot picker when a chosen slot can't be
+// booked. Distinguishes two causes so the message (and the slot list itself,
+// via the carried-forward extraMinutes) reflect what actually happened:
+// - the base slot (without extra time) is still free, but this client's
+//   extraTimeMinutes push the end time into the next booking
+// - the slot itself is genuinely gone (someone else took it)
+async function buildSlotConflictRedirect(
+    date: Date,
+    serviceIds: number[],
+    startTime: number,
+    extraMinutes: number
+): Promise<string> {
+    const params = new URLSearchParams({
+        date: date.toISOString().slice(0, 10),
+        services: serviceIds.join(","),
+    });
+
+    if (extraMinutes > 0) {
+        const baseValid = await getAvailableSlots(date, serviceIds, 0);
+        if (baseValid.includes(startTime)) {
+            params.set("error", "extra_time_conflict");
+            params.set("extraMinutes", String(extraMinutes));
+            return `/reservation?${params.toString()}`;
+        }
+    }
+
+    params.set("error", "slot_taken");
+    return `/reservation?${params.toString()}`;
+}
 
 export async function submitBooking(
     context: { date: Date; serviceId: number; startTime: number },
@@ -20,12 +52,14 @@ export async function submitBooking(
 
     const valid = await getAvailableSlots(context.date, [context.serviceId], client.extraTimeMinutes);
     if (!valid.includes(context.startTime)) {
-        const params = new URLSearchParams({
-            date: context.date.toISOString().slice(0, 10),
-            services: String(context.serviceId),
-            error: "slot_taken",
-        });
-        redirect(`/reservation?${params.toString()}`);
+        redirect(
+            await buildSlotConflictRedirect(
+                context.date,
+                [context.serviceId],
+                context.startTime,
+                client.extraTimeMinutes
+            )
+        );
     }
 
     const serviceId = context.serviceId;
@@ -49,13 +83,14 @@ export async function submitBooking(
             error instanceof Prisma.PrismaClientKnownRequestError &&
             error.code === "P2002"
         ) {
-            const dateParam = date.toISOString().slice(0, 10);
-            const params = new URLSearchParams({
-                date: dateParam,
-                services: String(serviceId),
-                error: "slot_taken",
-            });
-            redirect(`/reservation?${params.toString()}`);
+            redirect(
+                await buildSlotConflictRedirect(
+                    date,
+                    [serviceId],
+                    startTime,
+                    client.extraTimeMinutes
+                )
+            );
         } else {
             throw error;
         }
@@ -79,12 +114,14 @@ export async function submitGroupBooking(
 
     const valid = await getAvailableSlots(context.date, context.serviceIds, extraMinutes);
     if (!valid.includes(context.startTime)) {
-        const params = new URLSearchParams({
-            date: context.date.toISOString().slice(0, 10),
-            services: context.serviceIds.join(","),
-            error: "slot_taken",
-        });
-        redirect(`/reservation?${params.toString()}`);
+        redirect(
+            await buildSlotConflictRedirect(
+                context.date,
+                context.serviceIds,
+                context.startTime,
+                extraMinutes
+            )
+        );
     }
 
     const people = context.serviceIds.map((serviceId, i) => ({
@@ -107,13 +144,14 @@ export async function submitGroupBooking(
             error instanceof Prisma.PrismaClientKnownRequestError &&
             error.code === "P2002"
         ) {
-            const dateParam = context.date.toISOString().slice(0, 10);
-            const params = new URLSearchParams({
-                date: dateParam,
-                services: context.serviceIds.join(","),
-                error: "slot_taken",
-            });
-            redirect(`/reservation?${params.toString()}`);
+            redirect(
+                await buildSlotConflictRedirect(
+                    context.date,
+                    context.serviceIds,
+                    context.startTime,
+                    extraMinutes
+                )
+            );
         } else {
             throw error;
         }
@@ -125,6 +163,30 @@ export async function getAvailableDaysAction(
     serviceIds: number[]
 ): Promise<Date[]> {
     return getAvailableDaysInRange(range, serviceIds);
+}
+
+export async function getExtraMinutesAction(
+    entries: { name: string; phone: string }[]
+): Promise<number> {
+    const validEntries = entries
+        .map((e) => ({ name: e.name.trim(), phone: e.phone.trim() }))
+        .filter((e) => e.name && e.phone);
+    if (validEntries.length === 0) return 0;
+
+    const names = [...new Set(validEntries.map((e) => e.name))];
+    const candidates = await prisma.client.findMany({
+        where: { name: { in: names } },
+    });
+
+    return validEntries.reduce((sum, e) => {
+        const normalizedPhone = normalizePhoneForMatch(e.phone);
+        const match = candidates.find(
+            (c) =>
+                c.name === e.name &&
+                normalizePhoneForMatch(c.phone) === normalizedPhone
+        );
+        return sum + (match?.extraTimeMinutes ?? 0);
+    }, 0);
 }
 
 export async function getAvailableSlotsAction(

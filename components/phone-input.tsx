@@ -10,6 +10,7 @@ export function PhoneInput(props: ComponentProps<typeof Input>) {
             {...props}
             onChange={(e) => {
                 e.target.value = formatPhoneNumber(e.target.value);
+                props.onChange?.(e);
             }}
         />
     )

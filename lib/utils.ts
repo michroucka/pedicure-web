@@ -5,6 +5,15 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+// Strips diacritics for accent-insensitive search ("cara" matches "Čára").
+// NFD decomposes accented chars into base + combining marks, which the
+// regex then removes (U+0300-U+036F is the Unicode combining diacritical
+// marks block).
+export function normalizeForSearch(value: string): string {
+    const COMBINING_MARKS = /[\u0300-\u036f]/g;
+    return value.normalize("NFD").replace(COMBINING_MARKS, "").toLowerCase();
+}
+
 // Normalizes a Date to UTC midnight for its calendar day. `Booking.date` /
 // `AvailabilityException.date` are stored this way so exact-match DB
 // queries (`where: { date } `) work without timezone drift.
@@ -123,4 +132,14 @@ export function formatPhoneNumber(value: string) {
             return `${limited.slice(0, 3)} ${limited.slice(3)}`;
         return `${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
     }
+}
+
+// Normalizes a phone number for equality comparisons: digits only, with a
+// leading Czech country code (420) stripped, so "+420 123 123 123" and
+// "123 123 123" are treated as the same number when matching clients.
+export function normalizePhoneForMatch(value: string): string {
+    const digits = value.replace(/\D/g, "");
+    return digits.startsWith("420") && digits.length > 9
+        ? digits.slice(3)
+        : digits;
 }

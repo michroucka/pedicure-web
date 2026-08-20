@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { submitBooking, submitGroupBooking } from "@/app/reservation/actions.ts";
 import { prisma } from "@/lib/prisma.ts";
-import { SoloBookingForm } from "@/components/solo-booking-form.tsx";
-import { GroupBookingForm } from "@/components/group-booking-form.tsx";
-import { StepIndicator } from "@/components/step-indicator.tsx";
+import { SoloBookingForm } from "@/components/reservation/solo-booking-form.tsx";
+import { GroupBookingForm } from "@/components/reservation/group-booking-form.tsx";
+import { StepIndicator } from "@/components/reservation/step-indicator.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { UsersRound, CalendarDays, Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -16,10 +16,12 @@ export default async function DetailsPage({ searchParams }: {
         date?: string;
         services?: string;
         slot?: string;
+        extraMinutes?: string;
     }>;
 }) {
-    const { date, services, slot } = await searchParams;
+    const { date, services, slot, extraMinutes } = await searchParams;
     const serviceIds = services?.split(",").filter(Boolean).map(Number) ?? [];
+    const knownExtraMinutes = Number(extraMinutes ?? 0);
 
     if (!date || serviceIds.length === 0 || !slot) {
         redirect("/reservation");
@@ -40,7 +42,7 @@ export default async function DetailsPage({ searchParams }: {
         0
     );
     const dateSummary = format(new Date(date), "d. MMMM yyyy", { locale: cs });
-    const timeSummary = `${formatTime(Number(slot))} – ${formatTime(Number(slot) + totalDuration)}`;
+    const timeSummary = `${formatTime(Number(slot))} – ${formatTime(Number(slot) + totalDuration + knownExtraMinutes)}`;
 
     return (
         <div className="max-w-md mx-auto">
@@ -50,7 +52,7 @@ export default async function DetailsPage({ searchParams }: {
                 <CardContent className="flex flex-col gap-2 text-sm">
                     <div className="flex items-center gap-2">
                         <UsersRound className="size-4 text-muted-foreground" />
-                        {serviceNames.join(" · ")}
+                        {serviceNames.join(" • ")}
                     </div>
                     <div className="flex items-center gap-2">
                         <CalendarDays className="size-4 text-muted-foreground" />
@@ -71,6 +73,9 @@ export default async function DetailsPage({ searchParams }: {
                         startTime: Number(slot),
                     })}
                     backHref={backHref}
+                    startTime={Number(slot)}
+                    durationMinutes={totalDuration}
+                    initialExtraMinutes={knownExtraMinutes}
                 />
             ) : (
                 <GroupBookingForm
@@ -81,6 +86,9 @@ export default async function DetailsPage({ searchParams }: {
                     })}
                     serviceNames={serviceNames}
                     backHref={backHref}
+                    startTime={Number(slot)}
+                    durationMinutes={totalDuration}
+                    initialExtraMinutes={knownExtraMinutes}
                 />
             )}
         </div>

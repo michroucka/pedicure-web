@@ -2,10 +2,10 @@
 
 import { Service } from "@/lib/generated/prisma/client.ts";
 import { useState } from "react";
-import { StepCard } from "@/components/step-card.tsx";
-import { PersonsStep } from "@/components/persons-step.tsx";
-import { DateStep } from "@/components/date-step.tsx";
-import { TimeSlotStep } from "@/components/time-slot-step.tsx";
+import { StepCard } from "@/components/reservation/step-card.tsx";
+import { PersonsStep } from "@/components/reservation/persons-step.tsx";
+import { DateStep } from "@/components/reservation/date-step.tsx";
+import { TimeSlotStep } from "@/components/reservation/time-slot-step.tsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
@@ -40,7 +40,7 @@ export function ReservationWizard({ services }: { services: Service[] }) {
         .map((id) => services.find((s) => s.id === id))
         .filter((s): s is Service => !!s);
 
-    const personsSummary = selectedServices.map((s) => s.name).join(" · ");
+    const personsSummary = selectedServices.map((s) => s.name).join(" • ");
 
     const dateParam = searchParams.get("date");
     const dateSummary = dateParam
@@ -49,10 +49,10 @@ export function ReservationWizard({ services }: { services: Service[] }) {
 
     const slotParam = searchParams.get("slot");
     const selectedSlot = slotParam ? Number(slotParam) : undefined;
-    const totalDuration = selectedServices.reduce(
-        (sum, s) => sum + s.durationMinutes,
-        0
-    );
+    const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
+    const totalDuration =
+        selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0) +
+        extraMinutes;
     const slotSummary = slotParam
         ? `${formatTime(Number(slotParam))} – ${formatTime(Number(slotParam) + totalDuration)}`
         : "";
@@ -68,6 +68,9 @@ export function ReservationWizard({ services }: { services: Service[] }) {
             services: serviceIds.join(","),
             slot: String(selectedSlot),
         });
+        if (extraMinutes > 0) {
+            params.set("extraMinutes", String(extraMinutes));
+        }
         router.push(`/reservation/details?${params.toString()}`);
     }
 

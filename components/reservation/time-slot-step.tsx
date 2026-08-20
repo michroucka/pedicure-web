@@ -26,6 +26,7 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
     const slotParam = searchParams.get("slot");
     const selectedSlot = slotParam ? Number(slotParam) : undefined;
     const error = searchParams.get("error");
+    const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
 
     useEffect(() => {
         if (!date) return;
@@ -34,11 +35,16 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
         startTransition(async () => {
             const slots = await getAvailableSlotsAction(
                 selectedDate,
-                currentServices
+                currentServices,
+                extraMinutes
             );
             setAvailableSlots(slots);
         });
-    }, [searchParams.get("services"), searchParams.get("date")]);
+    }, [
+        searchParams.get("services"),
+        searchParams.get("date"),
+        searchParams.get("extraMinutes"),
+    ]);
 
     function selectSlot(s: number) {
         const params = new URLSearchParams(searchParams);
@@ -59,6 +65,20 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                     <AlertTitle>Termín již není volný</AlertTitle>
                     <AlertDescription>
                         Tento termín je již obsazený. Vyberte prosím jiný čas.
+                    </AlertDescription>
+                </Alert>
+            )}
+            {error === "extra_time_conflict" && (
+                <Alert
+                    variant="warning"
+                    className="mb-4"
+                >
+                    <AlertCircle />
+                    <AlertTitle>Termín není možný</AlertTitle>
+                    <AlertDescription>
+                        Podle vašich předchozích návštěv počítáme s{" "}
+                        {extraMinutes} min navíc a s tím se tento termín už
+                        nevejde před další rezervaci. Vyberte prosím jiný čas.
                     </AlertDescription>
                 </Alert>
             )}
