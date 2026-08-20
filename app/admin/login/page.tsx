@@ -36,7 +36,7 @@ export default async function AdminLoginPage({
         <div className="mx-auto flex min-h-svh max-w-sm items-center p-4">
             <Card className="w-full">
                 <CardContent>
-                    <h1 className="mb-4 text-xl font-semibold">Přihlášení</h1>
+                    <h2 className="mb-4 text-center">Přihlášení</h2>
                     {error && (
                         <Alert
                             variant="destructive"

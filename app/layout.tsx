@@ -1,4 +1,4 @@
-import { Geist_Mono, Inter } from "next/font/google";
+import { Montserrat, Playfair_Display } from "next/font/google";
 
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -6,11 +6,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const fontSans = Montserrat({ subsets: ["latin"], variable: "--font-sans" });
 
-const fontMono = Geist_Mono({
+const fontSerif = Playfair_Display({
     subsets: ["latin"],
-    variable: "--font-mono",
+    variable: "--font-serif",
 });
 
 export default function RootLayout({
@@ -24,9 +24,9 @@ export default function RootLayout({
             suppressHydrationWarning
             className={cn(
                 "antialiased",
-                fontMono.variable,
+                fontSerif.variable,
                 "font-sans",
-                inter.variable
+                fontSans.variable
             )}
         >
             <body>

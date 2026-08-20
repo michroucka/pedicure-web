@@ -6,7 +6,7 @@ import { CalendarCheck, CalendarClock, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
 
 const NAV_ITEMS = [
-    { href: "/admin", label: "Dnešek", icon: CalendarCheck },
+    { href: "/admin", label: "Kalendář", icon: CalendarCheck },
     { href: "/admin/availability", label: "Dostupnost", icon: CalendarClock },
     { href: "/admin/clients", label: "Klienti", icon: UsersRound },
 ];

@@ -71,7 +71,7 @@ function DialogContent({
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-4 right-4 bg-secondary"
+              className="absolute top-4 right-4 bg-muted hover:bg-[color-mix(in_oklch,var(--muted),var(--foreground)_8%)]"
               size="icon-sm"
             >
               <XIcon
@@ -130,7 +130,7 @@ function DialogTitle({
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "font-heading text-base leading-none font-medium",
+        "font-heading text-xl leading-none font-medium",
         className
       )}
       {...props}
