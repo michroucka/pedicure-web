@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { prisma } from "@/lib/prisma.ts";
 import {
     toDateOnly,
@@ -6,10 +7,10 @@ import {
     addUtcDays,
 } from "@/lib/utils.ts";
 import { resolveDayTimeSlots } from "@/lib/availability.ts";
-import { DayNav } from "@/components/day-nav.tsx";
-import { DayTimeline } from "@/components/day-timeline.tsx";
-import { WeekTimeline } from "@/components/week-timeline.tsx";
-import { AddBookingDialog } from "@/components/add-booking-dialog.tsx";
+import { DayNav } from "@/components/admin/day-nav.tsx";
+import { DayTimeline } from "@/components/admin/day-timeline.tsx";
+import { WeekTimeline } from "@/components/admin/week-timeline.tsx";
+import { AddBookingDialog } from "@/components/admin/add-booking-dialog.tsx";
 
 export default async function AdminHomePage({
     searchParams,
@@ -22,11 +23,16 @@ export default async function AdminHomePage({
 
     const services = await prisma.service.findMany({ orderBy: { id: "asc" } });
 
+    let weekStart: Date | undefined;
+    let weekEnd: Date | undefined;
+    let timeline: ReactNode;
+
     if (view === "week") {
-        const weekStart = startOfWeekUtc(date);
+        weekStart = startOfWeekUtc(date);
         const weekDays = Array.from({ length: 7 }, (_, i) =>
-            addUtcDays(weekStart, i)
+            addUtcDays(weekStart!, i)
         );
+        weekEnd = weekDays[6];
 
         const [bookings, recurring, exceptions] = await Promise.all([
             prisma.booking.findMany({
@@ -59,68 +65,64 @@ export default async function AdminHomePage({
             bookings.filter((b) => b.date.getTime() === d.getTime())
         );
 
-        return (
-            <div className="flex h-full w-full flex-col">
-                <div className="mx-auto w-full max-w-lg">
-                    <DayNav
-                        date={date}
-                        view={view}
-                        weekStart={weekDays[0]}
-                        weekEnd={weekDays[6]}
-                    />
-                </div>
-                <WeekTimeline
-                    weekDays={weekDays}
-                    windowsByDay={windowsByDay}
-                    bookingsByDay={bookingsByDay}
+        timeline = (
+            <WeekTimeline
+                weekDays={weekDays}
+                windowsByDay={windowsByDay}
+                bookingsByDay={bookingsByDay}
+                services={services}
+            />
+        );
+    } else {
+        const [bookings, recurring, exceptions] = await Promise.all([
+            prisma.booking.findMany({
+                where: { date, status: "CONFIRMED" },
+                include: { client: true, service: true },
+                orderBy: { startTime: "asc" },
+            }),
+            prisma.recurringAvailability.findMany({
+                where: { dayOfWeek: date.getUTCDay() },
+            }),
+            prisma.availabilityException.findMany({ where: { date } }),
+        ]);
+
+        const windows = resolveDayTimeSlots(
+            recurring.map((r) => ({ start: r.startTime, end: r.endTime })),
+            exceptions.map((e) => ({
+                type: e.type,
+                start: e.startTime,
+                end: e.endTime,
+            }))
+        );
+
+        timeline = (
+            <div className="mx-auto w-full max-w-lg">
+                <DayTimeline
+                    windows={windows}
+                    bookings={bookings}
                     services={services}
                 />
-                <div className="mx-auto w-full max-w-lg">
-                    <AddBookingDialog
-                        services={services}
-                        defaultDate={date}
-                    />
-                </div>
             </div>
         );
     }
 
-    const [bookings, recurring, exceptions] = await Promise.all([
-        prisma.booking.findMany({
-            where: { date, status: "CONFIRMED" },
-            include: { client: true, service: true },
-            orderBy: { startTime: "asc" },
-        }),
-        prisma.recurringAvailability.findMany({
-            where: { dayOfWeek: date.getUTCDay() },
-        }),
-        prisma.availabilityException.findMany({ where: { date } }),
-    ]);
-
-    const windows = resolveDayTimeSlots(
-        recurring.map((r) => ({ start: r.startTime, end: r.endTime })),
-        exceptions.map((e) => ({
-            type: e.type,
-            start: e.startTime,
-            end: e.endTime,
-        }))
-    );
-
     return (
-        <div className="mx-auto flex h-full w-full max-w-lg flex-col">
-            <DayNav
-                date={date}
-                view={view}
-            />
-            <DayTimeline
-                windows={windows}
-                bookings={bookings}
-                services={services}
-            />
-            <AddBookingDialog
-                services={services}
-                defaultDate={date}
-            />
+        <div className="flex h-full w-full flex-col">
+            <div className="mx-auto w-full max-w-lg">
+                <DayNav
+                    date={date}
+                    view={view}
+                    weekStart={weekStart}
+                    weekEnd={weekEnd}
+                />
+            </div>
+            {timeline}
+            <div className="mx-auto w-full max-w-lg">
+                <AddBookingDialog
+                    services={services}
+                    defaultDate={date}
+                />
+            </div>
         </div>
     );
 }
