@@ -30,10 +30,13 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 
 ## Tech stack (rozhodnuto)
 
-- **Next.js 15** (App Router), monorepo — web i appka ve stejném projektu
+- **Next.js 16** (App Router), monorepo — web i appka ve stejném projektu
 - **Tailwind CSS + shadcn/ui**
-- **PostgreSQL + Prisma** ORM (DB: Neon nebo Supabase, free tier)
-- **Auth.js (NextAuth)** — jen pro admina (pedikérku)
+- **PostgreSQL + Prisma** ORM (DB: Neon, free tier)
+- **Auth.js (NextAuth)** — jen pro admina (pedikérku); JWT session, credentials
+  provider proti `AdminUser`, heslo hashované přes **argon2**. Config je
+  rozdělený na `auth.config.ts` (edge-safe, používá ho i middleware) a
+  `auth.ts` (plná verze s Prisma/argon2, jen pro Node runtime)
 - **Resend** — transakční emaily z vlastní domény (SPF/DKIM/DMARC DNS záznamy)
 - **Hosting: Vercel** (Hobby/free plan stačí; zvážit Pro $20/měs jen pokud
   bude potřeba častější cron)
@@ -73,6 +76,9 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 **RecurringAvailability**
 - id, dayOfWeek, startTime, endTime
 - (bez breaku mezi rezervacemi — sloty na sebe navazují přímo)
+- Jeden den může mít víc řádků/bloků (např. 9–12 a 14–17 s obědovou
+  pauzou) — admin obrazovka Dostupnost umožňuje k jednomu dni přidat
+  víc časových bloků, ne jen jeden souvislý interval
 
 **AvailabilityException**
 - id, date, type (`blocked` / `extra_open`), startTime, endTime (nullable)
@@ -110,10 +116,18 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - **Připomínkový email** klientovi ráno v den rezervace (cron, volitelné —
   checkbox `reminderRequested` při vytváření rezervace)
 - **Zrušení/přesun přes magic link** — max do 24h před termínem (server-side
-  kontrola, konstanta v kódu, ne DB pole)
-  - Přesun = zrušit starý Booking + založit nový (ne editace in-place)
+  kontrola, konstanta v kódu, ne DB pole). Tohle omezení platí jen pro
+  klienta přes magic link — admin (pedikérka) může rezervaci
+  zrušit/přesunout z admin rozhraní kdykoliv, bez 24h limitu
+  - Přesun = zrušit starý Booking + založit nový (ne editace in-place).
+    Implementováno zatím pro admin (`lib/move-booking.ts` —
+    `moveBooking` pro sólo, `moveGroupBooking` pro celou skupinu
+    najednou se zachováním `groupId`); magic-link verze pro klienta
+    zatím není postavená (další krok v plánu)
 - **Skupinové rezervace** (matka+dcera apod.) — 2+ osob, navazující sloty,
-  různé služby možné, `groupId` na Booking, každá osoba samostatný záznam
+  různé služby možné, `groupId` na Booking, každá osoba samostatný záznam.
+  Kontaktní údaje (telefon, email) jsou jen jedny sdílené za celou
+  skupinu (jeden "hlavní kontakt"), ne per-osobu — jen jméno se liší
 - **No-show tracking** — netřeba, needed
 
 ## Admin UX — DŮLEŽITÉ
