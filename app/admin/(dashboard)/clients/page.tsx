@@ -1,10 +1,15 @@
-export default function ClientsPage() {
+import { prisma } from "@/lib/prisma.ts";
+import { ClientList } from "@/components/admin/client-list.tsx";
+
+export default async function ClientsPage() {
+    const clients = await prisma.client.findMany({
+        orderBy: { name: "asc" },
+    });
+
     return (
-        <div className="p-6">
-            <h1 className="text-xl font-semibold">Klienti</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-                Zatím tu nic není — přidáme později.
-            </p>
+        <div className="mx-auto w-full max-w-lg">
+            <h1 className="px-4 pt-4 text-center">Klienti</h1>
+            <ClientList clients={clients} />
         </div>
     );
 }
