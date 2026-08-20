@@ -46,6 +46,7 @@ export function BookingCard({
                 </div>
                 <div className="truncate text-xxs 2xl:text-xs text-muted-foreground">
                     {booking.service.name}
+                    {booking.client.extraTimeMinutes > 0 && "+"}
                 </div>
             </div>
             <div className="shrink-0 text-right text-xs">
