@@ -38,7 +38,7 @@ import {
     getMoveSlotsAction,
     moveBookingAction,
 } from "@/app/admin/(dashboard)/actions.ts";
-import type { BookingItem } from "@/components/booking-card.tsx";
+import type { BookingItem } from "@/components/admin/booking-card.tsx";
 
 const SOURCE_LABELS: Record<string, string> = {
     ONLINE: "Online",
@@ -138,7 +138,7 @@ export function BookingDetailDialog({
                                 {booking.client.name}
                                 {booking.groupId && (
                                     <span className="text-muted-foreground">
-                                        · Skupina
+                                        • Skupina
                                     </span>
                                 )}
                             </div>
@@ -149,7 +149,7 @@ export function BookingDetailDialog({
                             <div className="flex items-center gap-2">
                                 <Clock className="size-4 text-muted-foreground" />
                                 {formatTime(booking.startTime)} –{" "}
-                                {formatTime(booking.endTime)} ·
+                                {formatTime(booking.endTime)} •
                                 <span className="-ms-1 text-muted-foreground">
                                     {booking.service.name}
                                 </span>
@@ -260,7 +260,7 @@ export function BookingDetailDialog({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Zrušit rezervaci?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {booking.client.name} ·{" "}
+                            {booking.client.name} •{" "}
                             {formatTime(booking.startTime)}–
                             {formatTime(booking.endTime)}. Tuhle akci nejde vzít
                             zpět.

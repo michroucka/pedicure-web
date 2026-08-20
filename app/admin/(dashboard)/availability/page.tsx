@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma.ts";
 import { formatTime, getCzechToday } from "@/lib/utils.ts";
-import { AvailabilityForm } from "@/components/availability-form.tsx";
-import { ExceptionForm } from "@/components/exception-form.tsx";
-import { ExceptionList } from "@/components/exception-list.tsx";
+import { AvailabilityForm } from "@/components/admin/availability-form.tsx";
+import { ExceptionForm } from "@/components/admin/exception-form.tsx";
+import { ExceptionList } from "@/components/admin/exception-list.tsx";
 import {
     Tabs,
     TabsContent,

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { formatTime } from "@/lib/utils.ts";
-import { BookingDetailDialog } from "@/components/booking-detail-dialog.tsx";
+import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
 import {
     BookingCard,
     SERVICE_COLORS,
     type BookingItem,
-} from "@/components/booking-card.tsx";
+} from "@/components/admin/booking-card.tsx";
 import type { Service } from "@/lib/generated/prisma/client.ts";
 
 const PX_PER_MIN = 1.5;
@@ -84,7 +84,7 @@ export function DayTimeline({
                             24
                         )}
                         colorClass={colorByService.get(b.serviceId)}
-                        onSelect={() => setSelected(b)}
+                        onSelectAction={() => setSelected(b)}
                     />
                 ))}
             </div>

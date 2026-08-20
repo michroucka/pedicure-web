@@ -1,4 +1,4 @@
-import { AdminBottomNav } from "@/components/admin-bottom-nav.tsx";
+import { AdminBottomNav } from "@/components/admin/admin-bottom-nav.tsx";
 
 export default function AdminDashboardLayout({
     children,

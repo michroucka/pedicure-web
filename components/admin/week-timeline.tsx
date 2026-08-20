@@ -4,12 +4,12 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { cn, formatTime, toUtcMidnight } from "@/lib/utils.ts";
-import { BookingDetailDialog } from "@/components/booking-detail-dialog.tsx";
+import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
 import {
     BookingCard,
     SERVICE_COLORS,
     type BookingItem,
-} from "@/components/booking-card.tsx";
+} from "@/components/admin/booking-card.tsx";
 import type { Service } from "@/lib/generated/prisma/client.ts";
 
 const PX_PER_MIN = 1.5;
@@ -127,7 +127,7 @@ export function WeekTimeline({
                                         colorClass={colorByService.get(
                                             b.serviceId
                                         )}
-                                        onSelect={() => setSelected(b)}
+                                        onSelectAction={() => setSelected(b)}
                                     />
                                 ))}
                             </div>

@@ -183,7 +183,7 @@ export function ExceptionForm() {
                             <AlertDescription>
                                 {conflicts.map((c, i) => (
                                     <div key={i}>
-                                        {c.clientName} ·{" "}
+                                        {c.clientName} •{" "}
                                         {formatTime(c.startTime)}–
                                         {formatTime(c.endTime)}
                                     </div>

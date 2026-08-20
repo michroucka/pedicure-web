@@ -11,7 +11,12 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+    Calendar1,
+    CalendarDays,
+    ChevronLeft,
+    ChevronRight,
+} from "lucide-react";
 import { toUtcMidnight } from "@/lib/utils.ts";
 
 export function DayNav({
@@ -113,6 +118,7 @@ export function DayNav({
                                 variant={view === "day" ? "default" : "outline"}
                                 onClick={() => goTo(date, "day")}
                             >
+                                <Calendar1 className="size-4" />
                                 Den
                             </Button>
                             <Button
@@ -123,6 +129,7 @@ export function DayNav({
                                 }
                                 onClick={() => goTo(date, "week")}
                             >
+                                <CalendarDays className="size-4" />
                                 Týden
                             </Button>
                         </div>

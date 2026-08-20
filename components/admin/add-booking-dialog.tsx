@@ -200,6 +200,26 @@ export function AddBookingDialog({
                         <DialogTitle>Přidat rezervaci</DialogTitle>
                     </DialogHeader>
 
+                    <div className="grid grid-cols-2 gap-2">
+                        {SOURCE_OPTIONS.map((opt) => (
+                            <Button
+                                key={opt.value}
+                                type="button"
+                                variant={
+                                    source === opt.value ? "default" : "outline"
+                                }
+                                onClick={() => setSource(opt.value)}
+                            >
+                                {opt.value === "PHONE" ? (
+                                    <PhoneIcon className="size-4" />
+                                ) : (
+                                    <UserRound className="size-4" />
+                                )}
+                                {opt.label}
+                            </Button>
+                        ))}
+                    </div>
+
                     <div className="flex flex-col gap-3">
                         <div className="flex flex-col gap-2 rounded-2xl border p-3">
                             <div className="flex items-center justify-between">
@@ -369,28 +389,6 @@ export function AddBookingDialog({
                                     ))}
                                 </div>
                             )}
-
-                        <div className="grid grid-cols-2 gap-2">
-                            {SOURCE_OPTIONS.map((opt) => (
-                                <Button
-                                    key={opt.value}
-                                    type="button"
-                                    variant={
-                                        source === opt.value
-                                            ? "default"
-                                            : "outline"
-                                    }
-                                    onClick={() => setSource(opt.value)}
-                                >
-                                    {opt.value === "PHONE" ? (
-                                        <PhoneIcon className="size-4" />
-                                    ) : (
-                                        <UserRound className="size-4" />
-                                    )}
-                                    {opt.label}
-                                </Button>
-                            ))}
-                        </div>
 
                         {error && (
                             <Alert variant="destructive">

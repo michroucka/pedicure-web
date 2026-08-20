@@ -29,13 +29,13 @@ export function ExceptionList({ exceptions }: { exceptions: ExceptionItem[] }) {
 
     return (
         <div className="flex flex-col gap-2">
-            <h1 className="text-base font-semibold text-center">Aktivní výjimky</h1>
+            <h2 className="text-center">Aktivní výjimky</h2>
             {exceptions.map((exception) => (
                 <div
                     key={exception.id}
-                    className={`flex items-center justify-between rounded-2xl border px-3 py-1 ${exception.type === "BLOCKED" ? "text-danger-foreground" : "text-success-foreground"}`}
+                    className={`flex items-center justify-between rounded-2xl border px-3 py-1 ${exception.type === "BLOCKED" ? "bg-danger/30" : "bg-success/30"}`}
                 >
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2">
                         {exception.type === "BLOCKED" ? (
                             <CalendarOff className="size-4" />
                         ) : (
@@ -49,11 +49,11 @@ export function ExceptionList({ exceptions }: { exceptions: ExceptionItem[] }) {
                             exception.endTime !== null ? (
                                 <>
                                     {" "}
-                                    · {formatTime(exception.startTime)} –{" "}
+                                    • {formatTime(exception.startTime)} –{" "}
                                     {formatTime(exception.endTime)}
                                 </>
                             ) : (
-                                " · Celý den"
+                                " • Celý den"
                             )}
                         </span>
                     </div>

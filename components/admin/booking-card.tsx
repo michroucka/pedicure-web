@@ -22,20 +22,20 @@ export function BookingCard({
     top,
     height,
     colorClass,
-    onSelect,
+    onSelectAction,
 }: {
     booking: BookingItem;
     top: number;
     height: number;
     colorClass: string | undefined;
-    onSelect: () => void;
+    onSelectAction: () => void;
 }) {
     return (
         <button
             type="button"
-            onClick={onSelect}
+            onClick={onSelectAction}
             className={cn(
-                "absolute right-1 left-1 flex cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-lg border border-l-4 bg-card px-2 py-1 text-left text-sm transition hover:opacity-90",
+                "absolute right-1 left-1 flex cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-sm border border-l-4 bg-card px-2 py-1 text-left text-sm transition hover:opacity-90",
                 colorClass
             )}
             style={{ top, height }}
@@ -49,10 +49,10 @@ export function BookingCard({
                 </div>
             </div>
             <div className="shrink-0 text-right text-xs">
-                <div className="font-mono font-medium text-foreground">
+                <div className="tabular-nums font-medium text-foreground">
                     {formatTime(booking.startTime)}
                 </div>
-                <div className="font-mono font-medium text-muted-foreground">
+                <div className="tabular-nums font-medium text-muted-foreground">
                     {formatTime(booking.endTime)}
                 </div>
             </div>
