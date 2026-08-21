@@ -160,6 +160,7 @@ export function WeekTimeline({
 
             <BookingDetailDialog
                 booking={selected}
+                allBookings={allBookings}
                 onOpenChange={(open) => !open && setSelected(null)}
             />
         </div>

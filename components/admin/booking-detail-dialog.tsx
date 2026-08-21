@@ -23,6 +23,12 @@ import {
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput,
+    InputGroupText,
+} from "@/components/ui/input-group.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
 import {
     AlertCircle,
@@ -33,8 +39,9 @@ import {
     X,
     Plus,
     ArrowRightLeft,
+    QrCode,
 } from "lucide-react";
-import { formatTime, toUtcMidnight } from "@/lib/utils.ts";
+import { formatTime, toUtcMidnight, normalizePhoneForMatch } from "@/lib/utils.ts";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
@@ -48,20 +55,26 @@ const SOURCE_LABELS: Record<string, string> = {
     IN_PERSON: "Osobně",
 };
 
+const QR_TOTAL = "total";
+
 export function BookingDetailDialog({
     booking,
+    allBookings,
     onOpenChange,
 }: {
     booking: BookingItem | null;
+    allBookings: BookingItem[];
     onOpenChange: (open: boolean) => void;
 }) {
-    const [mode, setMode] = useState<"detail" | "move">("detail");
+    const [mode, setMode] = useState<"detail" | "move" | "qr">("detail");
     const [confirmCancel, setConfirmCancel] = useState(false);
     const [moveDate, setMoveDate] = useState<Date>();
     const [moveSlots, setMoveSlots] = useState<number[]>();
     const [selectedSlot, setSelectedSlot] = useState<number>();
     const [customTime, setCustomTime] = useState(false);
     const [customTimeValue, setCustomTimeValue] = useState("");
+    const [qrTarget, setQrTarget] = useState(QR_TOTAL);
+    const [qrAmount, setQrAmount] = useState("");
     const [error, setError] = useState<string>();
     const [isPending, startTransition] = useTransition();
 
@@ -73,6 +86,8 @@ export function BookingDetailDialog({
         setSelectedSlot(undefined);
         setCustomTime(false);
         setCustomTimeValue("");
+        setQrTarget(QR_TOTAL);
+        setQrAmount("");
         setError(undefined);
     }
 
@@ -90,6 +105,50 @@ export function BookingDetailDialog({
     }
 
     if (!booking) return null;
+
+    const groupBookings = booking.groupId
+        ? allBookings
+              .filter((b) => b.groupId === booking.groupId)
+              .sort((a, b) => a.startTime - b.startTime)
+        : [booking];
+
+    function openQr() {
+        setMode("qr");
+        selectQrTarget(QR_TOTAL);
+    }
+
+    function selectQrTarget(target: string) {
+        setQrTarget(target);
+        const amount =
+            target === QR_TOTAL
+                ? groupBookings.reduce((sum, b) => sum + b.service.price, 0)
+                : (groupBookings.find((b) => b.id === target)?.service
+                      .price ?? 0);
+        setQrAmount(String(amount));
+    }
+
+    const qrMessage =
+        qrTarget === QR_TOTAL
+            ? groupBookings[0].client.name
+            : (groupBookings.find((b) => b.id === qrTarget)?.client.name ??
+              groupBookings[0].client.name);
+
+    const qrAmountValue = Number(qrAmount);
+    const qrUrl =
+        qrAmountValue > 0
+            ? `https://api.paylibo.com/paylibo/generator/czech/image?${new URLSearchParams(
+                  {
+                      accountNumber: process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "",
+                      bankCode: process.env.NEXT_PUBLIC_BANK_CODE ?? "",
+                      amount: qrAmount,
+                      currency: "CZK",
+                      vs: normalizePhoneForMatch(booking.client.phone),
+                      message: qrMessage,
+                      size: "300",
+                      branding: "false",
+                  }
+              ).toString()}`
+            : undefined;
 
     function pickMoveDate(d: Date | undefined) {
         setMoveDate(d);
@@ -144,7 +203,9 @@ export function BookingDetailDialog({
                         <DialogTitle>
                             {mode === "detail"
                                 ? "Rezervace"
-                                : "Přesunout rezervaci"}
+                                : mode === "move"
+                                  ? "Přesunout rezervaci"
+                                  : "QR platba"}
                         </DialogTitle>
                     </DialogHeader>
 
@@ -173,6 +234,85 @@ export function BookingDetailDialog({
                             </div>
                             <div className="text-muted-foreground">
                                 {SOURCE_LABELS[booking.source]}
+                            </div>
+                        </div>
+                    ) : mode === "qr" ? (
+                        <div className="flex flex-col gap-5">
+                            {groupBookings.length > 1 && (
+                                <div
+                                    className="grid gap-2"
+                                    style={{
+                                        gridTemplateColumns: `repeat(${groupBookings.length + 1}, minmax(0, 1fr))`,
+                                    }}
+                                >
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={
+                                            qrTarget === QR_TOTAL
+                                                ? "default"
+                                                : "outline"
+                                        }
+                                        onClick={() =>
+                                            selectQrTarget(QR_TOTAL)
+                                        }
+                                    >
+                                        Celkem
+                                    </Button>
+                                    {groupBookings.map((gb) => (
+                                        <Button
+                                            key={gb.id}
+                                            type="button"
+                                            size="sm"
+                                            variant={
+                                                qrTarget === gb.id
+                                                    ? "default"
+                                                    : "outline"
+                                            }
+                                            onClick={() =>
+                                                selectQrTarget(gb.id)
+                                            }
+                                        >
+                                            {gb.client.name}
+                                        </Button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {qrUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- dynamic external QR image, no benefit from next/image
+                                <img
+                                    src={qrUrl}
+                                    alt="QR platba"
+                                    className="mx-auto rounded-lg border"
+                                    width={240}
+                                    height={240}
+                                />
+                            ) : (
+                                <div
+                                    className="mx-auto flex items-center justify-center rounded-lg border text-center text-sm text-muted-foreground"
+                                    style={{ width: 240, height: 240 }}
+                                >
+                                    Zadejte částku.
+                                </div>
+                            )}
+
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="font-medium">Částka:</span>
+                                <InputGroup className="w-auto max-w-32">
+                                    <InputGroupInput
+                                        type="number"
+                                        inputMode="numeric"
+                                        value={qrAmount}
+                                        onChange={(e) =>
+                                            setQrAmount(e.target.value)
+                                        }
+                                        onFocus={(e) => e.target.select()}
+                                    />
+                                    <InputGroupAddon align="inline-end">
+                                        <InputGroupText>Kč</InputGroupText>
+                                    </InputGroupAddon>
+                                </InputGroup>
                             </div>
                         </div>
                     ) : (
@@ -264,12 +404,28 @@ export function BookingDetailDialog({
                         </div>
                     )}
 
-                    <DialogFooter>
+                    <DialogFooter
+                        className={
+                            mode === "detail"
+                                ? "flex-row flex-wrap justify-between gap-2 sm:flex-nowrap sm:justify-start"
+                                : undefined
+                        }
+                    >
                         {mode === "detail" ? (
                             <>
                                 <Button
                                     type="button"
+                                    variant="outline"
+                                    className="order-1 mb-2 w-full sm:order-2 sm:mb-0 sm:ml-auto sm:w-auto"
+                                    onClick={openQr}
+                                >
+                                    <QrCode className="size-4" />
+                                    QR platba
+                                </Button>
+                                <Button
+                                    type="button"
                                     variant="destructive"
+                                    className="order-2 sm:order-1"
                                     onClick={() => setConfirmCancel(true)}
                                 >
                                     <X className="size-4" />
@@ -277,12 +433,21 @@ export function BookingDetailDialog({
                                 </Button>
                                 <Button
                                     type="button"
+                                    className="order-3"
                                     onClick={() => setMode("move")}
                                 >
                                     <ArrowRightLeft className="size-4" />
                                     Přesunout
                                 </Button>
                             </>
+                        ) : mode === "qr" ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setMode("detail")}
+                            >
+                                Zpět
+                            </Button>
                         ) : (
                             <>
                                 <Button

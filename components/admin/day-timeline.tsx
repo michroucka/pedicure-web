@@ -104,6 +104,7 @@ export function DayTimeline({
 
             <BookingDetailDialog
                 booking={selected}
+                allBookings={bookings}
                 onOpenChange={(open) => !open && setSelected(null)}
             />
         </div>
