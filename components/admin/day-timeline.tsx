@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { formatTime } from "@/lib/utils.ts";
+import { formatTime, getCzechToday, getCzechNowMinutes } from "@/lib/utils.ts";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
 import {
     BookingCard,
     SERVICE_COLORS,
+    isBookingPast,
     type BookingItem,
 } from "@/components/admin/booking-card.tsx";
 import type { Service } from "@/lib/generated/prisma/client.ts";
@@ -53,6 +54,9 @@ export function DayTimeline({
         ])
     );
 
+    const today = getCzechToday();
+    const nowMinutes = getCzechNowMinutes();
+
     return (
         <div className="flex px-4 py-3">
             <div
@@ -92,6 +96,7 @@ export function DayTimeline({
                             24
                         )}
                         colorClass={colorByService.get(b.serviceId)}
+                        past={isBookingPast(b, today, nowMinutes)}
                         onSelectAction={() => setSelected(b)}
                     />
                 ))}

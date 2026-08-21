@@ -9,6 +9,18 @@ import type {
 
 export type BookingItem = Booking & { client: Client; service: Service };
 
+// Already started (or on an earlier day) — dimmed in the timeline, but
+// cancel/move stay fully usable (no-shows get rebooked after the fact).
+export function isBookingPast(
+    booking: BookingItem,
+    today: Date,
+    nowMinutes: number
+): boolean {
+    if (booking.date.getTime() < today.getTime()) return true;
+    if (booking.date.getTime() > today.getTime()) return false;
+    return booking.startTime <= nowMinutes;
+}
+
 export const SERVICE_COLORS = [
     "border-chart-1/25 border-l-chart-1",
     "border-chart-2/25 border-l-chart-2",
@@ -22,12 +34,14 @@ export function BookingCard({
     top,
     height,
     colorClass,
+    past,
     onSelectAction,
 }: {
     booking: BookingItem;
     top: number;
     height: number;
     colorClass: string | undefined;
+    past?: boolean;
     onSelectAction: () => void;
 }) {
     return (
@@ -36,7 +50,8 @@ export function BookingCard({
             onClick={onSelectAction}
             className={cn(
                 "absolute right-1 left-1 flex cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-sm border border-l-4 bg-card px-2 py-1 text-left text-sm transition hover:opacity-90",
-                colorClass
+                colorClass,
+                past && "opacity-45"
             )}
             style={{ top, height }}
         >

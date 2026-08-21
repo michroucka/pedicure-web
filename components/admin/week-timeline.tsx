@@ -3,11 +3,18 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import { cn, formatTime, toUtcMidnight } from "@/lib/utils.ts";
+import {
+    cn,
+    formatTime,
+    toUtcMidnight,
+    getCzechToday,
+    getCzechNowMinutes,
+} from "@/lib/utils.ts";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
 import {
     BookingCard,
     SERVICE_COLORS,
+    isBookingPast,
     type BookingItem,
 } from "@/components/admin/booking-card.tsx";
 import type { Service } from "@/lib/generated/prisma/client.ts";
@@ -62,6 +69,8 @@ export function WeekTimeline({
 
     const gridHeight = (gridEnd - gridStart) * PX_PER_MIN;
     const today = toUtcMidnight(new Date());
+    const todayCzech = getCzechToday();
+    const nowMinutes = getCzechNowMinutes();
 
     return (
         <div className="flex p-3">
@@ -134,6 +143,11 @@ export function WeekTimeline({
                                         )}
                                         colorClass={colorByService.get(
                                             b.serviceId
+                                        )}
+                                        past={isBookingPast(
+                                            b,
+                                            todayCzech,
+                                            nowMinutes
                                         )}
                                         onSelectAction={() => setSelected(b)}
                                     />
