@@ -23,7 +23,7 @@ export function DayTimeline({
 }) {
     const [selected, setSelected] = useState<BookingItem | null>(null);
 
-    if (windows.length === 0) {
+    if (windows.length === 0 && bookings.length === 0) {
         return (
             <div className="p-6 text-center text-sm text-muted-foreground">
                 Zavřeno
@@ -31,9 +31,17 @@ export function DayTimeline({
         );
     }
 
-    const gridStart =
-        Math.floor(Math.min(...windows.map((w) => w.start)) / 60) * 60;
-    const gridEnd = Math.ceil(Math.max(...windows.map((w) => w.end)) / 60) * 60;
+    // Bounds normally follow the availability windows, but a booking made
+    // outside opening hours (admin "vlastní čas") can fall outside them —
+    // stretch the grid to still fit it.
+    const boundPoints = [
+        ...windows.map((w) => w.start),
+        ...windows.map((w) => w.end),
+        ...bookings.map((b) => b.startTime),
+        ...bookings.map((b) => b.endTime),
+    ];
+    const gridStart = Math.floor(Math.min(...boundPoints) / 60) * 60;
+    const gridEnd = Math.ceil(Math.max(...boundPoints) / 60) * 60;
 
     const hours: number[] = [];
     for (let h = gridStart; h <= gridEnd; h += 60) hours.push(h);

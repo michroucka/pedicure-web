@@ -10,10 +10,11 @@ import {
     SlotUnavailableError,
 } from "@/lib/move-booking.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
+import { hasOverlappingBooking } from "@/lib/check-booking-overlap.ts";
 import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
-import { toDateOnly } from "@/lib/utils.ts";
+import { toDateOnly, getCzechToday } from "@/lib/utils.ts";
 
 export async function getMoveSlotsAction(
     id: string,
@@ -93,8 +94,13 @@ export async function createManualBookingAction(input: {
     dateStr: string;
     startTime: number;
     source: "PHONE" | "IN_PERSON";
+    outsideHours?: boolean;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
     const date = toDateOnly(new Date(input.dateStr));
+
+    if (date.getTime() < getCzechToday().getTime()) {
+        return { ok: false, error: "Nelze vytvořit rezervaci v minulosti." };
+    }
 
     const clients = await Promise.all(
         input.people.map((p) => findOrCreateClient(input.phone, p.name))
@@ -106,11 +112,35 @@ export async function createManualBookingAction(input: {
         0
     );
 
-    const validSlots = await getAvailableSlots(date, serviceIds, extraMinutes, {
-        allowToday: true,
-    });
-    if (!validSlots.includes(input.startTime)) {
-        return { ok: false, error: "Zvolený termín už není volný." };
+    if (input.outsideHours) {
+        // Custom time entered by hand — skips the availability-window
+        // check entirely, so overlap with existing bookings needs its
+        // own explicit check here.
+        const services = await prisma.service.findMany({
+            where: { id: { in: serviceIds } },
+        });
+        const totalDuration =
+            services.reduce((sum, s) => sum + s.durationMinutes, 0) +
+            extraMinutes;
+
+        const overlaps = await hasOverlappingBooking(
+            date,
+            input.startTime,
+            input.startTime + totalDuration
+        );
+        if (overlaps) {
+            return { ok: false, error: "Zvolený čas koliduje s jinou rezervací." };
+        }
+    } else {
+        const validSlots = await getAvailableSlots(
+            date,
+            serviceIds,
+            extraMinutes,
+            { allowToday: true }
+        );
+        if (!validSlots.includes(input.startTime)) {
+            return { ok: false, error: "Zvolený termín už není volný." };
+        }
     }
 
     try {

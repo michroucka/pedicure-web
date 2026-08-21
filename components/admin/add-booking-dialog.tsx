@@ -32,6 +32,7 @@ import {
     UserRound,
     Phone,
     Sparkles,
+    X,
 } from "lucide-react";
 import {
     Tooltip,
@@ -74,11 +75,15 @@ export function AddBookingDialog({
     const [source, setSource] = useState<"PHONE" | "IN_PERSON">("PHONE");
     const [slots, setSlots] = useState<number[]>();
     const [selectedSlot, setSelectedSlot] = useState<number>();
+    const [customTime, setCustomTime] = useState(false);
+    const [customTimeValue, setCustomTimeValue] = useState("");
     const [error, setError] = useState<string>();
     const [isPending, startTransition] = useTransition();
 
     function refreshSlots(d: Date | undefined, ppl: PersonInput[]) {
         setSelectedSlot(undefined);
+        setCustomTime(false);
+        setCustomTimeValue("");
         setSlots(undefined);
         const serviceIds = ppl.map((p) => p.serviceId);
         if (!d || serviceIds.some((id) => id === undefined)) return;
@@ -130,7 +135,17 @@ export function AddBookingDialog({
         setSource("PHONE");
         setSlots(undefined);
         setSelectedSlot(undefined);
+        setCustomTime(false);
+        setCustomTimeValue("");
         setError(undefined);
+    }
+
+    function pickCustomTime(value: string) {
+        setCustomTimeValue(value);
+        const [h, m] = value.split(":").map(Number);
+        setSelectedSlot(
+            Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : undefined
+        );
     }
 
     function submit() {
@@ -159,6 +174,7 @@ export function AddBookingDialog({
                 dateStr: format(date, "yyyy-MM-dd"),
                 startTime: selectedSlot,
                 source,
+                outsideHours: customTime,
             });
             if (!result.ok) {
                 setError(result.error);
@@ -365,7 +381,32 @@ export function AddBookingDialog({
                         />
 
                         {date &&
-                            people.every((p) => p.serviceId !== undefined) && (
+                            people.every((p) => p.serviceId !== undefined) &&
+                            (customTime ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium">Vlastní čas:</span>
+                                    <Input
+                                        type="time"
+                                        value={customTimeValue}
+                                        onChange={(e) =>
+                                            pickCustomTime(e.target.value)
+                                        }
+                                        className="w-auto"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={() => {
+                                            setCustomTime(false);
+                                            setCustomTimeValue("");
+                                            setSelectedSlot(undefined);
+                                        }}
+                                    >
+                                        <X className="size-4" />
+                                    </Button>
+                                </div>
+                            ) : (
                                 <div className="grid grid-cols-4 gap-2">
                                     {slots?.length === 0 && (
                                         <p className="col-span-4 text-center text-sm text-muted-foreground">
@@ -387,8 +428,20 @@ export function AddBookingDialog({
                                             {formatTime(s)}
                                         </Button>
                                     ))}
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="hover:bg-accent"
+                                        onClick={() => {
+                                            setCustomTime(true);
+                                            setSelectedSlot(undefined);
+                                        }}
+                                    >
+                                        <Plus className="size-4 text-primary" />
+                                    </Button>
                                 </div>
-                            )}
+                            ))}
 
                         {error && (
                             <Alert variant="destructive">

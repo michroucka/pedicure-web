@@ -28,8 +28,9 @@ export function WeekTimeline({
     const [selected, setSelected] = useState<BookingItem | null>(null);
 
     const allWindows = windowsByDay.flat();
+    const allBookings = bookingsByDay.flat();
 
-    if (allWindows.length === 0) {
+    if (allWindows.length === 0 && allBookings.length === 0) {
         return (
             <div className="p-6 text-center text-sm text-muted-foreground">
                 Zavřeno celý týden
@@ -37,10 +38,17 @@ export function WeekTimeline({
         );
     }
 
-    const gridStart =
-        Math.floor(Math.min(...allWindows.map((w) => w.start)) / 60) * 60;
-    const gridEnd =
-        Math.ceil(Math.max(...allWindows.map((w) => w.end)) / 60) * 60;
+    // Bounds normally follow the availability windows, but a booking made
+    // outside opening hours (admin "vlastní čas") can fall outside them —
+    // stretch the grid to still fit it.
+    const boundPoints = [
+        ...allWindows.map((w) => w.start),
+        ...allWindows.map((w) => w.end),
+        ...allBookings.map((b) => b.startTime),
+        ...allBookings.map((b) => b.endTime),
+    ];
+    const gridStart = Math.floor(Math.min(...boundPoints) / 60) * 60;
+    const gridEnd = Math.ceil(Math.max(...boundPoints) / 60) * 60;
 
     const hours: number[] = [];
     for (let h = gridStart; h <= gridEnd; h += 60) hours.push(h);
