@@ -58,7 +58,7 @@ export function DayTimeline({
     const nowMinutes = getCzechNowMinutes();
 
     return (
-        <div className="flex px-4 py-3">
+        <div className="flex px-4 py-3 mb-16">
             <div
                 className="relative w-12 shrink-0"
                 style={{ height: (gridEnd - gridStart) * PX_PER_MIN }}

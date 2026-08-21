@@ -73,7 +73,7 @@ export function WeekTimeline({
     const nowMinutes = getCzechNowMinutes();
 
     return (
-        <div className="flex p-3">
+        <div className="flex p-3 mb-16">
             <div
                 className="relative w-12 shrink-0"
                 style={{ height: gridHeight, marginTop: 24 }}
