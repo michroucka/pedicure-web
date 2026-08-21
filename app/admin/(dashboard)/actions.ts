@@ -59,15 +59,16 @@ export async function moveBookingAction(
     id: string,
     groupId: string | null,
     dateStr: string,
-    startTime: number
+    startTime: number,
+    outsideHours?: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
     const date = toDateOnly(new Date(dateStr));
 
     try {
         if (groupId) {
-            await moveGroupBooking(groupId, date, startTime);
+            await moveGroupBooking(groupId, date, startTime, { outsideHours });
         } else {
-            await moveBooking(id, date, startTime);
+            await moveBooking(id, date, startTime, { outsideHours });
         }
     } catch (error) {
         if (error instanceof SlotUnavailableError) {

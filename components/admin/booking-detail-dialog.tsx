@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
 import {
     AlertCircle,
@@ -30,6 +31,7 @@ import {
     Clock,
     Check,
     X,
+    Plus,
     ArrowRightLeft,
 } from "lucide-react";
 import { formatTime, toUtcMidnight } from "@/lib/utils.ts";
@@ -58,6 +60,8 @@ export function BookingDetailDialog({
     const [moveDate, setMoveDate] = useState<Date>();
     const [moveSlots, setMoveSlots] = useState<number[]>();
     const [selectedSlot, setSelectedSlot] = useState<number>();
+    const [customTime, setCustomTime] = useState(false);
+    const [customTimeValue, setCustomTimeValue] = useState("");
     const [error, setError] = useState<string>();
     const [isPending, startTransition] = useTransition();
 
@@ -67,7 +71,17 @@ export function BookingDetailDialog({
         setMoveDate(undefined);
         setMoveSlots(undefined);
         setSelectedSlot(undefined);
+        setCustomTime(false);
+        setCustomTimeValue("");
         setError(undefined);
+    }
+
+    function pickCustomTime(value: string) {
+        setCustomTimeValue(value);
+        const [h, m] = value.split(":").map(Number);
+        setSelectedSlot(
+            Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : undefined
+        );
     }
 
     function close() {
@@ -81,6 +95,8 @@ export function BookingDetailDialog({
         setMoveDate(d);
         setSelectedSlot(undefined);
         setMoveSlots(undefined);
+        setCustomTime(false);
+        setCustomTimeValue("");
         if (!d || !booking) return;
         startTransition(async () => {
             const slots = await getMoveSlotsAction(
@@ -99,7 +115,8 @@ export function BookingDetailDialog({
                 booking.id,
                 booking.groupId,
                 format(moveDate, "yyyy-MM-dd"),
-                selectedSlot
+                selectedSlot,
+                customTime
             );
             if (!result.ok) {
                 setError(result.error);
@@ -172,30 +189,71 @@ export function BookingDetailDialog({
                                 className="w-full bg-transparent"
                             />
 
-                            {moveDate && (
-                                <div className="grid grid-cols-4 gap-2">
-                                    {moveSlots?.length === 0 && (
-                                        <p className="col-span-4 text-center text-sm text-muted-foreground">
-                                            Žádné volné termíny.
-                                        </p>
-                                    )}
-                                    {moveSlots?.map((s) => (
+                            {moveDate &&
+                                (customTime ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium">
+                                            Vlastní čas:
+                                        </span>
+                                        <Input
+                                            type="time"
+                                            value={customTimeValue}
+                                            onChange={(e) =>
+                                                pickCustomTime(e.target.value)
+                                            }
+                                            className="w-auto"
+                                        />
                                         <Button
-                                            key={s}
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            onClick={() => {
+                                                setCustomTime(false);
+                                                setCustomTimeValue("");
+                                                setSelectedSlot(undefined);
+                                            }}
+                                        >
+                                            <X className="size-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {moveSlots?.length === 0 && (
+                                            <p className="col-span-4 text-center text-sm text-muted-foreground">
+                                                Žádné volné termíny.
+                                            </p>
+                                        )}
+                                        {moveSlots?.map((s) => (
+                                            <Button
+                                                key={s}
+                                                type="button"
+                                                size="sm"
+                                                variant={
+                                                    s === selectedSlot
+                                                        ? "default"
+                                                        : "outline"
+                                                }
+                                                onClick={() =>
+                                                    setSelectedSlot(s)
+                                                }
+                                            >
+                                                {formatTime(s)}
+                                            </Button>
+                                        ))}
+                                        <Button
                                             type="button"
                                             size="sm"
-                                            variant={
-                                                s === selectedSlot
-                                                    ? "default"
-                                                    : "outline"
-                                            }
-                                            onClick={() => setSelectedSlot(s)}
+                                            variant="outline"
+                                            className="hover:bg-accent"
+                                            onClick={() => {
+                                                setCustomTime(true);
+                                                setSelectedSlot(undefined);
+                                            }}
                                         >
-                                            {formatTime(s)}
+                                            <Plus className="size-4 text-primary" />
                                         </Button>
-                                    ))}
-                                </div>
-                            )}
+                                    </div>
+                                ))}
 
                             {error && (
                                 <Alert variant="destructive">
