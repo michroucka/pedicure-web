@@ -184,6 +184,34 @@
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
 }
 
+/*
+ * Marketing site palette — one fixed identity (no light/dark switching),
+ * scoped so shadcn components (Button, Card, ...) pick it up automatically
+ * inside the (marketing) route group without touching the app's tokens.
+ * Background/neutrals are derived from the app's --primary hue (2.79) so
+ * the marketing site reads as a sibling of the app; --primary/--secondary
+ * are sampled straight from the logo's gradient (gold/dusty rose).
+ */
+.marketing {
+    --background: #38252a;
+    --foreground: #f4e9de;
+    --card: #483439;
+    --card-foreground: #f4e9de;
+    --popover: #483439;
+    --popover-foreground: #f4e9de;
+    --primary: #e2a156;
+    --primary-foreground: #211015;
+    --secondary: #cd998e;
+    --secondary-foreground: #211015;
+    --muted: #3e2e32;
+    --muted-foreground: #afa294;
+    --accent: #cd998e;
+    --accent-foreground: #f4e9de;
+    --border: #5c464b;
+    --input: #5c464b;
+    --ring: #e2a156;
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;
@@ -205,5 +233,8 @@
     }
     h4 {
         @apply text-xl font-medium font-heading;
+    }
+    h5 {
+        @apply text-lg font-medium font-heading;
     }
 }
