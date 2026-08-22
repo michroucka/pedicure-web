@@ -34,9 +34,12 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - **Tailwind CSS + shadcn/ui**
 - **PostgreSQL + Prisma** ORM (DB: Neon, free tier)
 - **Auth.js (NextAuth)** — jen pro admina (pedikérku); JWT session, credentials
-  provider proti `AdminUser`, heslo hashované přes **argon2**. Config je
-  rozdělený na `auth.config.ts` (edge-safe, používá ho i middleware) a
-  `auth.ts` (plná verze s Prisma/argon2, jen pro Node runtime)
+  provider proti `AdminUser`, heslo hashované přes **argon2**, vše v jednom
+  `auth.ts` (Node runtime). Ochrana `/admin/(dashboard)` je řešená přímo
+  v `app/admin/(dashboard)/layout.tsx` (server-side kontrola session +
+  `redirect`), ne přes `middleware.ts`/`proxy.ts` — Next.js doporučuje
+  middleware/proxy používat jen když není jiná možnost, a tady stačí
+  kontrola v layoutu bez nutnosti edge-safe configu navíc
 - **Resend** — transakční emaily z vlastní domény (SPF/DKIM/DMARC DNS záznamy)
 - **Hosting: Vercel** (Hobby/free plan stačí; zvážit Pro $20/měs jen pokud
   bude potřeba častější cron)

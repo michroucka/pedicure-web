@@ -1,4 +1,4 @@
-import { signIn } from "@/auth.ts";
+import { auth, signIn } from "@/auth.ts";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card.tsx";
@@ -15,6 +15,11 @@ export default async function AdminLoginPage({
     searchParams: Promise<{ error?: string }>;
 }) {
     const { error } = await searchParams;
+
+    const session = await auth();
+    if (session?.user) {
+        redirect("/admin");
+    }
 
     async function login(formData: FormData) {
         "use server";

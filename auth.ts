@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import argon2 from "argon2";
 import { z } from "zod";
-import { authConfig } from "./auth.config.ts";
 import { prisma } from "@/lib/prisma.ts";
 
 const credentialsSchema = z.object({
@@ -11,7 +10,12 @@ const credentialsSchema = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-    ...authConfig,
+    pages: {
+        signIn: "/admin/login",
+    },
+    session: {
+        strategy: "jwt",
+    },
     providers: [
         Credentials({
             credentials: {
