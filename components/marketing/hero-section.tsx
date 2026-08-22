@@ -7,8 +7,8 @@ export function HeroSection() {
         <section className="relative overflow-hidden">
             <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 md:py-24">
                 <div>
-                    <h1 className="italic">Vaše nohy vás nosí celý život.</h1>
-                    <p className="mt-4 max-w-prose text-lg text-muted-foreground">
+                    <h1 className="italic text-pretty">Vaše nohy vás nosí celý život.</h1>
+                    <p className="mt-4 max-w-prose text-pretty text-lg text-muted-foreground">
                         Každý den, na každém kroku. A právě proto si zaslouží
                         kvalitní a profesionální péči – už 20 let.
                     </p>

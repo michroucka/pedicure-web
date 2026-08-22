@@ -39,7 +39,7 @@ export function AftercareSection() {
                             <dt className="font-heading text-base font-medium">
                                 {tip.title}
                             </dt>
-                            <dd className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                            <dd className="mt-1.5 text-sm text-pretty leading-relaxed text-muted-foreground">
                                 {tip.body}
                             </dd>
                         </div>

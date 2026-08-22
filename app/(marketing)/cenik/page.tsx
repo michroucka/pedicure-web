@@ -11,20 +11,16 @@ export default async function CenikPage() {
 
     return (
         <section>
-            <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-24">
+            <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 md:py-24">
                 <h1 className="italic">Ceník</h1>
-                <p className="mt-4 max-w-prose text-base leading-relaxed text-muted-foreground">
+                <p className="mt-4 max-w-prose text-pretty text-base leading-relaxed text-muted-foreground">
                     Díky svým zkušenostem dokážu péči přizpůsobit
                     individuálním potřebám vašich nohou.
                 </p>
 
-                <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-stretch">
+                <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
                     {services.map((service) => (
-                        <Card
-                            key={service.id}
-                            style={{ flexGrow: service.durationMinutes }}
-                            className="flex-1 basis-0"
-                        >
+                        <Card key={service.id}>
                             <CardContent className="flex h-full flex-col">
                                 <p className="font-heading text-lg font-medium">
                                     {service.name}
@@ -45,13 +41,14 @@ export default async function CenikPage() {
                     ))}
                 </div>
 
-                <Button
-                    asChild
-                    size="lg"
-                    className="mt-10"
-                >
-                    <Link href="/reservation">Objednat se</Link>
-                </Button>
+                <div className="mt-10 flex justify-end">
+                    <Button
+                        asChild
+                        size="lg"
+                    >
+                        <Link href="/reservation">Objednat se</Link>
+                    </Button>
+                </div>
             </div>
         </section>
     );

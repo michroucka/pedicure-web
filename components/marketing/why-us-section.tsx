@@ -29,7 +29,7 @@ export function WhyUsSection() {
                     {REASONS.map((reason) => (
                         <div key={reason.title}>
                             <h5>{reason.title}</h5>
-                            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                            <p className="mt-2 text-sm text-pretty leading-relaxed text-muted-foreground">
                                 {reason.body}
                             </p>
                         </div>
