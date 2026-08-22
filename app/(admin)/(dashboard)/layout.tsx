@@ -9,7 +9,7 @@ export default async function AdminDashboardLayout({
 }) {
     const session = await auth();
     if (!session?.user) {
-        redirect("/admin/login");
+        redirect("/login");
     }
 
     return (

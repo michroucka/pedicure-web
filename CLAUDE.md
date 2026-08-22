@@ -35,11 +35,19 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - **PostgreSQL + Prisma** ORM (DB: Neon, free tier)
 - **Auth.js (NextAuth)** — jen pro admina (pedikérku); JWT session, credentials
   provider proti `AdminUser`, heslo hashované přes **argon2**, vše v jednom
-  `auth.ts` (Node runtime). Ochrana `/admin/(dashboard)` je řešená přímo
-  v `app/admin/(dashboard)/layout.tsx` (server-side kontrola session +
-  `redirect`), ne přes `middleware.ts`/`proxy.ts` — Next.js doporučuje
-  middleware/proxy používat jen když není jiná možnost, a tady stačí
-  kontrola v layoutu bez nutnosti edge-safe configu navíc
+  `auth.ts` (Node runtime). Ochrana admin sekce je řešená přímo
+  v `app/(admin)/(dashboard)/layout.tsx` (server-side kontrola session +
+  `redirect`), ne přes `middleware.ts` — Next.js doporučuje middleware/proxy
+  používat jen když není jiná možnost, a tady stačí kontrola v layoutu bez
+  nutnosti edge-safe configu navíc
+- **Admin na vlastní subdoméně** (`admin.pedikurakralovice.cz`) — admin routy
+  (`/kalendar`, `/dostupnost`, `/klienti`, `/login`) nemají žádný společný
+  URL prefix, takže dávají smysl jen na téhle subdoméně. `proxy.ts` podle
+  hlavičky `Host` přesměruje admin cesty pryč z hlavní domény na
+  `admin.pedikurakralovice.cz`, a na admin subdoméně přesměruje `/` na
+  `/kalendar`. Tohle je jeden z mála legitimních důvodů mít v projektu
+  `proxy.ts` — rozhodování podle domény musí proběhnout dřív, než Next.js
+  vůbec vyřeší routu, což layout nezvládne
 - **Resend** — transakční emaily z vlastní domény (SPF/DKIM/DMARC DNS záznamy)
 - **Hosting: Vercel** (Hobby/free plan stačí; zvážit Pro $20/měs jen pokud
   bude potřeba častější cron)

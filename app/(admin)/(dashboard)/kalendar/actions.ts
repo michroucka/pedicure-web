@@ -52,7 +52,7 @@ export async function getMoveSlotsAction(
 
 export async function cancelBookingAction(id: string) {
     await cancelBooking(id);
-    revalidatePath("/admin");
+    revalidatePath("/kalendar");
 }
 
 export async function moveBookingAction(
@@ -77,7 +77,7 @@ export async function moveBookingAction(
         throw error;
     }
 
-    revalidatePath("/admin");
+    revalidatePath("/kalendar");
     return { ok: true };
 }
 
@@ -177,6 +177,6 @@ export async function createManualBookingAction(input: {
         throw error;
     }
 
-    revalidatePath("/admin");
+    revalidatePath("/kalendar");
     return { ok: true };
 }

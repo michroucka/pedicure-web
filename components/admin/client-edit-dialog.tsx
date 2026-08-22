@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea.tsx";
 import { Checkbox } from "@/components/ui/checkbox.tsx";
 import { Check, Mail, Phone, StickyNote, UserRound } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/utils.ts";
-import { updateClientAction } from "@/app/admin/(dashboard)/clients/actions.ts";
+import { updateClientAction } from "@/app/(admin)/(dashboard)/klienti/actions.ts";
 import type { Client } from "@/lib/generated/prisma/client.ts";
 
 const DEFAULT_EXTRA_MINUTES = 15;

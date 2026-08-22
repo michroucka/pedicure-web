@@ -6,9 +6,9 @@ import { CalendarCheck, CalendarClock, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
 
 const NAV_ITEMS = [
-    { href: "/admin", label: "Kalendář", icon: CalendarCheck },
-    { href: "/admin/availability", label: "Dostupnost", icon: CalendarClock },
-    { href: "/admin/clients", label: "Klienti", icon: UsersRound },
+    { href: "/kalendar", label: "Kalendář", icon: CalendarCheck },
+    { href: "/dostupnost", label: "Dostupnost", icon: CalendarClock },
+    { href: "/klienti", label: "Klienti", icon: UsersRound },
 ];
 
 export function AdminBottomNav() {
@@ -18,7 +18,7 @@ export function AdminBottomNav() {
         <nav className="sticky bottom-0 z-10 flex border-t bg-card pb-[env(safe-area-inset-bottom)]">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                 const active =
-                    href === "/admin" ? pathname === href : pathname.startsWith(href);
+                    href === "/kalendar" ? pathname === href : pathname.startsWith(href);
 
                 return (
                     <Link

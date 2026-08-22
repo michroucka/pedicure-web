@@ -24,5 +24,5 @@ export async function updateClientAction(
         },
     });
 
-    revalidatePath("/admin/clients");
+    revalidatePath("/klienti");
 }

@@ -12,7 +12,7 @@ import { useTransition } from "react";
 import {
     availabilitySchema,
     type AvailabilityFormData,
-} from "@/app/admin/(dashboard)/availability/schema.ts";
+} from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { roundToQuarterHour } from "@/lib/utils.ts";

@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma.ts";
 import { formatTime, getCzechToday } from "@/lib/utils.ts";
 import { AvailabilityForm } from "@/components/admin/availability-form.tsx";
 import { ExceptionForm } from "@/components/admin/exception-form.tsx";
-import { ExceptionList } from "@/components/admin/exception-list.tsx";
 import {
     Tabs,
     TabsContent,
@@ -56,10 +55,7 @@ export default async function AvailabilityPage() {
                 </TabsList>
 
                 <TabsContent value="exceptions">
-                    <ExceptionForm />
-                    <div className="mt-4">
-                        <ExceptionList exceptions={exceptions} />
-                    </div>
+                    <ExceptionForm exceptions={exceptions} />
                 </TabsContent>
 
                 <TabsContent value="recurring">

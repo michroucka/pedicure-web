@@ -26,7 +26,7 @@ export async function saveRecurringAvailability(data: AvailabilityFormData) {
         prisma.recurringAvailability.createMany({ data: rows }),
     ]);
 
-    revalidatePath("/admin/availability");
+    revalidatePath("/dostupnost");
 }
 
 export async function createException(data: ExceptionFormData) {
@@ -48,12 +48,12 @@ export async function createException(data: ExceptionFormData) {
                   },
     });
 
-    revalidatePath("/admin/availability");
+    revalidatePath("/dostupnost");
 }
 
 export async function deleteException(id: string) {
     await prisma.availabilityException.delete({ where: { id } });
-    revalidatePath("/admin/availability");
+    revalidatePath("/dostupnost");
 }
 
 export type ExceptionConflict = {

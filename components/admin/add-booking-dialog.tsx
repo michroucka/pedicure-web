@@ -43,7 +43,7 @@ import { formatPhoneNumber, formatTime, toUtcMidnight } from "@/lib/utils.ts";
 import {
     createManualBookingAction,
     getManualBookingSlotsAction,
-} from "@/app/admin/(dashboard)/actions.ts";
+} from "@/app/(admin)/(dashboard)/kalendar/actions.ts";
 import type { Service } from "@/lib/generated/prisma/client.ts";
 
 type PersonInput = {

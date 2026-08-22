@@ -18,7 +18,7 @@ export default async function AdminLoginPage({
 
     const session = await auth();
     if (session?.user) {
-        redirect("/admin");
+        redirect("/kalendar");
     }
 
     async function login(formData: FormData) {
@@ -27,11 +27,11 @@ export default async function AdminLoginPage({
             await signIn("credentials", {
                 username: formData.get("username"),
                 password: formData.get("password"),
-                redirectTo: "/admin",
+                redirectTo: "/kalendar",
             });
         } catch (err) {
             if (err instanceof AuthError) {
-                redirect(`/admin/login?error=${err.type}`);
+                redirect(`/login?error=${err.type}`);
             }
             throw err;
         }
