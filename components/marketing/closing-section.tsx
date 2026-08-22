@@ -23,7 +23,7 @@ export function ClosingSection() {
                     size="lg"
                     className="mt-6"
                 >
-                    <Link href="/reservation">Objednat se</Link>
+                    <Link href="/rezervace">Objednat se</Link>
                 </Button>
             </div>
         </section>

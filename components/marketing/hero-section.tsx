@@ -17,7 +17,7 @@ export function HeroSection() {
                             asChild
                             size="lg"
                         >
-                            <Link href="/reservation">Objednat se</Link>
+                            <Link href="/rezervace">Objednat se</Link>
                         </Button>
                         <Button
                             asChild

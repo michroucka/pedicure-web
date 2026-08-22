@@ -49,7 +49,7 @@ export function MarketingNav() {
                     </nav>
 
                     <Button asChild>
-                        <Link href="/reservation">Objednat se</Link>
+                        <Link href="/rezervace">Objednat se</Link>
                     </Button>
                 </div>
 

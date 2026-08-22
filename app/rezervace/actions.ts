@@ -32,12 +32,12 @@ async function buildSlotConflictRedirect(
         if (baseValid.includes(startTime)) {
             params.set("error", "extra_time_conflict");
             params.set("extraMinutes", String(extraMinutes));
-            return `/reservation?${params.toString()}`;
+            return `/rezervace?${params.toString()}`;
         }
     }
 
     params.set("error", "slot_taken");
-    return `/reservation?${params.toString()}`;
+    return `/rezervace?${params.toString()}`;
 }
 
 export async function submitBooking(
@@ -77,7 +77,7 @@ export async function submitBooking(
             extraTimeMinutes: client.extraTimeMinutes,
             reminderRequested,
         });
-        redirect(`/reservation/confirmed?id=${booking.id}`);
+        redirect(`/rezervace/confirmed?id=${booking.id}`);
     } catch (error) {
         if (
             error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -138,7 +138,7 @@ export async function submitGroupBooking(
             "ONLINE",
             reminderRequested,
         )
-        redirect(`/reservation/confirmed?groupId=${bookings[0].groupId}`);
+        redirect(`/rezervace/confirmed?groupId=${bookings[0].groupId}`);
     } catch (error) {
         if (
             error instanceof Prisma.PrismaClientKnownRequestError &&

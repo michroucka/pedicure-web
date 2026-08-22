@@ -2,10 +2,10 @@
 
 import { Service } from "@/lib/generated/prisma/client.ts";
 import { useState } from "react";
-import { StepCard } from "@/components/reservation/step-card.tsx";
-import { PersonsStep } from "@/components/reservation/persons-step.tsx";
-import { DateStep } from "@/components/reservation/date-step.tsx";
-import { TimeSlotStep } from "@/components/reservation/time-slot-step.tsx";
+import { StepCard } from "@/components/rezervace/step-card.tsx";
+import { PersonsStep } from "@/components/rezervace/persons-step.tsx";
+import { DateStep } from "@/components/rezervace/date-step.tsx";
+import { TimeSlotStep } from "@/components/rezervace/time-slot-step.tsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
@@ -71,7 +71,7 @@ export function ReservationWizard({ services }: { services: Service[] }) {
         if (extraMinutes > 0) {
             params.set("extraMinutes", String(extraMinutes));
         }
-        router.push(`/reservation/details?${params.toString()}`);
+        router.push(`/rezervace/details?${params.toString()}`);
     }
 
     return (

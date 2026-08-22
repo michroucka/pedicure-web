@@ -56,7 +56,7 @@ export default function KontaktPage() {
                         asChild
                         size="lg"
                     >
-                        <Link href="/reservation">Objednat se online</Link>
+                        <Link href="/rezervace">Objednat se online</Link>
                     </Button>
                 </div>
             </div>

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { groupSchema } from "@/app/reservation/schema.ts";
-import { getExtraMinutesAction } from "@/app/reservation/actions.ts";
+import { groupSchema } from "@/app/rezervace/schema.ts";
+import { getExtraMinutesAction } from "@/app/rezervace/actions.ts";
 import {
     Field,
     FieldLabel,

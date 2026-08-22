@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
-import { StepIndicator } from "@/components/reservation/step-indicator.tsx";
+import { StepIndicator } from "@/components/rezervace/step-indicator.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { BellRing, CalendarDays, CheckCircle2, Clock, Mail, UserRound } from "lucide-react";

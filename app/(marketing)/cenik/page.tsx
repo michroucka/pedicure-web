@@ -46,7 +46,7 @@ export default async function CenikPage() {
                         asChild
                         size="lg"
                     >
-                        <Link href="/reservation">Objednat se</Link>
+                        <Link href="/rezervace">Objednat se</Link>
                     </Button>
                 </div>
             </div>

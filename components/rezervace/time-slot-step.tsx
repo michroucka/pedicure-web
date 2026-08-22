@@ -2,11 +2,11 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { getAvailableSlotsAction } from "@/app/reservation/actions.ts";
+import { getAvailableSlotsAction } from "@/app/rezervace/actions.ts";
 import { formatTime } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
-import { AlertCircle, CalendarX } from "lucide-react";
+import { AlertCircle, CalendarX, Loader2 } from "lucide-react";
 
 export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void }) {
     const [availableSlots, setAvailableSlots] = useState<number[]>();
@@ -62,9 +62,9 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                     className="mb-4"
                 >
                     <AlertCircle />
-                    <AlertTitle>Termín již není volný</AlertTitle>
+                    <AlertTitle>Termín nedostupný</AlertTitle>
                     <AlertDescription>
-                        Tento termín je již obsazený. Vyberte prosím jiný čas.
+                        Tento termín již není dostupný. Vyberte prosím jiný čas.
                     </AlertDescription>
                 </Alert>
             )}
@@ -74,7 +74,7 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                     className="mb-4"
                 >
                     <AlertCircle />
-                    <AlertTitle>Termín není možný</AlertTitle>
+                    <AlertTitle>Termín nedostupný</AlertTitle>
                     <AlertDescription>
                         Podle vašich předchozích návštěv počítáme s{" "}
                         {extraMinutes} min navíc a s tím se tento termín už
@@ -82,7 +82,12 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                     </AlertDescription>
                 </Alert>
             )}
-            {!isLoading && availableSlots?.length === 0 ? (
+            {isLoading ? (
+                <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
+                    <Loader2 className="size-6 animate-spin" />
+                    Načítání dostupných termínů…
+                </div>
+            ) : availableSlots?.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
                     <CalendarX className="size-6" />
                     Pro tento den už nejsou volné žádné termíny.

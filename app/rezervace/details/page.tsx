@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { submitBooking, submitGroupBooking } from "@/app/reservation/actions.ts";
+import { submitBooking, submitGroupBooking } from "@/app/rezervace/actions.ts";
 import { prisma } from "@/lib/prisma.ts";
-import { SoloBookingForm } from "@/components/reservation/solo-booking-form.tsx";
-import { GroupBookingForm } from "@/components/reservation/group-booking-form.tsx";
-import { StepIndicator } from "@/components/reservation/step-indicator.tsx";
+import { SoloBookingForm } from "@/components/rezervace/solo-booking-form.tsx";
+import { GroupBookingForm } from "@/components/rezervace/group-booking-form.tsx";
+import { StepIndicator } from "@/components/rezervace/step-indicator.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { UsersRound, CalendarDays, Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -24,7 +24,7 @@ export default async function DetailsPage({ searchParams }: {
     const knownExtraMinutes = Number(extraMinutes ?? 0);
 
     if (!date || serviceIds.length === 0 || !slot) {
-        redirect("/reservation");
+        redirect("/rezervace");
     }
 
     const availableServices = await prisma.service.findMany({
@@ -35,7 +35,7 @@ export default async function DetailsPage({ searchParams }: {
         (id) => availableServices.find((s) => s.id === id)?.name ?? ""
     )
 
-    const backHref = `/reservation?date=${date}&services=${services}&slot=${slot}`;
+    const backHref = `/rezervace?date=${date}&services=${services}&slot=${slot}`;
 
     const totalDuration = availableServices.reduce(
         (sum, s) => sum + s.durationMinutes,

@@ -1,11 +1,18 @@
 import { ReactNode } from "react";
+import { BookingNav } from "@/components/rezervace/booking-nav.tsx";
+import { PortalContainerProvider } from "@/components/portal-container.tsx";
 
 export default function ReservationLayout({
     children,
-                                          }: {
+}: {
     children: ReactNode;
 }) {
-    return <div className="mt-8 max-lg:mx-4">
-        {children}
-    </div>;
+    return (
+        <PortalContainerProvider className="storefront min-h-svh bg-background text-foreground">
+            <BookingNav />
+            <div className="mt-8 max-lg:mx-4">
+                {children}
+            </div>
+        </PortalContainerProvider>
+    );
 }

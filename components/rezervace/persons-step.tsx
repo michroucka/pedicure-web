@@ -107,11 +107,11 @@ export function PersonsStep({
                     {i > 0 && (
                         <Button
                             type="button"
+                            size="icon"
                             variant="ghost"
                             onClick={() => removePerson(i)}
                         >
-                            <Trash2 data-icon="inline-start" />
-                            Odebrat
+                            <Trash2 data-icon="inline-start" className="text-destructive" />
                         </Button>
                     )}
                 </div>
