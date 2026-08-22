@@ -41,12 +41,17 @@ import {
     ArrowRightLeft,
     QrCode,
 } from "lucide-react";
-import { formatTime, toUtcMidnight, normalizePhoneForMatch } from "@/lib/utils.ts";
+import {
+    formatTime,
+    toUtcMidnight,
+    normalizePhoneForMatch,
+    toTelHref,
+} from "@/lib/utils.ts";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
     moveBookingAction,
-} from "@/app/admin/(dashboard)/actions.ts";
+} from "@/app/(admin)/(dashboard)/kalendar/actions.ts";
 import type { BookingItem } from "@/components/admin/booking-card.tsx";
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -222,7 +227,12 @@ export function BookingDetailDialog({
                             </div>
                             <div className="flex items-center gap-2">
                                 <Phone className="size-4 text-muted-foreground" />
-                                {booking.client.phone}
+                                <a
+                                    href={toTelHref(booking.client.phone)}
+                                    className="hover:underline"
+                                >
+                                    {booking.client.phone}
+                                </a>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Clock className="size-4 text-muted-foreground" />
@@ -484,8 +494,8 @@ export function BookingDetailDialog({
                         <AlertDialogTitle>Zrušit rezervaci?</AlertDialogTitle>
                         <AlertDialogDescription>
                             {booking.client.name} •{" "}
-                            {formatTime(booking.startTime)}–
-                            {formatTime(booking.endTime)}. Tuhle akci nejde vzít
+                            {formatTime(booking.startTime)} –{" "}
+                            {formatTime(booking.endTime)}. Tuto akci nelze vzít
                             zpět.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -494,6 +504,7 @@ export function BookingDetailDialog({
                         <AlertDialogAction
                             disabled={isPending}
                             onClick={doCancel}
+                            variant="destructive"
                         >
                             Zrušit rezervaci
                         </AlertDialogAction>

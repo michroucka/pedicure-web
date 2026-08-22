@@ -143,3 +143,15 @@ export function normalizePhoneForMatch(value: string): string {
         ? digits.slice(3)
         : digits;
 }
+
+// Builds a `tel:` href, adding the Czech country code when the stored
+// number doesn't already have one — some client records have it, some
+// don't, and `tel:` needs the full international form to dial correctly.
+export function toTelHref(value: string): string {
+    const digits = value.replace(/\D/g, "");
+    const withCountryCode =
+        digits.startsWith("420") && digits.length > 9
+            ? digits
+            : `420${digits}`;
+    return `tel:+${withCountryCode}`;
+}
