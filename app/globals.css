@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
     --font-heading: var(--font-serif);
     --font-display: var(--font-display);
@@ -127,72 +125,15 @@
     --spacing: 0.27rem;
 }
 
-.dark {
-    --background: oklch(0.1221 0 0);
-    --foreground: oklch(0.9551 0 0);
-    --card: oklch(0.2132 0.0042 264.4789);
-    --card-foreground: oklch(0.9551 0 0);
-    --popover: oklch(0.2568 0.0076 274.6528);
-    --popover-foreground: oklch(0.9551 0 0);
-    --primary: oklch(0.5608 0.1952 2.7932);
-    --primary-foreground: oklch(1.0000 0 0);
-    --secondary: oklch(0.2290 0.0036 228.9614);
-    --secondary-foreground: oklch(0.9551 0 0);
-    --muted: oklch(0.2940 0.0130 272.9312);
-    --muted-foreground: oklch(0.7058 0 0);
-    --accent: oklch(0.2000 0.0402 352.1774);
-    --accent-foreground: oklch(0.5608 0.1952 2.7932);
-    --destructive: oklch(0.7106 0.1661 22.2162);
-    --destructive-foreground: oklch(1.0000 0 0);
-    --danger: oklch(0.2800 0.1100 22.2162);
-    --danger-foreground: oklch(0.7500 0.1700 22.2162);
-    --success: oklch(0.2800 0.1000 156.4499);
-    --success-foreground: oklch(0.7800 0.1600 156.4499);
-    --warning: oklch(0.2800 0.1100 65.0000);
-    --warning-foreground: oklch(0.7800 0.1600 65.0000);
-    --info: oklch(0.2800 0.0900 250.1063);
-    --info-foreground: oklch(0.7500 0.1600 250.1063);
-    --border: oklch(0.3289 0.0092 268.3843);
-    --input: oklch(0.3289 0.0092 268.3843);
-    --ring: oklch(0.5608 0.1952 2.7932);
-    --chart-1: oklch(0.8003 0.1821 151.7110);
-    --chart-2: oklch(0.5608 0.1952 2.7932);
-    --chart-3: oklch(0.8077 0.1035 19.5706);
-    --chart-4: oklch(0.6691 0.1569 260.1063);
-    --chart-5: oklch(0.7058 0 0);
-    --sidebar: oklch(0.2011 0.0039 286.0396);
-    --sidebar-foreground: oklch(0.9551 0 0);
-    --sidebar-primary: oklch(0.5608 0.1952 2.7932);
-    --sidebar-primary-foreground: oklch(1.0000 0 0);
-    --sidebar-accent: oklch(0.2940 0.0130 272.9312);
-    --sidebar-accent-foreground: oklch(0.7320 0.2417 335.8450);
-    --sidebar-border: oklch(0.3289 0.0092 268.3843);
-    --sidebar-ring: oklch(0.7320 0.2417 335.8450);
-    --font-sans: Montserrat, ui-sans-serif, sans-serif, system-ui;
-    --font-serif: Playfair Display, ui-serif, serif;
-    --font-display: Fraunces, ui-serif, serif;
-    --font-mono: JetBrains Mono, ui-monospace, monospace;
-    --radius: 1.4rem;
-    --shadow-color: #000000;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-}
-
 /*
- * Marketing site palette — one fixed identity (no light/dark switching),
- * scoped so shadcn components (Button, Card, ...) pick it up automatically
- * inside the (marketing) route group without touching the app's tokens.
+ * Storefront palette (marketing + booking) — one fixed identity (no
+ * light/dark switching), scoped so shadcn components (Button, Card, ...)
+ * pick it up automatically without touching the admin app's tokens.
  * Background/neutrals are derived from the app's --primary hue (2.79) so
- * the marketing site reads as a sibling of the app; --primary/--secondary
+ * the storefront reads as a sibling of the admin app; --primary/--secondary
  * are sampled straight from the logo's gradient (gold/dusty rose).
  */
-.marketing {
+.storefront {
     --background: #38252a;
     --foreground: #f4e9de;
     --card: #483439;

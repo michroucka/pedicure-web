@@ -1,7 +1,6 @@
 import { Fraunces, Montserrat, Playfair_Display } from "next/font/google";
 
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
@@ -27,7 +26,6 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            suppressHydrationWarning
             className={cn(
                 "antialiased",
                 fontSerif.variable,
@@ -37,11 +35,9 @@ export default function RootLayout({
             )}
         >
             <body>
-                <ThemeProvider>
-                    <TooltipProvider>
-                        <div className="">{children}</div>
-                    </TooltipProvider>
-                </ThemeProvider>
+                <TooltipProvider>
+                    <div className="">{children}</div>
+                </TooltipProvider>
             </body>
         </html>
     );
