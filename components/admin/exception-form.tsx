@@ -1,14 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ComponentProps } from "react";
 import { format, addDays } from "date-fns";
 import { cs } from "date-fns/locale";
-import { Calendar } from "@/components/ui/calendar.tsx";
+import { Calendar, CalendarDayButton } from "@/components/ui/calendar.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
-import { AlertCircle, CalendarOff, Clock, CalendarPlus } from "lucide-react";
 import {
+    AlertCircle,
+    CalendarOff,
+    Clock,
+    CalendarPlus,
+    Trash2,
+} from "lucide-react";
+import {
+    cn,
     toUtcMidnight,
     roundToQuarterHour,
     parseTime,
@@ -16,9 +23,12 @@ import {
 } from "@/lib/utils.ts";
 import {
     createException,
+    deleteException,
     checkExceptionConflicts,
     type ExceptionConflict,
-} from "@/app/admin/(dashboard)/availability/actions.ts";
+} from "@/app/(admin)/(dashboard)/dostupnost/actions.ts";
+import type { AvailabilityException } from "@/lib/generated/prisma/client";
+import type { DayButton } from "react-day-picker";
 
 type Kind = "BLOCKED_ALL_DAY" | "BLOCKED_PARTIAL" | "EXTRA_OPEN";
 
@@ -29,7 +39,73 @@ const KIND_OPTIONS: { kind: Kind; label: string; icon: typeof CalendarOff }[] =
         { kind: "EXTRA_OPEN", label: "Navíc", icon: CalendarPlus },
     ];
 
-export function ExceptionForm() {
+function exceptionLabel(exception: AvailabilityException) {
+    if (exception.type === "EXTRA_OPEN") {
+        return `Otevřeno navíc: ${formatTime(exception.startTime!)} – ${formatTime(exception.endTime!)}`;
+    }
+    if (exception.startTime === null) {
+        return "Zavřeno celý den";
+    }
+    return `Zavřeno: ${formatTime(exception.startTime)}–${formatTime(exception.endTime!)}`;
+}
+
+function exceptionColorClass(exception: AvailabilityException) {
+    if (exception.type === "EXTRA_OPEN") return "bg-success-foreground";
+    if (exception.startTime === null) return "bg-danger-foreground";
+    return "bg-warning-foreground";
+}
+
+function ExceptionDayButton({
+    modifiers,
+    children,
+    ...props
+}: ComponentProps<typeof DayButton>) {
+    const isSplit =
+        !modifiers.blockedFull && modifiers.blockedPartial && modifiers.extraOpen;
+
+    const dotClassName = modifiers.blockedFull
+        ? "bg-danger-foreground"
+        : isSplit
+          ? undefined
+          : modifiers.blockedPartial
+            ? "bg-warning-foreground"
+            : modifiers.extraOpen
+              ? "bg-success-foreground"
+              : undefined;
+
+    const showDot = dotClassName !== undefined || isSplit;
+
+    return (
+        <CalendarDayButton
+            modifiers={modifiers}
+            {...props}
+        >
+            {children}
+            {showDot && (
+                <span
+                    className={cn(
+                        "size-2 rounded-full ring-1 ring-background",
+                        dotClassName
+                    )}
+                    style={
+                        isSplit
+                            ? {
+                                  background:
+                                      "linear-gradient(-45deg, var(--warning-foreground) 50%, var(--success-foreground) 50%)",
+                              }
+                            : undefined
+                    }
+                />
+            )}
+        </CalendarDayButton>
+    );
+}
+
+export function ExceptionForm({
+    exceptions,
+}: {
+    exceptions: AvailabilityException[];
+}) {
     const [date, setDate] = useState<Date>();
     const [kind, setKind] = useState<Kind>("BLOCKED_ALL_DAY");
     const [startTime, setStartTime] = useState("09:00");
@@ -39,8 +115,35 @@ export function ExceptionForm() {
         null
     );
     const [isPending, startTransition] = useTransition();
+    const [isDeleting, startDeleteTransition] = useTransition();
 
     const minDate = addDays(toUtcMidnight(new Date()), 1);
+
+    const exceptionsByDate = new Map<number, AvailabilityException[]>();
+    for (const exception of exceptions) {
+        const key = toUtcMidnight(exception.date).getTime();
+        const existing = exceptionsByDate.get(key) ?? [];
+        existing.push(exception);
+        exceptionsByDate.set(key, existing);
+    }
+
+    const modifiers = {
+        blockedFull: exceptions
+            .filter((e) => e.type === "BLOCKED" && e.startTime === null)
+            .map((e) => e.date),
+        blockedPartial: exceptions
+            .filter((e) => e.type === "BLOCKED" && e.startTime !== null)
+            .map((e) => e.date),
+        extraOpen: exceptions
+            .filter((e) => e.type === "EXTRA_OPEN")
+            .map((e) => e.date),
+    };
+
+    const existingForDate = date
+        ? [...(exceptionsByDate.get(toUtcMidnight(date).getTime()) ?? [])].sort(
+              (a, b) => (a.startTime ?? -1) - (b.startTime ?? -1)
+          )
+        : [];
 
     function updateDate(d: Date | undefined) {
         setDate(d);
@@ -112,11 +215,50 @@ export function ExceptionForm() {
                 disabled={(day) =>
                     toUtcMidnight(day).getTime() < minDate.getTime()
                 }
+                modifiers={modifiers}
+                components={{ DayButton: ExceptionDayButton }}
                 className="w-full bg-transparent"
+                fixedWeeks
             />
 
             {date && (
                 <>
+                    {existingForDate.length > 0 && (
+                        <div className="flex flex-col gap-2 mb-4">
+                            {existingForDate.map((exception) => (
+                                <div
+                                    key={exception.id}
+                                    className="flex items-center gap-2 px-3"
+                                >
+                                    <span
+                                        className={cn(
+                                            "h-6 w-1 shrink-0 rounded-full",
+                                            exceptionColorClass(exception)
+                                        )}
+                                    />
+                                    <span className="flex-1 text-sm">
+                                        {exceptionLabel(exception)}
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        disabled={isDeleting}
+                                        onClick={() =>
+                                            startDeleteTransition(async () => {
+                                                await deleteException(
+                                                    exception.id
+                                                );
+                                            })
+                                        }
+                                    >
+                                        <Trash2 className="size-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-3 gap-2">
                         {KIND_OPTIONS.map(({ kind: k, label, icon: Icon }) => (
                             <Button
