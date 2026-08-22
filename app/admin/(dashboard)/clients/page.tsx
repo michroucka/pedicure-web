@@ -8,7 +8,7 @@ export default async function ClientsPage() {
 
     return (
         <div className="mx-auto w-full max-w-lg">
-            <h1 className="px-4 pt-4 text-center">Klienti</h1>
+            <h2 className="px-4 pt-4 text-center">Klienti</h2>
             <ClientList clients={clients} />
         </div>
     );

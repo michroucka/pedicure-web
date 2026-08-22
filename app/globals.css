@@ -6,6 +6,7 @@
 
 @theme inline {
     --font-heading: var(--font-serif);
+    --font-display: var(--font-display);
     --font-sans: var(--font-sans);
     --font-serif: var(--font-serif);
     --font-mono: var(--font-mono);
@@ -110,6 +111,7 @@
     --sidebar-ring: oklch(0 0 0);
     --font-sans: Montserrat, ui-sans-serif, sans-serif, system-ui;
     --font-serif: Playfair Display, ui-serif, serif;
+    --font-display: Fraunces, ui-serif, serif;
     --font-mono: JetBrains Mono, ui-monospace, monospace;
     --radius: 1.4rem;
     --shadow-color: #000000;
@@ -168,6 +170,7 @@
     --sidebar-ring: oklch(0.7320 0.2417 335.8450);
     --font-sans: Montserrat, ui-sans-serif, sans-serif, system-ui;
     --font-serif: Playfair Display, ui-serif, serif;
+    --font-display: Fraunces, ui-serif, serif;
     --font-mono: JetBrains Mono, ui-monospace, monospace;
     --radius: 1.4rem;
     --shadow-color: #000000;
@@ -192,13 +195,13 @@
         @apply font-sans;
     }
     h1 {
-        @apply text-3xl font-semibold font-heading;
+        @apply text-4xl font-medium font-display;
     }
     h2 {
-        @apply text-2xl font-semibold font-heading;
+        @apply text-3xl font-semibold font-heading;
     }
     h3 {
-        @apply text-xl font-medium font-heading;
+        @apply text-2xl font-semibold font-heading;
     }
     h4 {
         @apply text-xl font-medium font-heading;

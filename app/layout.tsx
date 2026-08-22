@@ -1,4 +1,4 @@
-import { Montserrat, Playfair_Display } from "next/font/google";
+import { Fraunces, Montserrat, Playfair_Display } from "next/font/google";
 
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -13,6 +13,12 @@ const fontSerif = Playfair_Display({
     variable: "--font-serif",
 });
 
+const fontDisplay = Fraunces({
+    subsets: ["latin"],
+    style: ["normal", "italic"],
+    variable: "--font-display",
+});
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -25,6 +31,7 @@ export default function RootLayout({
             className={cn(
                 "antialiased",
                 fontSerif.variable,
+                fontDisplay.variable,
                 "font-sans",
                 fontSans.variable
             )}

@@ -34,7 +34,7 @@ export default async function ConfirmedPage({
 
             <div className="mb-6 flex flex-col items-center gap-2 text-center">
                 <CheckCircle2 className="size-10 text-success-foreground" />
-                <h1>Rezervace potvrzena</h1>
+                <h2>Rezervace potvrzena</h2>
             </div>
 
             <Card>
