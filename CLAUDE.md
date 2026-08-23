@@ -55,6 +55,20 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   hlavičky `Host` přesměruje admin cesty pryč z hlavní domény na
   `admin.pedikurakralovice.cz`, a na admin subdoméně přesměruje `/` na
   `/kalendar`
+- **`pedikurakralovice.cz` (apex bez www) 308 přesměrovává na
+  `www.pedikurakralovice.cz`** — nastaveno na úrovni Vercel domény, ne
+  v `proxy.ts`/aplikačním kódu. `www.` je tedy skutečná kanonická doména —
+  všechny absolutní URL v SEO kódu (`metadataBase`, `app/sitemap.ts`,
+  `Sitemap:` řádek v `app/robots.ts`, LocalBusiness JSON-LD) musí mířit na
+  `www.`, jinak vyhledávače narazí na redirect místo stránky
+- **Booking je dočasně vypnutý** přes `lib/booking-enabled.ts`
+  (`BOOKING_ENABLED = false`) — `RecurringAvailability` zatím nemá
+  nastavené žádné sloty, takže klient by na `/rezervace` stejně nic
+  nenašel. Dokud je flag `false`, `proxy.ts` přesměruje `/rezervace` na
+  `/` a všechna CTA "Objednat se" (hero, closing section, nav, ceník,
+  kontakt) jsou podmíněně skrytá. Až bude reálná dostupnost nastavená,
+  stačí přepnout flag na `true` – vrátí obojí najednou, nepřidávat CTA/gate
+  ručně po jednom
 - **Resend** — transakční emaily z vlastní domény (SPF/DKIM/DMARC DNS záznamy)
 - **Hosting: Vercel** (Hobby/free plan stačí; zvážit Pro $20/měs jen pokud
   bude potřeba častější cron)
@@ -158,12 +172,33 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - Přehled rezervací + rychlé akce (zrušit, ruční přidat) → optimalizovat
   pro touch (velké tap targets, ne husté tabulky).
 
+## SEO / dohledatelnost
+
+- **`app/robots.ts`** – host-aware (čte `Host` hlavičku): na hlavní doméně
+  povolí indexaci (kromě `/api/` a `/rezervace/`) a odkáže na sitemapu; na
+  `admin.pedikurakralovice.cz` má `Disallow: /` úplně na všechno.
+- **`app/sitemap.ts`** – homepage, `/cenik`, `/kontakt`. Všechny URL musí
+  mířit na `www.` (viz apex→www redirect výše).
+- **LocalBusiness JSON-LD** (`app/(marketing)/layout.tsx`) – adresa,
+  telefon, e-mail, `sameAs` s odkazem na Google Business Profile (Firmy.cz
+  se doplní, až profil potvrdí).
+- **Google Search Console** – ověřeno jako doménová property (DNS TXT),
+  sitemapa nahraná.
+- **Seznam Webmaster Tools** – ověřeno přes `<meta name="seznam-wmt">` v
+  `app/layout.tsx` (`verification.other`). Sitemapu si Seznam čte
+  automaticky z `robots.txt`, nemá samostatné pole pro ruční vložení URL.
+- **Odkaz na recenzi** na Kontakt stránce – karta vedoucí na Google
+  "napsat recenzi" odkaz (`g.page/r/.../review`), ne obecný odkaz na
+  profil (ten otevírá rovnou recenzní dialog, míň kroků = víc dokončených
+  recenzí).
+
 ## Marketing web — struktura stránek
 
 - **Homepage** — základní info + fotky
 - **Ceník** — služby (30/45/60 min varianty) + produkty na prodej (krémy
   apod., statický výpis, ne eshop)
-- **Kontakt** — kontaktní formulář + adresa
+- **Kontakt** — telefon, e-mail, adresa s mapou, odkaz na Google recenzi
+  (žádný kontaktní formulář)
 - CTA proklik do booking appky z homepage a ceníku
 
 ## Styl práce
@@ -171,3 +206,6 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - Preferuji stručná vysvětlení, detail jen na vyžádání.
 - Komunikace v češtině.
 - Chci rozumět každé části architektury, ne jen "ať to funguje".
+- U UI změn neověřuj sám v prohlížeči (nespouštěj dev server kvůli
+  screenshotu) — stačí typecheck/build. Vizuální kontrolu v prohlížeči si
+  dělám sám.
