@@ -1,13 +1,28 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import argon2 from "argon2";
+import { createHash } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma.ts";
+
+declare module "@auth/core/jwt" {
+    interface JWT {
+        // Fingerprint of the AdminUser's passwordHash at the time this
+        // token was issued/last confirmed — lets the jwt callback detect
+        // a password change without ever putting the real hash in the
+        // token. Undefined only on the very first call, right after sign-in.
+        pwFingerprint?: string;
+    }
+}
 
 const credentialsSchema = z.object({
     username: z.string().min(1),
     password: z.string().min(1),
 });
+
+function passwordFingerprint(passwordHash: string) {
+    return createHash("sha256").update(passwordHash).digest("hex");
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     pages: {
@@ -19,9 +34,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     callbacks: {
         // With the jwt strategy, sessions aren't checked against the
         // database by default — the signed cookie alone is trusted until
-        // it expires, so a deleted/changed AdminUser would stay logged in.
-        // This runs on every request and re-validates against the DB,
-        // returning null (= logged out) if the account is gone.
+        // it expires, so a deleted or edited AdminUser had no effect on
+        // an already-issued session. This runs on every request and
+        // re-validates against the DB: logged out (null) if the account
+        // is gone, or if its username/email/password changed since this
+        // token was issued — an existing session shouldn't silently pick
+        // up a changed account, it should have to log in again.
         async jwt({ token }) {
             if (!token.sub) return null;
 
@@ -30,8 +48,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             });
             if (!admin) return null;
 
+            const currentFingerprint = passwordFingerprint(admin.passwordHash);
+            const changedSinceIssued =
+                token.pwFingerprint !== undefined &&
+                (token.name !== admin.username ||
+                    token.email !== admin.email ||
+                    token.pwFingerprint !== currentFingerprint);
+
+            if (changedSinceIssued) return null;
+
             token.name = admin.username;
             token.email = admin.email;
+            token.pwFingerprint = currentFingerprint;
             return token;
         },
     },
