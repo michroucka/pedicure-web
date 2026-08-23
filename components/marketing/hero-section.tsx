@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
+import { SectionWave } from "@/components/marketing/section-wave.tsx";
 
 export function HeroSection() {
     return (
@@ -29,21 +30,25 @@ export function HeroSection() {
                     </div>
                 </div>
 
-                <div className="relative aspect-4/5 overflow-hidden rounded-4xl bg-muted">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Image
-                            src="/icon-light.svg"
-                            alt=""
-                            width={160}
-                            height={160}
-                            className="size-2/5 opacity-40"
-                        />
-                    </div>
-                    <p className="absolute inset-x-0 bottom-3 text-center text-xs text-muted-foreground italic">
-                        fotka, doplní se
-                    </p>
+                <div
+                    className="relative aspect-4/5 overflow-hidden bg-muted"
+                    style={{ borderRadius: "62% 38% 55% 45% / 45% 55% 45% 55%" }}
+                >
+                    <Image
+                        src="/portret.jpg"
+                        alt="Kateřina Roučková, pedikérka"
+                        fill
+                        sizes="(min-width: 768px) 40vw, 90vw"
+                        className="object-cover"
+                        priority
+                    />
                 </div>
             </div>
+
+            <SectionWave
+                variant="a"
+                className="fill-card"
+            />
         </section>
     );
 }

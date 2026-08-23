@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { SectionWave } from "@/components/marketing/section-wave.tsx";
 
 const PRINCIPLES = [
     "pečlivém a individuálním přístupu",
@@ -11,7 +12,7 @@ export function AboutSection() {
     return (
         <section
             id="o-mne"
-            className="scroll-mt-20 bg-card"
+            className="relative scroll-mt-20 bg-card"
         >
             <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-24">
                 <Image
@@ -60,6 +61,11 @@ export function AboutSection() {
                     ))}
                 </ul>
             </div>
+
+            <SectionWave
+                variant="b"
+                className="fill-background"
+            />
         </section>
     );
 }

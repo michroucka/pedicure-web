@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
+import { SectionWave } from "@/components/marketing/section-wave.tsx";
 
 export function ClosingSection() {
     return (
-        <section className="bg-background">
+        <section className="relative bg-background">
             <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 md:py-24">
                 <h2 className="font-display italic">Vaše nohy v dobrých rukou</h2>
                 <p className="mx-auto mt-4 max-w-prose text-base leading-relaxed text-muted-foreground">
@@ -26,6 +27,11 @@ export function ClosingSection() {
                     <Link href="/rezervace">Objednat se</Link>
                 </Button>
             </div>
+
+            <SectionWave
+                variant="e"
+                className="fill-card"
+            />
         </section>
     );
 }

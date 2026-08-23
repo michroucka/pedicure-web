@@ -1,3 +1,5 @@
+import { SectionWave } from "@/components/marketing/section-wave.tsx";
+
 const TIPS = [
     {
         title: "Hydratace je základ",
@@ -23,7 +25,7 @@ const TIPS = [
 
 export function AftercareSection() {
     return (
-        <section className="bg-card">
+        <section className="relative bg-card">
             <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-24">
                 <h2 className="font-display">Jak pečovat o nohy po pedikúře</h2>
                 <p className="mt-6 max-w-prose text-base leading-relaxed text-card-foreground/90">
@@ -58,6 +60,11 @@ export function AftercareSection() {
                     </p>
                 </div>
             </div>
+
+            <SectionWave
+                variant="d"
+                className="fill-background"
+            />
         </section>
     );
 }
