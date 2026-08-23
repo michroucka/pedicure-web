@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { ArrowUpRight, Mail, MapPin, Phone, Star } from "lucide-react";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 
 export const metadata: Metadata = {
     title: "Kontakt",
     description:
-        "Kontakt na pedikúru Nohy v čajku – Boženy Němcové 204, Kralovice. Telefon, e-mail a mapa provozovny.",
+        "Kontakt na pedikúru Nohy v cajku – Boženy Němcové 204, Kralovice. Telefon, e-mail a mapa provozovny.",
     alternates: { canonical: "/kontakt" },
 };
 
@@ -59,6 +59,34 @@ export default function KontaktPage() {
                         style={{ border: "none", display: "block" }}
                     />
                 </div>
+
+                <a
+                    href="https://g.page/r/CdZJqS_7_oGNEBM/review"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group mt-6 flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+                >
+                    <div
+                        className="flex shrink-0 gap-0.5"
+                        aria-hidden
+                    >
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                                key={i}
+                                className="size-4 fill-primary text-primary"
+                            />
+                        ))}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-medium text-card-foreground">
+                            Byli jste u nás?
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            Napište nám recenzi na Google
+                        </p>
+                    </div>
+                    <ArrowUpRight className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </a>
 
                 {BOOKING_ENABLED && (
                     <div className="mt-8 flex justify-end">
