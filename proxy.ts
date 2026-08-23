@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 import { auth } from "@/auth.ts";
+import type { NextAuthRequest } from "next-auth";
 
 // Domain-based routing: the admin routes (kalendar/dostupnost/klienti/login)
 // have no shared URL prefix, so they only make sense reachable through
@@ -16,6 +18,14 @@ import { auth } from "@/auth.ts";
 // navigation, so it doesn't have that gap. (Next.js 16 always runs proxy on
 // the Node.js runtime, not Edge, so calling the full auth() — Prisma and
 // all — here is fine; no edge-safe config split needed.)
+//
+// auth() has to be called through its own auth(request => ...) wrapper, not
+// as a bare `await auth()` — only the wrapper can attach the refreshed
+// session cookie to the response it returns. A bare call can read the
+// session fine, but any Set-Cookie it would have issued (e.g. the jwt
+// callback's rolling re-validation) is silently dropped when returned
+// inside a NextResponse we built ourselves, so the token never actually
+// updates — every request looks like the very first one after sign-in.
 const MAIN_HOST = "pedikurakralovice.cz";
 const ADMIN_HOST = "admin.pedikurakralovice.cz";
 
@@ -28,7 +38,14 @@ function matchesPath(pathname: string, paths: string[]) {
     );
 }
 
-export default async function proxy(request: NextRequest) {
+const checkSession = auth((req: NextAuthRequest, _event: NextFetchEvent) => {
+    if (!req.auth?.user) {
+        return NextResponse.redirect(new URL("/login", req.url));
+    }
+    return NextResponse.next();
+});
+
+export default async function proxy(request: NextRequest, event: NextFetchEvent) {
     const host = request.headers.get("host") ?? "";
     const { pathname } = request.nextUrl;
 
@@ -46,15 +63,7 @@ export default async function proxy(request: NextRequest) {
     }
 
     if (matchesPath(pathname, PROTECTED_PATHS)) {
-        const session = await auth();
-        console.log("[proxy] auth check", {
-            pathname,
-            hasSession: !!session,
-            user: session?.user ?? null,
-        });
-        if (!session?.user) {
-            return NextResponse.redirect(new URL("/login", request.url));
-        }
+        return checkSession(request, event);
     }
 
     return NextResponse.next();
