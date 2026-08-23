@@ -47,6 +47,11 @@ export default async function proxy(request: NextRequest) {
 
     if (matchesPath(pathname, PROTECTED_PATHS)) {
         const session = await auth();
+        console.log("[proxy] auth check", {
+            pathname,
+            hasSession: !!session,
+            user: session?.user ?? null,
+        });
         if (!session?.user) {
             return NextResponse.redirect(new URL("/login", request.url));
         }
