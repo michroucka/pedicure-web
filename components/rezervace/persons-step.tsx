@@ -77,45 +77,58 @@ export function PersonsStep({
 
     return (
         <div>
-            {Array.from({ length: personCount }).map((_, i) => (
-                <div
-                    key={i}
-                    className="mb-2 flex items-center gap-2"
-                >
-                    <span className="w-16">{`Osoba ${i + 1}`}</span>
-                    <Select
-                        onValueChange={(v) => v && updateService(i, v)}
-                        value={currentServices[i] ?? ""}
+            {Array.from({ length: personCount }).map((_, i) => {
+                const selectedService = services.find(
+                    (s) => String(s.id) === currentServices[i]
+                );
+
+                return (
+                    <div
+                        key={i}
+                        className="mb-2"
                     >
-                        <SelectTrigger className="w-full max-w-48">
-                            <SelectValue placeholder="Vyberte službu" />
-                        </SelectTrigger>
-                        <SelectContent position="popper">
-                            <SelectGroup>
-                                <SelectLabel>Služby</SelectLabel>
-                                {services.map((s) => (
-                                    <SelectItem
-                                        value={String(s.id)}
-                                        key={s.id}
-                                    >
-                                        {s.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                    {i > 0 && (
-                        <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => removePerson(i)}
-                        >
-                            <Trash2 data-icon="inline-start" className="text-destructive" />
-                        </Button>
-                    )}
-                </div>
-            ))}
+                        <div className="flex items-center gap-2">
+                            <span className="w-16">{`Osoba ${i + 1}`}</span>
+                            <Select
+                                onValueChange={(v) => v && updateService(i, v)}
+                                value={currentServices[i] ?? ""}
+                            >
+                                <SelectTrigger className="w-full max-w-48">
+                                    <SelectValue placeholder="Vyberte službu" />
+                                </SelectTrigger>
+                                <SelectContent position="popper">
+                                    <SelectGroup>
+                                        <SelectLabel>Služby</SelectLabel>
+                                        {services.map((s) => (
+                                            <SelectItem
+                                                value={String(s.id)}
+                                                key={s.id}
+                                            >
+                                                {s.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            {i > 0 && (
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => removePerson(i)}
+                                >
+                                    <Trash2 data-icon="inline-start" className="text-destructive" />
+                                </Button>
+                            )}
+                        </div>
+                        {selectedService?.description && (
+                            <p className="mt-1 px-2 text-xs text-pretty text-muted-foreground">
+                                {selectedService.description}
+                            </p>
+                        )}
+                    </div>
+                );
+            })}
             <div className="mt-2 flex">
                 {personCount < 4 && (
                     <Button
