@@ -16,6 +16,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session: {
         strategy: "jwt",
     },
+    callbacks: {
+        // With the jwt strategy, sessions aren't checked against the
+        // database by default — the signed cookie alone is trusted until
+        // it expires, so a deleted/changed AdminUser would stay logged in.
+        // This runs on every request and re-validates against the DB,
+        // returning null (= logged out) if the account is gone.
+        async jwt({ token }) {
+            if (!token.sub) return null;
+
+            const admin = await prisma.adminUser.findUnique({
+                where: { id: token.sub },
+            });
+            if (!admin) return null;
+
+            token.name = admin.username;
+            token.email = admin.email;
+            return token;
+        },
+    },
     providers: [
         Credentials({
             credentials: {
