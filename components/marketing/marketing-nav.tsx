@@ -26,7 +26,7 @@ function NavLinks() {
 
 export function MarketingNav() {
     return (
-        <header className="sticky top-0 z-10 border-b border-border/60 bg-background/90 backdrop-blur">
+        <header className="sticky top-0 z-10 border-b border-border/60 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
             <div className="mx-auto max-w-5xl px-4 sm:px-6">
                 <div className="flex items-center justify-between gap-4 py-3">
                     <Link
