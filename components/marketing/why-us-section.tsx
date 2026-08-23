@@ -23,7 +23,7 @@ export function WhyUsSection() {
                 <InteriorCarousel />
 
                 <div>
-                    <h2 className="font-display">Proč právě Nohy v cajku?</h2>
+                    <h2 className="font-display text-pretty">Proč právě Nohy v cajku?</h2>
                     <p className="mt-6 text-base leading-relaxed text-pretty text-muted-foreground">
                         Dvacet let v oboru znamená tisíce hodin práce,
                         zkušeností a setkání s nejrůznějšími potřebami

@@ -12,7 +12,7 @@ export default function KontaktPage() {
         <section>
             <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 md:py-24">
                 <h1 className="italic">Kontakt</h1>
-                <p className="mt-4 max-w-prose text-base leading-relaxed text-muted-foreground">
+                <p className="mt-4 max-w-prose text-base text-pretty leading-relaxed text-muted-foreground">
                     Dopřejte svým nohám péči zkušených rukou. Ať už potřebujete
                     pravidelnou pedikúru, řešíte konkrétní problém, nebo si
                     chcete jednoduše dopřát chvíli pro sebe, budu se na vás

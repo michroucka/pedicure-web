@@ -27,8 +27,8 @@ export function AftercareSection() {
     return (
         <section className="relative bg-card">
             <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-24">
-                <h2 className="font-display">Jak pečovat o nohy po pedikúře</h2>
-                <p className="mt-6 max-w-prose text-base leading-relaxed text-card-foreground/90">
+                <h2 className="font-display text-pretty">Jak pečovat o nohy po pedikúře</h2>
+                <p className="mt-6 max-w-prose text-pretty text-base leading-relaxed text-card-foreground/90">
                     Po pedikúře si užijte pocit lehkých a upravených nohou.
                     Dopřáli jste svým nohám profesionální péči a chcete, aby
                     vydržely krásné, hebké a upravené co nejdéle? Stačí jim
@@ -50,7 +50,7 @@ export function AftercareSection() {
 
                 <div className="mt-12 border-t border-border pt-8">
                     <h3>A kdy přijít znovu?</h3>
-                    <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-3 max-w-prose text-pretty text-sm leading-relaxed text-muted-foreground">
                         Většině klientů vyhovuje návštěva přibližně jednou za
                         4–6 týdnů, vždy ale záleží na individuálním stavu
                         vašich nohou a rychlosti, s jakou se tvoří ztvrdlá

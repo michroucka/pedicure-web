@@ -34,7 +34,7 @@ export default async function CenikPage() {
                                     {service.durationMinutes} minut
                                 </p>
                                 {service.description && (
-                                    <p className="mt-3 text-sm text-muted-foreground">
+                                    <p className="mt-3 text-sm text-pretty text-muted-foreground">
                                         {service.description}
                                     </p>
                                 )}

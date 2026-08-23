@@ -53,7 +53,7 @@ export function AboutSection() {
                     {PRINCIPLES.map((principle) => (
                         <li
                             key={principle}
-                            className="flex items-start gap-2 text-sm text-card-foreground/90"
+                            className="flex items-start gap-2 text-pretty text-sm text-card-foreground/90"
                         >
                             <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
                             {principle}
