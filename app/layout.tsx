@@ -1,6 +1,7 @@
 import { Fraunces, Montserrat, Playfair_Display } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -59,6 +60,7 @@ export default function RootLayout({
                     <div className="">{children}</div>
                 </TooltipProvider>
                 <Analytics />
+                <SpeedInsights />
             </body>
         </html>
     );
