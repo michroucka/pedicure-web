@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 
 export const metadata: Metadata = {
     title: "Ceník",
@@ -49,14 +50,16 @@ export default async function CenikPage() {
                     ))}
                 </div>
 
-                <div className="mt-10 flex justify-end">
-                    <Button
-                        asChild
-                        size="lg"
-                    >
-                        <Link href="/rezervace">Objednat se</Link>
-                    </Button>
-                </div>
+                {BOOKING_ENABLED && (
+                    <div className="mt-10 flex justify-end">
+                        <Button
+                            asChild
+                            size="lg"
+                        >
+                            <Link href="/rezervace">Objednat se</Link>
+                        </Button>
+                    </div>
+                )}
             </div>
         </section>
     );

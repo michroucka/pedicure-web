@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { auth } from "@/auth.ts";
 import type { NextAuthRequest } from "next-auth";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 
 // Domain-based routing: the admin routes (kalendar/dostupnost/klienti/login)
 // have no shared URL prefix, so they only make sense reachable through
@@ -54,6 +55,10 @@ export default async function proxy(request: NextRequest, event: NextFetchEvent)
 
     if (isAdminHost && pathname === "/") {
         return NextResponse.redirect(new URL("/kalendar", request.url));
+    }
+
+    if (!BOOKING_ENABLED && matchesPath(pathname, ["/rezervace"])) {
+        return NextResponse.redirect(new URL("/", request.url));
     }
 
     if (isMainHost && matchesPath(pathname, ADMIN_PATHS)) {

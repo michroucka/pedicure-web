@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
 import { SectionWave } from "@/components/marketing/section-wave.tsx";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 
 export function ClosingSection() {
     return (
@@ -19,13 +20,15 @@ export function ClosingSection() {
                     problém, nebo si chcete jednoduše dopřát chvíli pro
                     sebe, budu se na vás těšit.
                 </p>
-                <Button
-                    asChild
-                    size="lg"
-                    className="mt-6"
-                >
-                    <Link href="/rezervace">Objednat se</Link>
-                </Button>
+                {BOOKING_ENABLED && (
+                    <Button
+                        asChild
+                        size="lg"
+                        className="mt-6"
+                    >
+                        <Link href="/rezervace">Objednat se</Link>
+                    </Button>
+                )}
             </div>
 
             <SectionWave

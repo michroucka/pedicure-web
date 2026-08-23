@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 
 const NAV_LINKS = [
     { href: "/#o-mne", label: "O mně" },
@@ -48,9 +49,11 @@ export function MarketingNav() {
                         <NavLinks />
                     </nav>
 
-                    <Button asChild>
-                        <Link href="/rezervace">Objednat se</Link>
-                    </Button>
+                    {BOOKING_ENABLED && (
+                        <Button asChild>
+                            <Link href="/rezervace">Objednat se</Link>
+                        </Button>
+                    )}
                 </div>
 
                 <nav className="flex items-center justify-center border-t border-border/60 gap-8 py-2 -mx-4 text-muted-foreground md:hidden">

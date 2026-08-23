@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
 import { Mail, MapPin, Phone } from "lucide-react";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 
 export const metadata: Metadata = {
     title: "Kontakt",
@@ -59,14 +60,16 @@ export default function KontaktPage() {
                     />
                 </div>
 
-                <div className="mt-8 flex justify-end">
-                    <Button
-                        asChild
-                        size="lg"
-                    >
-                        <Link href="/rezervace">Objednat se online</Link>
-                    </Button>
-                </div>
+                {BOOKING_ENABLED && (
+                    <div className="mt-8 flex justify-end">
+                        <Button
+                            asChild
+                            size="lg"
+                        >
+                            <Link href="/rezervace">Objednat se online</Link>
+                        </Button>
+                    </div>
+                )}
             </div>
         </section>
     );

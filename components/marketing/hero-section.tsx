@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
 import { SectionWave } from "@/components/marketing/section-wave.tsx";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 
 export function HeroSection() {
     return (
@@ -14,12 +15,14 @@ export function HeroSection() {
                         kvalitní a profesionální péči – už 20 let.
                     </p>
                     <div className="mt-8 flex flex-wrap gap-3">
-                        <Button
-                            asChild
-                            size="lg"
-                        >
-                            <Link href="/rezervace">Objednat se</Link>
-                        </Button>
+                        {BOOKING_ENABLED && (
+                            <Button
+                                asChild
+                                size="lg"
+                            >
+                                <Link href="/rezervace">Objednat se</Link>
+                            </Button>
+                        )}
                         <Button
                             asChild
                             variant="outline"
