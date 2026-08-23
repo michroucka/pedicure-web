@@ -1,5 +1,6 @@
 import { Fraunces, Montserrat, Playfair_Display } from "next/font/google";
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,6 +48,7 @@ export default function RootLayout({
                 <TooltipProvider>
                     <div className="">{children}</div>
                 </TooltipProvider>
+                <Analytics />
             </body>
         </html>
     );
