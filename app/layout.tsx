@@ -8,12 +8,30 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
+const DESCRIPTION =
+    "Pedikúra v Kralovicích s dvacetiletou praxí. Kateřina Roučková nabízí individuální a šetrnou péči o nohy – od pravidelné pedikúry po řešení problematických chodidel.";
+
 export const metadata: Metadata = {
+    metadataBase: new URL("https://pedikurakralovice.cz"),
     title: {
         default: "Nohy v cajku",
         template: "%s | Nohy v cajku",
     },
-    description: "Pedikúra Kralovice – Kateřina Roučková",
+    description: DESCRIPTION,
+    openGraph: {
+        type: "website",
+        locale: "cs_CZ",
+        siteName: "Nohy v cajku",
+        title: "Nohy v cajku",
+        description: DESCRIPTION,
+        url: "/",
+        images: [{ url: "/portret.jpg", width: 1200, height: 1500 }],
+    },
+    verification: {
+        other: {
+            "seznam-wmt": "pdWNBd69hNdsMxv1s6j7AWWB8xOyLpNI",
+        },
+    },
 };
 
 // viewportFit "cover" lets the page paint under the iOS notch/dynamic

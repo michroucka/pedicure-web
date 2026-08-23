@@ -12,9 +12,9 @@ import {
 import { cn } from "@/lib/utils.ts";
 
 const PHOTOS = [
-    { src: "/interier-1.jpg", alt: "" },
-    { src: "/interier-2.jpg", alt: "" },
-    { src: "/exterier.jpg", alt: "" },
+    { src: "/interier-1.jpg", alt: "Interiér provozovny Nohy v čajku v Kralovicích" },
+    { src: "/interier-2.jpg", alt: "Pracovní místo pro pedikúru v provozovně Nohy v čajku" },
+    { src: "/exterier.jpg", alt: "Vstup do provozovny Nohy v čajku, Boženy Němcové 204, Kralovice" },
 ];
 
 export function InteriorCarousel() {

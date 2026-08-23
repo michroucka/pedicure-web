@@ -6,6 +6,9 @@ import { Card, CardContent } from "@/components/ui/card.tsx";
 
 export const metadata: Metadata = {
     title: "Ceník",
+    description:
+        "Ceník pedikúry v Kralovicích – přehled služeb a jejich délky. Objednejte se online během chvilky.",
+    alternates: { canonical: "/cenik" },
 };
 
 export default async function CenikPage() {

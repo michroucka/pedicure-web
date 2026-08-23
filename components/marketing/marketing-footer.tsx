@@ -11,6 +11,9 @@ export function MarketingFooter() {
                         <p className="text-xs text-muted-foreground">
                             Kateřina Roučková
                         </p>
+                        <p className="text-xs text-muted-foreground">
+                            Boženy Němcové 204, Kralovice
+                        </p>
                     </div>
                     <Image
                         src="/icon-light.svg"

@@ -5,6 +5,9 @@ import { Mail, MapPin, Phone } from "lucide-react";
 
 export const metadata: Metadata = {
     title: "Kontakt",
+    description:
+        "Kontakt na pedikúru Nohy v čajku – Boženy Němcové 204, Kralovice. Telefon, e-mail a mapa provozovny.",
+    alternates: { canonical: "/kontakt" },
 };
 
 export default function KontaktPage() {
