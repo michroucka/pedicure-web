@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { PasswordInput } from "@/components/password-input.tsx";
-import { Button } from "@/components/ui/button.tsx";
+import { LoginSubmitButton } from "@/components/admin/login-submit-button.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
-import { AlertCircle, LogIn, Lock, User } from "lucide-react";
+import { AlertCircle, Lock, User } from "lucide-react";
 
 export const metadata: Metadata = {
     title: {
@@ -89,13 +89,7 @@ export default async function AdminLoginPage({
                                 />
                             </Field>
                         </FieldGroup>
-                        <Button
-                            type="submit"
-                            className="mt-6 w-full"
-                        >
-                            <LogIn className="size-4" />
-                            Přihlásit se
-                        </Button>
+                        <LoginSubmitButton />
                     </form>
                 </CardContent>
             </Card>
