@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils.ts";
 const PHOTOS = [
     { src: "/interier-1.jpg", alt: "" },
     { src: "/interier-2.jpg", alt: "" },
+    { src: "/exterier.jpg", alt: "" },
 ];
 
 export function InteriorCarousel() {
