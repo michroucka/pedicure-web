@@ -5,7 +5,7 @@ import { AdminBottomNav } from "@/components/admin/admin-bottom-nav.tsx";
 
 export const metadata: Metadata = {
     title: {
-        template: "%s – Nohy v cajku Admin",
+        template: "%s | Nohy v cajku Admin",
         default: "Nohy v cajku Admin",
     },
 };

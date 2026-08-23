@@ -6,7 +6,7 @@ import {
     type Exception,
     type TimeSlot,
 } from "./availability.ts";
-import type { Prisma, Service } from "@/lib/generated/prisma/client";
+import type { Prisma } from "@/lib/generated/prisma/client";
 
 export async function getAvailableSlots(
     date: Date,
@@ -21,15 +21,6 @@ export async function getAvailableSlots(
 ): Promise<number[]> {
     const db = options.db ?? prisma;
 
-    const services: Service[] = await db.service.findMany({
-        where: { id: { in: serviceIds } },
-    });
-
-    const minServiceDuration = await db.service.aggregate({
-        where: { active: true },
-        _min: { durationMinutes: true },
-    });
-
     const day = toDateOnly(date);
     const today = getCzechToday();
 
@@ -41,17 +32,25 @@ export async function getAvailableSlots(
 
     const dayOfWeek = day.getUTCDay();
 
-    const [recurring, exceptions, bookings] = await Promise.all([
-        db.recurringAvailability.findMany({
-            where: { dayOfWeek },
-        }),
-        db.availabilityException.findMany({
-            where: { date: day },
-        }),
-        db.booking.findMany({
-            where: { date: day, status: "CONFIRMED" },
-        }),
-    ]);
+    const [services, minServiceDuration, recurring, exceptions, bookings] =
+        await Promise.all([
+            db.service.findMany({
+                where: { id: { in: serviceIds } },
+            }),
+            db.service.aggregate({
+                where: { active: true },
+                _min: { durationMinutes: true },
+            }),
+            db.recurringAvailability.findMany({
+                where: { dayOfWeek },
+            }),
+            db.availabilityException.findMany({
+                where: { date: day },
+            }),
+            db.booking.findMany({
+                where: { date: day, status: "CONFIRMED" },
+            }),
+        ]);
 
     const recurringWindows: TimeSlot[] = recurring.map((r) => ({
         start: r.startTime,

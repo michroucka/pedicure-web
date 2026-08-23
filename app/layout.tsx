@@ -1,5 +1,5 @@
 import { Fraunces, Montserrat, Playfair_Display } from "next/font/google";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
@@ -13,6 +13,16 @@ export const metadata: Metadata = {
         template: "%s | Nohy v cajku",
     },
     description: "Pedikúra Kralovice – Kateřina Roučková",
+};
+
+// viewportFit "cover" lets the page paint under the iOS notch/dynamic
+// island and home indicator instead of Safari filling that strip with a
+// flat white bar; themeColor is what it fills it with. Defaults to the
+// admin app's (near-white) background — the storefront layouts override
+// this to their own dark plum.
+export const viewport: Viewport = {
+    viewportFit: "cover",
+    themeColor: "#FDFDFD",
 };
 
 const fontSans = Montserrat({ subsets: ["latin"], variable: "--font-sans" });
@@ -44,7 +54,7 @@ export default function RootLayout({
                 fontSans.variable
             )}
         >
-            <body>
+            <body className="bg-background text-foreground">
                 <TooltipProvider>
                     <div className="">{children}</div>
                 </TooltipProvider>
