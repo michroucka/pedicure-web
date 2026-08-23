@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma.ts";
 import { formatTime, getCzechToday } from "@/lib/utils.ts";
 import { AvailabilityForm } from "@/components/admin/availability-form.tsx";
@@ -10,6 +11,10 @@ import {
 } from "@/components/ui/tabs.tsx";
 import { CalendarX, Repeat } from "lucide-react";
 import { saveRecurringAvailability } from "./actions.ts";
+
+export const metadata: Metadata = {
+    title: "Dostupnost",
+};
 
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 

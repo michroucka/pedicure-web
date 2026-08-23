@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/prisma.ts";
 import {
@@ -11,6 +12,10 @@ import { DayNav } from "@/components/admin/day-nav.tsx";
 import { DayTimeline } from "@/components/admin/day-timeline.tsx";
 import { WeekTimeline } from "@/components/admin/week-timeline.tsx";
 import { AddBookingDialog } from "@/components/admin/add-booking-dialog.tsx";
+
+export const metadata: Metadata = {
+    title: "Kalendář",
+};
 
 export default async function AdminHomePage({
     searchParams,

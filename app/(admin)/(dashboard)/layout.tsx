@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth.ts";
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav.tsx";
+
+export const metadata: Metadata = {
+    title: {
+        template: "%s – Nohy v cajku Admin",
+        default: "Nohy v cajku Admin",
+    },
+};
 
 export default async function AdminDashboardLayout({
     children,

@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { BookingNav } from "@/components/rezervace/booking-nav.tsx";
 import { PortalContainerProvider } from "@/components/portal-container.tsx";
+
+export const metadata: Metadata = {
+    title: "Rezervace",
+};
 
 export default function ReservationLayout({
     children,

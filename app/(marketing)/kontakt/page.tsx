@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
 import { Mail, MapPin, Phone } from "lucide-react";
+
+export const metadata: Metadata = {
+    title: "Kontakt",
+};
 
 export default function KontaktPage() {
     return (

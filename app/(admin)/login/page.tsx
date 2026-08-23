@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { auth, signIn } from "@/auth.ts";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
@@ -8,6 +9,12 @@ import { PasswordInput } from "@/components/password-input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { AlertCircle, LogIn, Lock, User } from "lucide-react";
+
+export const metadata: Metadata = {
+    title: {
+        absolute: "Přihlášení – Nohy v cajku Admin",
+    },
+};
 
 export default async function AdminLoginPage({
     searchParams,

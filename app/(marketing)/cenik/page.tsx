@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
+
+export const metadata: Metadata = {
+    title: "Ceník",
+};
 
 export default async function CenikPage() {
     const services = await prisma.service.findMany({
