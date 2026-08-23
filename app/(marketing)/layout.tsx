@@ -17,8 +17,8 @@ const LOCAL_BUSINESS_JSON_LD = {
     "@context": "https://schema.org",
     "@type": "HealthAndBeautyBusiness",
     name: "Nohy v cajku",
-    image: "https://pedikurakralovice.cz/portret.jpg",
-    url: "https://pedikurakralovice.cz",
+    image: "https://www.pedikurakralovice.cz/portret.jpg",
+    url: "https://www.pedikurakralovice.cz",
     telephone: "+420739665010",
     email: "rouckova@pedikurakralovice.cz",
     address: {
