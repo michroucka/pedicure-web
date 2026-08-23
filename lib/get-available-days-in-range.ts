@@ -6,8 +6,6 @@ import {
     type Exception,
     type TimeSlot,
 } from "./availability.ts";
-import type { Service } from "@/lib/generated/prisma/client";
-
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function getAvailableDaysInRange(
@@ -15,27 +13,26 @@ export async function getAvailableDaysInRange(
     serviceIds: number[],
     extraMinutes: number = 0
 ): Promise<Date[]> {
-    const services: Service[] = await prisma.service.findMany({
-        where: { id: { in: serviceIds } },
-    });
-
-    const minServiceDuration = await prisma.service.aggregate({
-        where: { active: true },
-        _min: { durationMinutes: true },
-    });
-
     const from = toDateOnly(range.from);
     const to = toDateOnly(range.to);
 
-    const [recurring, exceptions, bookings] = await Promise.all([
-        prisma.recurringAvailability.findMany(),
-        prisma.availabilityException.findMany({
-            where: { date: { gte: from, lte: to } },
-        }),
-        prisma.booking.findMany({
-            where: { date: { gte: from, lte: to }, status: "CONFIRMED" },
-        }),
-    ]);
+    const [services, minServiceDuration, recurring, exceptions, bookings] =
+        await Promise.all([
+            prisma.service.findMany({
+                where: { id: { in: serviceIds } },
+            }),
+            prisma.service.aggregate({
+                where: { active: true },
+                _min: { durationMinutes: true },
+            }),
+            prisma.recurringAvailability.findMany(),
+            prisma.availabilityException.findMany({
+                where: { date: { gte: from, lte: to } },
+            }),
+            prisma.booking.findMany({
+                where: { date: { gte: from, lte: to }, status: "CONFIRMED" },
+            }),
+        ]);
 
     const recurringByDayOfWeek = new Map<number, TimeSlot[]>();
     for (const r of recurring) {
