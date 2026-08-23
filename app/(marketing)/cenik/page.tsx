@@ -12,14 +12,6 @@ export const metadata: Metadata = {
     alternates: { canonical: "/cenik" },
 };
 
-// Force dynamic (per-request) rendering instead of the default static
-// prerender — a static /cenik needs a working DB connection at build
-// time, and Neon's free-tier autosuspend can make that connection time
-// out and fail the whole deploy if the compute happens to be asleep
-// right then. Rendering per-request only needs the DB to be reachable
-// when someone actually visits the page.
-export const dynamic = "force-dynamic";
-
 export default async function CenikPage() {
     const services = await prisma.service.findMany({
         where: { active: true },
