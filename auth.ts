@@ -41,18 +41,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // token was issued — an existing session shouldn't silently pick
         // up a changed account, it should have to log in again.
         async jwt({ token }) {
-            if (!token.sub) {
-                console.log("[jwt] no token.sub, invalidating");
-                return null;
-            }
+            if (!token.sub) return null;
 
             const admin = await prisma.adminUser.findUnique({
                 where: { id: token.sub },
             });
-            if (!admin) {
-                console.log("[jwt] no admin found for id", token.sub);
-                return null;
-            }
+            if (!admin) return null;
 
             const currentFingerprint = passwordFingerprint(admin.passwordHash);
             const changedSinceIssued =
@@ -61,21 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     token.email !== admin.email ||
                     token.pwFingerprint !== currentFingerprint);
 
-            console.log("[jwt] check", {
-                sub: token.sub,
-                tokenName: token.name,
-                dbUsername: admin.username,
-                tokenEmail: token.email,
-                dbEmail: admin.email,
-                hadFingerprint: token.pwFingerprint !== undefined,
-                fingerprintMatch: token.pwFingerprint === currentFingerprint,
-                changedSinceIssued,
-            });
-
-            if (changedSinceIssued) {
-                console.log("[jwt] invalidating — account changed since token issued");
-                return null;
-            }
+            if (changedSinceIssued) return null;
 
             token.name = admin.username;
             token.email = admin.email;
