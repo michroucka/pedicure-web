@@ -35,19 +35,26 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - **PostgreSQL + Prisma** ORM (DB: Neon, free tier)
 - **Auth.js (NextAuth)** — jen pro admina (pedikérku); JWT session, credentials
   provider proti `AdminUser`, heslo hashované přes **argon2**, vše v jednom
-  `auth.ts` (Node runtime). Ochrana admin sekce je řešená přímo
-  v `app/(admin)/(dashboard)/layout.tsx` (server-side kontrola session +
-  `redirect`), ne přes `middleware.ts` — Next.js doporučuje middleware/proxy
-  používat jen když není jiná možnost, a tady stačí kontrola v layoutu bez
-  nutnosti edge-safe configu navíc
+  `auth.ts` (Node runtime). `jwt` callback revaliduje session proti DB při
+  každém requestu (ne jen podle platnosti podpisu) — smazaný účet nebo
+  změna username/emailu/hesla session okamžitě zneplatní
+- **Ochrana admin sekce** je v `proxy.ts`, ne (jen) v layoutu — zkoušeli jsme
+  nejdřív kontrolu v `app/(admin)/(dashboard)/layout.tsx` (server-side
+  session check + `redirect`), protože Next.js middleware/proxy doporučuje
+  jen když není jiná možnost. Ukázalo se ale, že Next.js cachuje shared
+  layout napříč klientskou navigací (klik mezi `/kalendar`/`/dostupnost`/
+  `/klienti` layout znovu nespustí, jen page segment), takže kontrola
+  v layoutu zachytí zneplatněnou session až při tvrdém reloadu. `proxy.ts`
+  běží na každý request včetně soft navigace, takže tuhle mezeru nemá —
+  to je ten "není jiná možnost" případ. Next.js 16 navíc `proxy.ts` vždy
+  spouští na Node.js runtime (ne Edge), takže tam jde volat plné `auth()`
+  s Prisma bez potřeby edge-safe configu
 - **Admin na vlastní subdoméně** (`admin.pedikurakralovice.cz`) — admin routy
   (`/kalendar`, `/dostupnost`, `/klienti`, `/login`) nemají žádný společný
   URL prefix, takže dávají smysl jen na téhle subdoméně. `proxy.ts` podle
   hlavičky `Host` přesměruje admin cesty pryč z hlavní domény na
   `admin.pedikurakralovice.cz`, a na admin subdoméně přesměruje `/` na
-  `/kalendar`. Tohle je jeden z mála legitimních důvodů mít v projektu
-  `proxy.ts` — rozhodování podle domény musí proběhnout dřív, než Next.js
-  vůbec vyřeší routu, což layout nezvládne
+  `/kalendar`
 - **Resend** — transakční emaily z vlastní domény (SPF/DKIM/DMARC DNS záznamy)
 - **Hosting: Vercel** (Hobby/free plan stačí; zvážit Pro $20/měs jen pokud
   bude potřeba častější cron)

@@ -15,6 +15,10 @@ export default async function AdminDashboardLayout({
 }: {
     children: React.ReactNode;
 }) {
+    // Primary enforcement is proxy.ts, which runs on every request
+    // (including soft client-side navigation between these pages) — this
+    // layout only re-renders on a hard load, so it's a defense-in-depth
+    // backstop, not the main gate.
     const session = await auth();
     if (!session?.user) {
         redirect("/login");
