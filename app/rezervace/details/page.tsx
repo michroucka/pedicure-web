@@ -3,7 +3,6 @@ import { submitBooking, submitGroupBooking } from "@/app/rezervace/actions.ts";
 import { prisma } from "@/lib/prisma.ts";
 import { SoloBookingForm } from "@/components/rezervace/solo-booking-form.tsx";
 import { GroupBookingForm } from "@/components/rezervace/group-booking-form.tsx";
-import { StepIndicator } from "@/components/rezervace/step-indicator.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { UsersRound, CalendarDays, Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -46,8 +45,6 @@ export default async function DetailsPage({ searchParams }: {
 
     return (
         <div className="max-w-md mx-auto">
-            <StepIndicator currentStep={2} />
-
             <Card className="mb-6">
                 <CardContent className="flex flex-col gap-2 text-sm">
                     <div className="flex items-center gap-2">

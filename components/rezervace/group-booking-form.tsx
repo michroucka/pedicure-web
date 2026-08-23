@@ -215,7 +215,7 @@ export function GroupBookingForm({
                 </Field>
             </FieldLabel>
 
-            <div className="flex justify-between">
+            <div className="flex justify-between pb-6">
                 <Button
                     variant="outline"
                     size="lg"

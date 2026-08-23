@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
-import { StepIndicator } from "@/components/rezervace/step-indicator.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { BellRing, CalendarDays, CheckCircle2, Clock, Mail, UserRound } from "lucide-react";
@@ -30,8 +29,6 @@ export default async function ConfirmedPage({
 
     return (
         <div className="mx-auto max-w-md">
-            <StepIndicator currentStep={3} />
-
             <div className="mb-6 flex flex-col items-center gap-2 text-center">
                 <CheckCircle2 className="size-10 text-success-foreground" />
                 <h2>Rezervace potvrzena</h2>

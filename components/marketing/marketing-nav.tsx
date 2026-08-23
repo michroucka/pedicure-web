@@ -28,7 +28,7 @@ export function MarketingNav() {
     return (
         <header className="sticky top-0 z-10 border-b border-border/60 bg-background pt-[env(safe-area-inset-top)]">
             <div className="mx-auto max-w-5xl px-4 sm:px-6">
-                <div className="flex items-center justify-between gap-4 py-3">
+                <div className="flex items-center justify-between py-3">
                     <Link
                         href="/"
                         className="shrink-0"
@@ -38,7 +38,7 @@ export function MarketingNav() {
                             alt="Nohy v cajku"
                             width={241}
                             height={60}
-                            className="-my-1 h-14 w-auto"
+                            className="-my-1 h-12 md:h-14 w-auto"
                             priority
                             draggable={false}
                         />

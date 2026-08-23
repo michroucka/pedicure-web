@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma.ts";
 import { Service } from "@/lib/generated/prisma/client";
-import { StepIndicator } from "@/components/rezervace/step-indicator.tsx";
 import { ReservationWizard } from "@/components/rezervace/reservation-wizard.tsx";
 
 export default async function ReservationPage() {
@@ -12,8 +11,6 @@ export default async function ReservationPage() {
 
     return (
         <div className="max-w-md mx-auto">
-            <StepIndicator currentStep={1} />
-
             <Suspense>
                 <ReservationWizard services={availableServices} />
             </Suspense>
