@@ -12,7 +12,7 @@ import { AlertCircle, LogIn, Lock, User } from "lucide-react";
 
 export const metadata: Metadata = {
     title: {
-        absolute: "Přihlášení – Nohy v cajku Admin",
+        absolute: "Přihlášení | Nohy v cajku Admin",
     },
 };
 
