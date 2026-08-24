@@ -2,11 +2,32 @@ import { describe, expect, it } from "vitest";
 import {
     computeAvailableSlots,
     computeGaps,
+    rangesOverlap,
     resolveDayTimeSlots,
     subtractOne,
     toExceptionRange,
     type TimeSlot,
 } from "./availability";
+
+describe("rangesOverlap", () => {
+    it("returns false for disjoint ranges", () => {
+        expect(
+            rangesOverlap({ start: 0, end: 60 }, { start: 60, end: 120 })
+        ).toBe(false);
+    });
+
+    it("returns true when ranges partially overlap", () => {
+        expect(
+            rangesOverlap({ start: 0, end: 60 }, { start: 30, end: 90 })
+        ).toBe(true);
+    });
+
+    it("returns true when one range fully contains the other", () => {
+        expect(
+            rangesOverlap({ start: 0, end: 120 }, { start: 30, end: 60 })
+        ).toBe(true);
+    });
+});
 
 describe("subtractOne", () => {
     it("returns the slot unchanged when there is no overlap", () => {

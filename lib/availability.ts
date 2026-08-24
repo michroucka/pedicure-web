@@ -22,6 +22,10 @@ export function toExceptionRange(exception: Exception): TimeSlot {
     return { start: exception.start, end: exception.end };
 }
 
+export function rangesOverlap(a: TimeSlot, b: TimeSlot): boolean {
+    return a.start < b.end && b.start < a.end;
+}
+
 export function subtractOne(s: TimeSlot, blocked: TimeSlot): TimeSlot[] {
     const overlapStart: number = Math.max(s.start, blocked.start);
     const overlapEnd: number = Math.min(s.end, blocked.end);

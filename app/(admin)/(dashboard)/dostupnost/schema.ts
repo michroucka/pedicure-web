@@ -55,3 +55,17 @@ export const exceptionSchema = z.discriminatedUnion("kind", [
 ]);
 
 export type ExceptionFormData = z.infer<typeof exceptionSchema>;
+export type ExceptionKind = ExceptionFormData["kind"];
+
+export const editExceptionSchema = z
+    .object({
+        id: z.string().min(1),
+        startTime: z.string().regex(TIME_RE, "Neplatný čas"),
+        endTime: z.string().regex(TIME_RE, "Neplatný čas"),
+    })
+    .refine((e) => e.startTime < e.endTime, {
+        message: "Konec musí být po začátku",
+        path: ["endTime"],
+    });
+
+export type EditExceptionFormData = z.infer<typeof editExceptionSchema>;

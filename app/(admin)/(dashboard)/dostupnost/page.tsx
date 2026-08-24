@@ -40,9 +40,9 @@ export default async function AvailabilityPage() {
     }));
 
     return (
-        <div className="mx-auto max-w-lg p-4">
+        <div className="mx-auto max-w-lg p-4 lg:max-w-3xl">
             <Tabs defaultValue="exceptions">
-                <TabsList className="mb-4 w-full">
+                <TabsList className="mb-4 w-full max-w-md self-center">
                     <TabsTrigger
                         value="exceptions"
                         className="py-2 text-base"

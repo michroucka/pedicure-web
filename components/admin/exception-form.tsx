@@ -4,6 +4,7 @@ import { useState, useTransition, type ComponentProps } from "react";
 import { format, addDays } from "date-fns";
 import { cs } from "date-fns/locale";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar.tsx";
+import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
@@ -12,7 +13,8 @@ import {
     CalendarOff,
     Clock,
     CalendarPlus,
-    Trash2,
+    Pencil,
+    Trash2, X, Check,
 } from "lucide-react";
 import {
     cn,
@@ -24,13 +26,14 @@ import {
 import {
     createException,
     deleteException,
+    updateException,
     checkExceptionConflicts,
     type ExceptionConflict,
 } from "@/app/(admin)/(dashboard)/dostupnost/actions.ts";
+import type { ExceptionKind as Kind } from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
 import type { AvailabilityException } from "@/lib/generated/prisma/client";
 import type { DayButton } from "react-day-picker";
-
-type Kind = "BLOCKED_ALL_DAY" | "BLOCKED_PARTIAL" | "EXTRA_OPEN";
+import { Spinner } from "@/components/ui/spinner.tsx"
 
 const KIND_OPTIONS: { kind: Kind; label: string; icon: typeof CalendarOff }[] =
     [
@@ -117,6 +120,12 @@ export function ExceptionForm({
     const [isPending, startTransition] = useTransition();
     const [isDeleting, startDeleteTransition] = useTransition();
 
+    const [editingId, setEditingId] = useState<string>();
+    const [editStartTime, setEditStartTime] = useState("");
+    const [editEndTime, setEditEndTime] = useState("");
+    const [editError, setEditError] = useState<string>();
+    const [isEditPending, startEditTransition] = useTransition();
+
     const minDate = addDays(toUtcMidnight(new Date()), 1);
 
     const exceptionsByDate = new Map<number, AvailabilityException[]>();
@@ -148,6 +157,41 @@ export function ExceptionForm({
     function updateDate(d: Date | undefined) {
         setDate(d);
         setConflicts(null);
+        setEditingId(undefined);
+    }
+
+    function startEdit(exception: AvailabilityException) {
+        setEditingId(exception.id);
+        setEditStartTime(formatTime(exception.startTime!));
+        setEditEndTime(formatTime(exception.endTime!));
+        setEditError(undefined);
+    }
+
+    function cancelEdit() {
+        setEditingId(undefined);
+        setEditError(undefined);
+    }
+
+    function saveEdit() {
+        if (!editingId) return;
+        if (editStartTime >= editEndTime) {
+            setEditError("Konec musí být po začátku.");
+            return;
+        }
+        setEditError(undefined);
+
+        startEditTransition(async () => {
+            const result = await updateException({
+                id: editingId,
+                startTime: editStartTime,
+                endTime: editEndTime,
+            });
+            if (!result.ok) {
+                setEditError(result.error);
+                return;
+            }
+            setEditingId(undefined);
+        });
     }
 
     function updateKind(k: Kind) {
@@ -199,157 +243,292 @@ export function ExceptionForm({
                 }
             }
 
-            await createException(payload);
+            const result = await createException(payload);
+            if (!result.ok) {
+                setError(result.error);
+                return;
+            }
             setDate(undefined);
             setConflicts(null);
         });
     }
 
     return (
-        <div className="flex flex-col gap-3">
-            <Calendar
-                mode="single"
-                locale={cs}
-                selected={date}
-                onSelect={updateDate}
-                disabled={(day) =>
-                    toUtcMidnight(day).getTime() < minDate.getTime()
-                }
-                modifiers={modifiers}
-                components={{ DayButton: ExceptionDayButton }}
-                className="w-full bg-transparent"
-                fixedWeeks
-            />
+        <Card>
+            <CardContent className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+                <Calendar
+                    mode="single"
+                    locale={cs}
+                    selected={date}
+                    onSelect={updateDate}
+                    disabled={(day) =>
+                        toUtcMidnight(day).getTime() < minDate.getTime()
+                    }
+                    modifiers={modifiers}
+                    components={{ DayButton: ExceptionDayButton }}
+                    className="w-full bg-transparent"
+                    fixedWeeks
+                />
 
-            {date && (
-                <>
-                    {existingForDate.length > 0 && (
-                        <div className="flex flex-col gap-2 mb-4">
-                            {existingForDate.map((exception) => (
-                                <div
-                                    key={exception.id}
-                                    className="flex items-center gap-2 px-3"
-                                >
-                                    <span
-                                        className={cn(
-                                            "h-6 w-1 shrink-0 rounded-full",
-                                            exceptionColorClass(exception)
-                                        )}
-                                    />
-                                    <span className="flex-1 text-sm">
-                                        {exceptionLabel(exception)}
-                                    </span>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        disabled={isDeleting}
-                                        onClick={() =>
-                                            startDeleteTransition(async () => {
-                                                await deleteException(
-                                                    exception.id
-                                                );
-                                            })
-                                        }
-                                    >
-                                        <Trash2 className="size-4 text-destructive" />
-                                    </Button>
+                <div className="flex flex-col gap-3">
+                    {!date ? (
+                        <p className="text-sm text-muted-foreground">
+                            Vyber datum v kalendáři.
+                        </p>
+                    ) : (
+                        <>
+                            {existingForDate.length > 0 && (
+                                <div className="mb-4 flex flex-col gap-2">
+                                    {existingForDate.map((exception) =>
+                                        editingId === exception.id ? (
+                                            <div
+                                                key={exception.id}
+                                                className="flex flex-col gap-2 px-3"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Input
+                                                        type="time"
+                                                        step="900"
+                                                        lang="cs"
+                                                        className="w-auto"
+                                                        value={editStartTime}
+                                                        onChange={(e) =>
+                                                            setEditStartTime(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        onBlur={(e) =>
+                                                            setEditStartTime(
+                                                                roundToQuarterHour(
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            )
+                                                        }
+                                                    />
+                                                    <span className="text-muted-foreground">
+                                                        –
+                                                    </span>
+                                                    <Input
+                                                        type="time"
+                                                        step="900"
+                                                        lang="cs"
+                                                        className="w-auto"
+                                                        value={editEndTime}
+                                                        onChange={(e) =>
+                                                            setEditEndTime(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        onBlur={(e) =>
+                                                            setEditEndTime(
+                                                                roundToQuarterHour(
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            )
+                                                        }
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        size="icon-lg"
+                                                        variant="ghost"
+                                                        disabled={
+                                                            isEditPending
+                                                        }
+                                                        onClick={cancelEdit}
+                                                    >
+                                                        <X className="size-5" />
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        size="icon-lg"
+                                                        variant="ghost"
+                                                        disabled={
+                                                            isEditPending
+                                                        }
+                                                        onClick={saveEdit}
+                                                    >
+                                                        {isEditPending ? (
+                                                            <Spinner className="size-5" />
+                                                        ) : (
+                                                            <Check className="size-5 text-success-foreground" />
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                                {editError && (
+                                                    <Alert variant="destructive">
+                                                        <AlertCircle />
+                                                        <AlertTitle>
+                                                            {editError}
+                                                        </AlertTitle>
+                                                    </Alert>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div
+                                                key={exception.id}
+                                                className="flex items-center gap-2 px-3"
+                                            >
+                                                <span
+                                                    className={cn(
+                                                        "h-6 w-1 shrink-0 rounded-full",
+                                                        exceptionColorClass(
+                                                            exception
+                                                        )
+                                                    )}
+                                                />
+                                                <span className="flex-1 text-sm">
+                                                    {exceptionLabel(exception)}
+                                                </span>
+                                                {exception.startTime !==
+                                                    null && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon-sm"
+                                                        disabled={isDeleting}
+                                                        onClick={() =>
+                                                            startEdit(
+                                                                exception
+                                                            )
+                                                        }
+                                                    >
+                                                        <Pencil className="size-4" />
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    disabled={isDeleting}
+                                                    onClick={() =>
+                                                        startDeleteTransition(
+                                                            async () => {
+                                                                await deleteException(
+                                                                    exception.id
+                                                                );
+                                                            }
+                                                        )
+                                                    }
+                                                >
+                                                    <Trash2 className="size-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        )
+                                    )}
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            )}
 
-                    <div className="grid grid-cols-3 gap-2">
-                        {KIND_OPTIONS.map(({ kind: k, label, icon: Icon }) => (
+                            <div className="grid grid-cols-3 gap-2">
+                                {KIND_OPTIONS.map(
+                                    ({ kind: k, label, icon: Icon }) => (
+                                        <Button
+                                            key={k}
+                                            type="button"
+                                            variant={
+                                                kind === k
+                                                    ? "default"
+                                                    : "outline"
+                                            }
+                                            onClick={() => updateKind(k)}
+                                        >
+                                            <Icon className="size-4" />
+                                            {label}
+                                        </Button>
+                                    )
+                                )}
+                            </div>
+
+                            {kind !== "BLOCKED_ALL_DAY" && (
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        type="time"
+                                        step="900"
+                                        lang="cs"
+                                        className="w-auto"
+                                        value={startTime}
+                                        onChange={(e) =>
+                                            updateStartTime(e.target.value)
+                                        }
+                                        onBlur={(e) =>
+                                            updateStartTime(
+                                                roundToQuarterHour(
+                                                    e.target.value
+                                                )
+                                            )
+                                        }
+                                    />
+                                    <span className="text-muted-foreground">
+                                        –
+                                    </span>
+                                    <Input
+                                        type="time"
+                                        step="900"
+                                        lang="cs"
+                                        className="w-auto"
+                                        value={endTime}
+                                        onChange={(e) =>
+                                            updateEndTime(e.target.value)
+                                        }
+                                        onBlur={(e) =>
+                                            updateEndTime(
+                                                roundToQuarterHour(
+                                                    e.target.value
+                                                )
+                                            )
+                                        }
+                                    />
+                                </div>
+                            )}
+
+                            {error && (
+                                <Alert variant="destructive">
+                                    <AlertCircle />
+                                    <AlertTitle>{error}</AlertTitle>
+                                </Alert>
+                            )}
+
+                            {conflicts && conflicts.length > 0 && (
+                                <Alert variant="warning">
+                                    <AlertCircle />
+                                    <AlertTitle>
+                                        V tomto termínu{" "}
+                                        {conflicts.length > 1
+                                            ? "jsou"
+                                            : "je"}{" "}
+                                        rezervace
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        {conflicts.map((c, i) => (
+                                            <div key={i}>
+                                                {c.clientName} •{" "}
+                                                {formatTime(c.startTime)}–
+                                                {formatTime(c.endTime)}
+                                            </div>
+                                        ))}
+                                        Rezervaci je potřeba zrušit nebo
+                                        přesunout ručně.
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
                             <Button
-                                key={k}
                                 type="button"
                                 size="lg"
-                                variant={kind === k ? "default" : "outline"}
-                                onClick={() => updateKind(k)}
+                                disabled={isPending}
+                                onClick={submit}
                             >
-                                <Icon className="size-4" />
-                                {label}
+                                {isPending
+                                    ? "Ukládám…"
+                                    : conflicts && conflicts.length > 0
+                                      ? "Přesto uložit"
+                                      : "Přidat výjimku"}
                             </Button>
-                        ))}
-                    </div>
-
-                    {kind !== "BLOCKED_ALL_DAY" && (
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="time"
-                                step="900"
-                                lang="cs"
-                                className="w-auto"
-                                value={startTime}
-                                onChange={(e) =>
-                                    updateStartTime(e.target.value)
-                                }
-                                onBlur={(e) =>
-                                    updateStartTime(
-                                        roundToQuarterHour(e.target.value)
-                                    )
-                                }
-                            />
-                            <span className="text-muted-foreground">–</span>
-                            <Input
-                                type="time"
-                                step="900"
-                                lang="cs"
-                                className="w-auto"
-                                value={endTime}
-                                onChange={(e) => updateEndTime(e.target.value)}
-                                onBlur={(e) =>
-                                    updateEndTime(
-                                        roundToQuarterHour(e.target.value)
-                                    )
-                                }
-                            />
-                        </div>
+                        </>
                     )}
-
-                    {error && (
-                        <Alert variant="destructive">
-                            <AlertCircle />
-                            <AlertTitle>{error}</AlertTitle>
-                        </Alert>
-                    )}
-
-                    {conflicts && conflicts.length > 0 && (
-                        <Alert variant="warning">
-                            <AlertCircle />
-                            <AlertTitle>
-                                V tomto termínu{" "}
-                                {conflicts.length > 1 ? "jsou" : "je"} rezervace
-                            </AlertTitle>
-                            <AlertDescription>
-                                {conflicts.map((c, i) => (
-                                    <div key={i}>
-                                        {c.clientName} •{" "}
-                                        {formatTime(c.startTime)}–
-                                        {formatTime(c.endTime)}
-                                    </div>
-                                ))}
-                                Rezervaci je potřeba zrušit nebo přesunout
-                                ručně.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-
-                    <Button
-                        type="button"
-                        size="lg"
-                        disabled={isPending}
-                        onClick={submit}
-                    >
-                        {isPending
-                            ? "Ukládám…"
-                            : conflicts && conflicts.length > 0
-                              ? "Přesto uložit"
-                              : "Přidat výjimku"}
-                    </Button>
-                </>
-            )}
-        </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
