@@ -192,7 +192,7 @@ export function AddBookingDialog({
                     <Button
                         type="button"
                         size="icon-xl"
-                        className="fixed right-4 bottom-22 z-10 rounded-full shadow-lg"
+                        className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 rounded-full shadow-lg"
                         onClick={() => {
                             reset();
                             setOpen(true);
