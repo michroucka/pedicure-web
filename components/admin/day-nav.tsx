@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useState, useTransition, type ReactNode } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { format, addDays, getISOWeek } from "date-fns";
 import { cs } from "date-fns/locale";
 import { Button } from "@/components/ui/button.tsx";
@@ -11,58 +11,48 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
-import {
-    Calendar1,
-    CalendarDays,
-    ChevronLeft,
-    ChevronRight,
-} from "lucide-react";
-import { toUtcMidnight } from "@/lib/utils.ts";
+import { Spinner } from "@/components/ui/spinner.tsx";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn, toUtcMidnight } from "@/lib/utils.ts";
 
-export function DayNav({
+// No more Den/Týden toggle — which one is visible is decided purely by the
+// lg breakpoint (className below), same as everywhere else this app splits
+// mobile/tablet-portrait from tablet-landscape/desktop. Both nav bars (and
+// both timelines in kalendar/page.tsx) render every time; CSS just hides
+// one of them. That avoids the old client-side matchMedia + router.replace
+// dance, which meant a visible flash from day to week on wide screens after
+// hydration.
+function NavBar({
     date,
-    view,
-    weekStart,
-    weekEnd,
+    step,
+    label,
+    className,
 }: {
     date: Date;
-    view: "day" | "week";
-    weekStart?: Date;
-    weekEnd?: Date;
+    step: number;
+    label: ReactNode;
+    className?: string;
 }) {
     const router = useRouter();
     const pathname = usePathname();
-    const searchParams = useSearchParams();
     const [open, setOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
-    // On a bare /admin visit (no params at all yet), default to Week on
-    // tablet-landscape/desktop and Day on mobile — matches the same lg
-    // breakpoint the Den/Týden toggle itself is gated behind.
-    useEffect(() => {
-        if (searchParams.size > 0) return;
-        if (window.matchMedia("(min-width: 1024px)").matches) {
-            router.replace(`${pathname}?view=week`);
-        }
-    }, [searchParams, pathname, router]);
-
-    function goTo(d: Date, nextView: "day" | "week" = view) {
-        const params = new URLSearchParams({
-            date: format(d, "yyyy-MM-dd"),
-            view: nextView,
+    function goTo(d: Date) {
+        const params = new URLSearchParams({ date: format(d, "yyyy-MM-dd") });
+        startTransition(() => {
+            router.push(`${pathname}?${params.toString()}`);
         });
-        router.push(`${pathname}?${params.toString()}`);
     }
 
-    const step = view === "week" ? 7 : 1;
-    const isToday = date.getTime() === toUtcMidnight(new Date()).getTime();
-
     return (
-        <div className="px-4 py-2">
+        <div className={cn("px-4 py-2", className)}>
             <div className="flex items-center justify-between gap-2">
                 <Button
                     type="button"
                     variant="outline"
                     size="icon"
+                    disabled={isPending}
                     onClick={() => goTo(addDays(date, -step))}
                 >
                     <ChevronLeft className="size-4" />
@@ -77,66 +67,21 @@ export function DayNav({
                             type="button"
                             variant="ghost"
                             className="h-auto flex-col gap-0 py-1"
+                            disabled={isPending}
                         >
-                            {view === "day" ? (
-                                <>
-                                    <span className="text-xs text-muted-foreground">
-                                        {isToday
-                                            ? "Dnes"
-                                            : format(date, "EEEE", {
-                                                  locale: cs,
-                                              })}
-                                    </span>
-                                    <span className="font-semibold">
-                                        {format(date, "d. MMMM yyyy", {
-                                            locale: cs,
-                                        })}
-                                    </span>
-                                </>
+                            {isPending ? (
+                                <Spinner className="size-5" />
                             ) : (
-                                <>
-                                    <span className="text-xs text-muted-foreground">
-                                        {weekStart &&
-                                            `${getISOWeek(weekStart)}. týden`}
-                                    </span>
-                                    <span className="font-semibold">
-                                        {weekStart && format(weekStart, "d.")} –{" "}
-                                        {weekEnd &&
-                                            format(weekEnd, "d. MMMM yyyy", {
-                                                locale: cs,
-                                            })}
-                                    </span>
-                                </>
+                                label
                             )}
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="flex w-auto flex-col gap-2 p-2">
-                        <div className="hidden grid-cols-2 gap-2 lg:grid">
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant={view === "day" ? "default" : "outline"}
-                                onClick={() => goTo(date, "day")}
-                            >
-                                <Calendar1 className="size-4" />
-                                Den
-                            </Button>
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant={
-                                    view === "week" ? "default" : "outline"
-                                }
-                                onClick={() => goTo(date, "week")}
-                            >
-                                <CalendarDays className="size-4" />
-                                Týden
-                            </Button>
-                        </div>
+                    <PopoverContent className="w-auto p-2">
                         <Calendar
                             mode="single"
                             locale={cs}
                             selected={date}
+                            defaultMonth={date}
                             onSelect={(d) => {
                                 if (!d) return;
                                 goTo(d);
@@ -151,11 +96,62 @@ export function DayNav({
                     type="button"
                     variant="outline"
                     size="icon"
+                    disabled={isPending}
                     onClick={() => goTo(addDays(date, step))}
                 >
                     <ChevronRight className="size-4" />
                 </Button>
             </div>
         </div>
+    );
+}
+
+export function DayNav({
+    date,
+    weekStart,
+    weekEnd,
+}: {
+    date: Date;
+    weekStart: Date;
+    weekEnd: Date;
+}) {
+    const isToday = date.getTime() === toUtcMidnight(new Date()).getTime();
+
+    return (
+        <>
+            <NavBar
+                date={date}
+                step={1}
+                className="md:hidden"
+                label={
+                    <>
+                        <span className="text-xs text-muted-foreground">
+                            {isToday
+                                ? "Dnes"
+                                : format(date, "EEEE", { locale: cs })}
+                        </span>
+                        <span className="font-semibold">
+                            {format(date, "d. MMMM yyyy", { locale: cs })}
+                        </span>
+                    </>
+                }
+            />
+            <NavBar
+                date={date}
+                step={7}
+                className="hidden md:block"
+                label={
+                    <>
+                        <span className="text-xs text-muted-foreground">
+                            {getISOWeek(weekStart)}. týden
+                        </span>
+                        <span className="font-semibold">
+                            {format(weekStart, "d.")} –{" "}
+                            {format(weekEnd, "d. MMMM yyyy", { locale: cs })}
+                        </span>
+                    </>
+                }
+            />
+        </>
     );
 }
