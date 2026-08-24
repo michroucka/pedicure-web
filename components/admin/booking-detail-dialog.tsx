@@ -30,6 +30,7 @@ import {
     InputGroupText,
 } from "@/components/ui/input-group.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
+import { Spinner } from "@/components/ui/spinner.tsx";
 import {
     AlertCircle,
     Phone,
@@ -82,6 +83,7 @@ export function BookingDetailDialog({
     const [qrAmount, setQrAmount] = useState("");
     const [error, setError] = useState<string>();
     const [isPending, startTransition] = useTransition();
+    const [isLoadingSlots, startSlotsTransition] = useTransition();
 
     function reset() {
         setMode("detail");
@@ -162,7 +164,7 @@ export function BookingDetailDialog({
         setCustomTime(false);
         setCustomTimeValue("");
         if (!d || !booking) return;
-        startTransition(async () => {
+        startSlotsTransition(async () => {
             const slots = await getMoveSlotsAction(
                 booking.id,
                 booking.groupId,
@@ -365,6 +367,11 @@ export function BookingDetailDialog({
                                         >
                                             <X className="size-4" />
                                         </Button>
+                                    </div>
+                                ) : isLoadingSlots ? (
+                                    <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                                        <Spinner className="size-4" />
+                                        Načítám dostupné termíny…
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-4 gap-2">
