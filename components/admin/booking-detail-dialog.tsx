@@ -45,7 +45,6 @@ import {
 import {
     formatTime,
     toUtcMidnight,
-    normalizePhoneForMatch,
     toTelHref,
 } from "@/lib/utils.ts";
 import {
@@ -134,23 +133,17 @@ export function BookingDetailDialog({
         setQrAmount(String(amount));
     }
 
-    const qrMessage =
-        qrTarget === QR_TOTAL
-            ? groupBookings[0].client.name
-            : (groupBookings.find((b) => b.id === qrTarget)?.client.name ??
-              groupBookings[0].client.name);
-
     const qrAmountValue = Number(qrAmount);
     const qrUrl =
         qrAmountValue > 0
             ? `https://api.paylibo.com/paylibo/generator/czech/image?${new URLSearchParams(
                   {
+                      accountPrefix: process.env.NEXT_PUBLIC_BANK_PREFIX ?? "",
                       accountNumber: process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "",
                       bankCode: process.env.NEXT_PUBLIC_BANK_CODE ?? "",
                       amount: qrAmount,
                       currency: "CZK",
-                      vs: normalizePhoneForMatch(booking.client.phone),
-                      message: qrMessage,
+                      message: "Pedikúra",
                       size: "300",
                       branding: "false",
                   }
