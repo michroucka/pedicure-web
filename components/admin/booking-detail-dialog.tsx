@@ -474,7 +474,11 @@ export function BookingDetailDialog({
                                     }
                                     onClick={confirmMove}
                                 >
-                                    <Check className="size-4" />
+                                    {isPending ? (
+                                        <Spinner className="size-4" />
+                                    ) : (
+                                        <Check className="size-4" />
+                                    )}
                                     {isPending
                                         ? "Přesouvám…"
                                         : "Potvrdit přesun"}

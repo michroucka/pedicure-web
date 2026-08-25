@@ -14,7 +14,7 @@ import {
 import { cs } from "date-fns/locale";
 import { cn, toUtcMidnight } from "@/lib/utils";
 import { getAvailableDaysAction } from "@/app/rezervace/actions.ts";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner.tsx";
 
 // Fetched once per service selection instead of once per visible month —
 // browsing a few months back/forth then costs zero extra round-trips.
@@ -112,7 +112,7 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
         <div>
             {isLoading && (
                 <div className="mb-2 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="size-4 animate-spin" />
+                    <Spinner className="size-4" />
                     Načítání dostupných termínů…
                 </div>
             )}

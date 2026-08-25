@@ -6,7 +6,8 @@ import { getAvailableSlotsAction } from "@/app/rezervace/actions.ts";
 import { formatTime } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
-import { AlertCircle, CalendarX, Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner.tsx";
+import { AlertCircle, CalendarX } from "lucide-react";
 
 export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void }) {
     const [availableSlots, setAvailableSlots] = useState<number[]>();
@@ -84,7 +85,7 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
             )}
             {isLoading ? (
                 <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
-                    <Loader2 className="size-6 animate-spin" />
+                    <Spinner className="size-6" />
                     Načítání dostupných termínů…
                 </div>
             ) : availableSlots?.length === 0 ? (

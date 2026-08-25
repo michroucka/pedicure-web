@@ -15,6 +15,7 @@ import {
 } from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
+import { Spinner } from "@/components/ui/spinner.tsx";
 import { roundToQuarterHour } from "@/lib/utils.ts";
 import { Plus, Trash2, Save } from "lucide-react";
 
@@ -166,7 +167,11 @@ export function AvailabilityForm({
                 className="mt-2"
                 size="lg"
             >
-                <Save className="size-4" />
+                {isSaving ? (
+                    <Spinner className="size-4" />
+                ) : (
+                    <Save className="size-4" />
+                )}
                 {isSaving ? "Ukládám…" : "Uložit"}
             </Button>
         </form>

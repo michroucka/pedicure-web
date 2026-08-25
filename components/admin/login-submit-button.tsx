@@ -2,7 +2,8 @@
 
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button.tsx";
-import { LogIn, Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner.tsx";
+import { LogIn } from "lucide-react";
 
 export function LoginSubmitButton() {
     const { pending } = useFormStatus();
@@ -14,7 +15,7 @@ export function LoginSubmitButton() {
             disabled={pending}
         >
             {pending ? (
-                <Loader2 className="size-4 animate-spin" />
+                <Spinner className="size-4" />
             ) : (
                 <LogIn className="size-4" />
             )}

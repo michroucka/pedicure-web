@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { Spinner } from "@/components/ui/spinner.tsx";
 import { Check, Mail, Phone, StickyNote, UserRound } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/utils.ts";
 import { updateClientAction } from "@/app/(admin)/(dashboard)/klienti/actions.ts";
@@ -164,7 +165,11 @@ export function ClientEditDialog({
                         disabled={isPending}
                         onClick={submit}
                     >
-                        <Check className="size-4" />
+                        {isPending ? (
+                            <Spinner className="size-4" />
+                        ) : (
+                            <Check className="size-4" />
+                        )}
                         {isPending ? "Ukládám…" : "Uložit"}
                     </Button>
                 </DialogFooter>

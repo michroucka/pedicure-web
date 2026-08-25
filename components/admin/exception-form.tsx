@@ -519,6 +519,7 @@ export function ExceptionForm({
                                 disabled={isPending}
                                 onClick={submit}
                             >
+                                {isPending && <Spinner className="size-4" />}
                                 {isPending
                                     ? "Ukládám…"
                                     : conflicts && conflicts.length > 0
