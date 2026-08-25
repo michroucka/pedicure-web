@@ -7,3 +7,10 @@ export async function cancelBooking(id: string): Promise<Booking> {
         data: { status: "CANCELLED" },
     });
 }
+
+export async function cancelGroupBooking(groupId: string): Promise<void> {
+    await prisma.booking.updateMany({
+        where: { groupId, status: "CONFIRMED" },
+        data: { status: "CANCELLED" },
+    });
+}

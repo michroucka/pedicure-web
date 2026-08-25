@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { groupSchema } from "@/app/rezervace/schema.ts";
@@ -14,17 +14,12 @@ import {
     FieldLegend,
     FieldSet,
     FieldSeparator,
-    FieldContent,
-    FieldTitle,
-    FieldDescription,
 } from "@/components/ui/field.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { PhoneInput } from "@/components/phone-input.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { Checkbox } from "@/components/ui/checkbox.tsx";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert.tsx";
 import {
-    BellRing,
     Check,
     ChevronLeft,
     Info,
@@ -61,7 +56,6 @@ export function GroupBookingForm({
     } = useForm<GroupFormData>({
         resolver: zodResolver(groupSchema),
         mode: "onChange",
-        defaultValues: { reminderRequested: false },
     });
 
     const names = useWatch({ control, name: "names" });
@@ -187,35 +181,7 @@ export function GroupBookingForm({
                 </Alert>
             )}
 
-            <FieldLabel
-                htmlFor="reminderRequested"
-                className="my-6"
-            >
-                <Field orientation="horizontal">
-                    <Controller
-                        name="reminderRequested"
-                        control={control}
-                        render={({ field }) => (
-                            <Checkbox
-                                id="reminderRequested"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                        )}
-                    />
-                    <FieldContent>
-                        <FieldTitle>
-                            <BellRing className="size-4" />
-                            Ranní připomínka
-                        </FieldTitle>
-                        <FieldDescription>
-                            Pošleme e-mailem ráno v den rezervace.
-                        </FieldDescription>
-                    </FieldContent>
-                </Field>
-            </FieldLabel>
-
-            <div className="flex justify-between pb-6">
+            <div className="mt-6 flex justify-between pb-6">
                 <Button
                     variant="outline"
                     size="lg"

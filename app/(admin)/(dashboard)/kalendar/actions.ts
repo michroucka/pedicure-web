@@ -163,8 +163,7 @@ export async function createManualBookingAction(input: {
                 })),
                 date,
                 input.startTime,
-                input.source,
-                false
+                input.source
             );
         }
     } catch (error) {

@@ -9,6 +9,7 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
+import { sendBookingConfirmationEmail } from "@/lib/send-booking-confirmation-email.ts";
 
 // Builds the redirect back to the slot picker when a chosen slot can't be
 // booked. Distinguishes two causes so the message (and the slot list itself,
@@ -42,12 +43,11 @@ async function buildSlotConflictRedirect(
 
 export async function submitBooking(
     context: { date: Date; serviceId: number; startTime: number },
-    data: { name: string; phone: string; email: string; reminderRequested: boolean }
+    data: { name: string; phone: string; email: string }
 ) {
     const name = data.name;
     const phone = data.phone;
     const email = data.email;
-    const reminderRequested = data.reminderRequested;
     const client = await findOrCreateClient(phone, name, email);
 
     const valid = await getAvailableSlots(context.date, [context.serviceId], client.extraTimeMinutes);
@@ -75,8 +75,14 @@ export async function submitBooking(
             startTime,
             source,
             extraTimeMinutes: client.extraTimeMinutes,
-            reminderRequested,
         });
+
+        const bookingWithRelations = await prisma.booking.findUniqueOrThrow({
+            where: { id: booking.id },
+            include: { client: true, service: true },
+        });
+        await sendBookingConfirmationEmail([bookingWithRelations]);
+
         redirect(`/rezervace/confirmed?id=${booking.id}`);
     } catch (error) {
         if (
@@ -99,11 +105,10 @@ export async function submitBooking(
 
 export async function submitGroupBooking(
     context: { date: Date; serviceIds: number[]; startTime: number },
-    data: { names: string[]; phone: string; email: string; reminderRequested: boolean }
+    data: { names: string[]; phone: string; email: string }
 ) {
     const phone = data.phone;
     const email = data.email;
-    const reminderRequested = data.reminderRequested;
     const names = context.serviceIds.map((_, i) => data.names[i]);
 
     const clients = await Promise.all(
@@ -136,8 +141,15 @@ export async function submitGroupBooking(
             context.date,
             context.startTime,
             "ONLINE",
-            reminderRequested,
         )
+
+        const bookingsWithRelations = await prisma.booking.findMany({
+            where: { groupId: bookings[0].groupId },
+            include: { client: true, service: true },
+            orderBy: { startTime: "asc" },
+        });
+        await sendBookingConfirmationEmail(bookingsWithRelations);
+
         redirect(`/rezervace/confirmed?groupId=${bookings[0].groupId}`);
     } catch (error) {
         if (

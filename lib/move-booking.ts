@@ -71,7 +71,6 @@ export async function moveBooking(
                 date: newDate,
                 startTime: newStartTime,
                 source: booking.source,
-                reminderRequested: booking.reminderRequested,
                 extraTimeMinutes: booking.client.extraTimeMinutes,
             },
             tx
@@ -149,7 +148,6 @@ export async function moveGroupBooking(
                     startTime,
                     source: booking.source,
                     groupId,
-                    reminderRequested: booking.reminderRequested,
                     extraTimeMinutes: booking.client.extraTimeMinutes,
                 },
                 tx

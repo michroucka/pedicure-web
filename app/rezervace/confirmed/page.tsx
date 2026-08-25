@@ -5,7 +5,7 @@ import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { BellRing, CalendarDays, CheckCircle2, Clock, Mail, UserRound } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Mail, Smartphone, UserRound } from "lucide-react";
 import Link from "next/link";
 
 export default async function ConfirmedPage({
@@ -65,20 +65,25 @@ export default async function ConfirmedPage({
                     Potvrzovací e-mail jsme odeslali na{" "}
                     {bookings[0].client.email}.
                 </div>
-                {bookings[0].reminderRequested && (
-                    <div className="flex items-center gap-2">
-                        <BellRing className="size-4 shrink-0" />
-                        Ráno v den rezervace Vám pošleme e-mailem připomínku.
-                    </div>
-                )}
+                <div className="flex items-center gap-2">
+                    <Smartphone className="size-4 shrink-0" />
+                    Ráno v den rezervace Vám pošleme SMS připomínku.
+                </div>
             </div>
 
-            <Button
-                asChild
-                className="mt-6 w-full"
-            >
-                <Link href="/">Zpět na hlavní stránku</Link>
-            </Button>
+            <div className="mt-6 flex flex-col gap-2">
+                <Button asChild>
+                    <Link href="/">Zpět na hlavní stránku</Link>
+                </Button>
+                <Button
+                    asChild
+                    variant="outline"
+                >
+                    <Link href={`/rezervace/sprava/${bookings[0].cancelToken}`}>
+                        Zrušit nebo přesunout rezervaci
+                    </Link>
+                </Button>
+            </div>
         </div>
     );
 }

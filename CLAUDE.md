@@ -102,8 +102,9 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   volných slotů pro tohoto klienta), note, createdAt
 - `email` je v DB nepovinné (telefonické/osobní rezervace zadané
   pedikérkou nemusí email řešit) — ale online booking formulář ho
-  vyžaduje jako povinný, protože na něm stojí potvrzovací email, magic
-  link i připomínka
+  vyžaduje jako povinný, protože na něm stojí potvrzovací email i magic
+  link (ranní připomínka jde přes SMS na `phone`, ten je povinný vždy,
+  bez ohledu na `source`)
 
 **RecurringAvailability**
 - id, dayOfWeek, startTime, endTime
@@ -123,9 +124,6 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - source (`online` / `phone` / `in_person` — rezervace na příště domluvená
   přímo při návštěvě)
 - cancelToken (magic link)
-- reminderRequested (bool, default false — checkbox "poslat připomínku"
-  při vytváření rezervace; u skupinové rezervace jeden sdílený checkbox
-  za celou skupinu, ne per-osoba)
 - reminderSent (bool)
 - createdAt
 - Efektivní délka slotu = `service.durationMinutes + client.extraTimeMinutes`
@@ -142,20 +140,31 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   (date, startTime), insert selže při kolizi → klient dostane chybu a musí
   vybrat jiný slot. Ne aplikační mutex (Vercel = více instancí, nepomůže).
 - **Push pedikérce** při každé nové rezervaci
-- **Ranní cron** (Vercel Cron, denně) — push s rozpisem dne (časy od-do) +
-  proklik do kalendáře dne; email verze s plným rozpisem včetně jmen klientů
-- **Email klientovi** — potvrzení rezervace s magic linkem (zrušení/přesun)
-- **Připomínkový email** klientovi ráno v den rezervace (cron, volitelné —
-  checkbox `reminderRequested` při vytváření rezervace)
-- **Zrušení/přesun přes magic link** — max do 24h před termínem (server-side
-  kontrola, konstanta v kódu, ne DB pole). Tohle omezení platí jen pro
-  klienta přes magic link — admin (pedikérka) může rezervaci
-  zrušit/přesunout z admin rozhraní kdykoliv, bez 24h limitu
-  - Přesun = zrušit starý Booking + založit nový (ne editace in-place).
-    Implementováno zatím pro admin (`lib/move-booking.ts` —
-    `moveBooking` pro sólo, `moveGroupBooking` pro celou skupinu
-    najednou se zachováním `groupId`); magic-link verze pro klienta
-    zatím není postavená (další krok v plánu)
+- **Ranní cron** (Vercel Cron, denně) — push pedikérce s rozpisem dne
+  (časy od-do) + proklik do kalendáře dne; email verze s plným rozpisem
+  včetně jmen klientů
+- **Email klientovi** — potvrzení rezervace s magic linkem
+  (zrušení/přesun); postaveno přes Resend + `@react-email/components`
+  (`lib/send-booking-confirmation-email.ts`, `emails/`), voláno jen pro
+  `source: "online"` (telefonické/osobní rezervace se domlouvají přímo)
+- **Připomínková SMS** klientovi ráno v den rezervace (cron) — jde
+  automaticky u každé rezervace bez ohledu na zdroj, žádný opt-in
+  checkbox. Přes SMSManager.cz (`lib/sms.ts`, zatím neimplementováno)
+- **Zrušení/přesun přes magic link** — max do 24h před termínem, kontrola
+  přes `lib/booking-modification-window.ts`
+  (`canClientModifyBooking`, konstanta v kódu, ne DB pole). Tohle omezení
+  platí jen pro klienta přes magic link — admin (pedikérka) může
+  rezervaci zrušit/přesunout z admin rozhraní kdykoliv, bez 24h limitu.
+  Klientská stránka je `app/rezervace/sprava/[token]/`
+  (`ManageBooking` komponenta) — pro skupinovou rezervaci token kteréhokoli
+  člena spravuje celou skupinu najednou (`cancelGroupBooking`,
+  `moveGroupBooking`), stejná konvence jako v adminu
+  - Přesun = zrušit starý Booking + založit nový (ne editace in-place),
+    `lib/move-booking.ts` — `moveBooking` pro sólo, `moveGroupBooking`
+    pro celou skupinu najednou se zachováním `groupId`. Nový Booking má
+    nový `cancelToken` — po přesunu přes magic link je proto potřeba
+    klienta přesměrovat na `/rezervace/sprava/{novýToken}`, jinak by mu
+    starý odkaz přestal fungovat
 - **Skupinové rezervace** (matka+dcera apod.) — 2+ osob, navazující sloty,
   různé služby možné, `groupId` na Booking, každá osoba samostatný záznam.
   Kontaktní údaje (telefon, email) jsou jen jedny sdílené za celou

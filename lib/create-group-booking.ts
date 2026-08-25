@@ -11,8 +11,7 @@ export async function createGroupBooking(
     }[],
     date: Date,
     groupStart: number,
-    source: BookingSource,
-    reminderRequested: boolean
+    source: BookingSource
 ): Promise<Booking[]> {
     const bookings: Booking[] = [];
     const groupId: string = crypto.randomUUID();
@@ -29,7 +28,6 @@ export async function createGroupBooking(
                     source,
                     groupId,
                     extraTimeMinutes: person.extraTimeMinutes,
-                    reminderRequested,
                 },
                 tx
             );

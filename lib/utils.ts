@@ -5,13 +5,18 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-// Strips diacritics for accent-insensitive search ("cara" matches "Čára").
 // NFD decomposes accented chars into base + combining marks, which the
 // regex then removes (U+0300-U+036F is the Unicode combining diacritical
 // marks block).
+const COMBINING_MARKS = /[\u0300-\u036f]/g;
+
+export function stripDiacritics(value: string): string {
+    return value.normalize("NFD").replace(COMBINING_MARKS, "");
+}
+
+// For accent-insensitive search ("cara" matches "Čára").
 export function normalizeForSearch(value: string): string {
-    const COMBINING_MARKS = /[\u0300-\u036f]/g;
-    return value.normalize("NFD").replace(COMBINING_MARKS, "").toLowerCase();
+    return stripDiacritics(value).toLowerCase();
 }
 
 // Normalizes a Date to UTC midnight for its calendar day. `Booking.date` /
@@ -144,14 +149,18 @@ export function normalizePhoneForMatch(value: string): string {
         : digits;
 }
 
-// Builds a `tel:` href, adding the Czech country code when the stored
-// number doesn't already have one — some client records have it, some
-// don't, and `tel:` needs the full international form to dial correctly.
-export function toTelHref(value: string): string {
+// Adds the Czech country code when the stored number doesn't already have
+// one — some client records have it, some don't — and strips everything
+// else down to bare digits. E.164 without the leading `+`, which is what
+// both `tel:` hrefs and the SMSManager API expect.
+export function toE164(value: string): string {
     const digits = value.replace(/\D/g, "");
-    const withCountryCode =
-        digits.startsWith("420") && digits.length > 9
-            ? digits
-            : `420${digits}`;
-    return `tel:+${withCountryCode}`;
+    return digits.startsWith("420") && digits.length > 9
+        ? digits
+        : `420${digits}`;
+}
+
+// Builds a `tel:` href from a stored phone number — see toE164.
+export function toTelHref(value: string): string {
+    return `tel:+${toE164(value)}`;
 }

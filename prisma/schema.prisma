@@ -85,10 +85,15 @@ model Booking {
   groupId             String?
   source              BookingSource
   cancelToken         String          @unique
-  reminderRequested   Boolean         @default(false)
   reminderSent        Boolean         @default(false)
   createdAt           DateTime        @default(now())
-  @@unique([date, startTime])
+  // No @@unique([date, startTime]) here — a plain unique constraint would
+  // also apply to CANCELLED rows, permanently blocking that slot from ever
+  // being (re)booked again after one cancellation. Prisma's schema DSL
+  // can't express a partial/filtered unique index, so the real constraint
+  // (unique on date+startTime, but only WHERE status = 'CONFIRMED') is
+  // created by hand in a migration instead — see
+  // prisma/migrations/*_confirmed_only_slot_uniqueness.
 }
 
 model AdminUser {
