@@ -60,8 +60,8 @@ export function BookingConfirmationEmail({
                 <Container style={container}>
                     <Img
                         src={LOGO_URL}
-                        width="96"
-                        height="96"
+                        width="128"
+                        height="128"
                         alt="Pedikúra Kralovice"
                         style={logo}
                     />
