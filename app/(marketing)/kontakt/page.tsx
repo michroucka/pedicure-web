@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button.tsx";
-import { ArrowUpRight, Mail, MapPin, Phone, Star } from "lucide-react";
+import { Mail, MapPin, Phone, Star } from "lucide-react";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
+import Image from "next/image";
 
 export const metadata: Metadata = {
     title: "Kontakt",
@@ -16,7 +17,7 @@ export default function KontaktPage() {
         <section>
             <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 md:py-24">
                 <h1 className="italic">Kontakt</h1>
-                <p className="mt-4 max-w-prose text-base text-pretty leading-relaxed text-muted-foreground">
+                <p className="mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
                     Dopřejte svým nohám péči zkušených rukou. Ať už potřebujete
                     pravidelnou pedikúru, řešíte konkrétní problém, nebo si
                     chcete jednoduše dopřát chvíli pro sebe, budu se na vás
@@ -53,40 +54,51 @@ export default function KontaktPage() {
 
                 <div className="mt-6 overflow-hidden rounded-2xl border border-border">
                     <iframe
-                        src="https://mapy.com/s/basasacuha"
+                        src="https://mapy.com/cs/zakladni?x=13.4847511111&y=49.9803738889&z=17&source=firm&id=14057489&widgetFirmy=14057489&frame=1"
                         width="100%"
                         height={280}
                         style={{ border: "none", display: "block" }}
                     />
                 </div>
 
-                <a
-                    href="https://g.page/r/CdZJqS_7_oGNEBM/review"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group mt-6 flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
-                >
-                    <div
-                        className="flex shrink-0 gap-0.5"
-                        aria-hidden
-                    >
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                                key={i}
-                                className="size-4 fill-primary text-primary"
+                <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4">
+                    <div className="flex items-center gap-2">
+                        <Star className="size-4 shrink-0 text-primary" />
+                        <h5>Ohodnoťte nás</h5>
+                    </div>
+                    <div className="flex gap-2">
+                        <a
+                            href="https://g.page/r/CdZJqS_7_oGNEBM/review"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Ohodnotit na Googlu"
+                            className="flex size-11 items-center justify-center rounded-full bg-muted transition-colors hover:bg-primary/10"
+                        >
+                            <Image
+                                src="/google-logo.svg"
+                                alt="Google"
+                                width={32}
+                                height={32}
+                                className="size-6.5"
                             />
-                        ))}
+                        </a>
+                        <a
+                            href="https://www.firmy.cz/detail/14057489-nohy-v-cajku-pedikura-kralovice-kralovice.html#pridat-hodnoceni"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Ohodnotit na Firmy.cz"
+                            className="flex size-11 items-center justify-center rounded-full bg-muted transition-colors hover:bg-primary/10"
+                        >
+                            <Image
+                                src="/firmy-logo.svg"
+                                alt="Firmy.cz"
+                                width={32}
+                                height={32}
+                                className="size-5.5"
+                            />
+                        </a>
                     </div>
-                    <div className="min-w-0">
-                        <p className="text-sm font-medium text-card-foreground">
-                            Byli jste u nás?
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            Napište nám recenzi na Google
-                        </p>
-                    </div>
-                    <ArrowUpRight className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                </a>
+                </div>
 
                 {BOOKING_ENABLED && (
                     <div className="mt-8 flex justify-end">
