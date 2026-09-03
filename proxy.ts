@@ -30,8 +30,14 @@ import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 const MAIN_HOST = "pedikurakralovice.cz";
 const ADMIN_HOST = "admin.pedikurakralovice.cz";
 
-const ADMIN_PATHS = ["/kalendar", "/dostupnost", "/klienti", "/login"];
-const PROTECTED_PATHS = ["/kalendar", "/dostupnost", "/klienti"];
+const ADMIN_PATHS = [
+    "/kalendar",
+    "/dostupnost",
+    "/klienti",
+    "/login",
+    "/nastaveni",
+];
+const PROTECTED_PATHS = ["/kalendar", "/dostupnost", "/klienti", "/nastaveni"];
 
 function matchesPath(pathname: string, paths: string[]) {
     return paths.some(
@@ -46,7 +52,10 @@ const checkSession = auth((req: NextAuthRequest, _event: NextFetchEvent) => {
     return NextResponse.next();
 });
 
-export default async function proxy(request: NextRequest, event: NextFetchEvent) {
+export default async function proxy(
+    request: NextRequest,
+    event: NextFetchEvent
+) {
     const host = request.headers.get("host") ?? "";
     const { pathname } = request.nextUrl;
 

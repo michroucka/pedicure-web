@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+ import type { Metadata } from "next";
 import { auth, signIn } from "@/auth.ts";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
@@ -19,9 +19,9 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage({
     searchParams,
 }: {
-    searchParams: Promise<{ error?: string }>;
+    searchParams: Promise<{ error?: string; passwordChanged?: boolean }>;
 }) {
-    const { error } = await searchParams;
+    const { error, passwordChanged } = await searchParams;
 
     const session = await auth();
     if (session?.user) {
@@ -58,6 +58,18 @@ export default async function AdminLoginPage({
                             <AlertTitle>Přihlášení se nezdařilo</AlertTitle>
                             <AlertDescription>
                                 Zkontrolujte uživatelské jméno a heslo.
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    {passwordChanged && (
+                        <Alert
+                            variant="info"
+                            className="mb-4"
+                        >
+                            <AlertCircle />
+                            <AlertTitle>Heslo bylo úspěšně změněno</AlertTitle>
+                            <AlertDescription>
+                                Přihlaste se prosím znovu.
                             </AlertDescription>
                         </Alert>
                     )}
