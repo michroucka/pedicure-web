@@ -11,6 +11,8 @@ import { DayNav } from "@/components/admin/day-nav.tsx";
 import { DayTimeline } from "@/components/admin/day-timeline.tsx";
 import { WeekTimeline } from "@/components/admin/week-timeline.tsx";
 import { AddBookingDialog } from "@/components/admin/add-booking-dialog.tsx";
+import { QuickQrDialog } from "@/components/admin/quick-qr-dialog.tsx";
+import { FloatingActions } from "@/components/admin/floating-actions.tsx";
 
 export const metadata: Metadata = {
     title: "Kalendář",
@@ -100,12 +102,13 @@ export default async function AdminHomePage({
                 />
             </div>
 
-            <div className="mx-auto w-full max-w-lg">
+            <FloatingActions>
+                <QuickQrDialog />
                 <AddBookingDialog
                     services={services}
                     defaultDate={date}
                 />
-            </div>
+            </FloatingActions>
         </div>
     );
 }

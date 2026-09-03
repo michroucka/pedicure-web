@@ -193,7 +193,7 @@ export function AddBookingDialog({
                     <Button
                         type="button"
                         size="icon-xl"
-                        className="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 rounded-full shadow-lg"
+                        className="rounded-full shadow-lg"
                         onClick={() => {
                             reset();
                             setOpen(true);
@@ -385,7 +385,9 @@ export function AddBookingDialog({
                             people.every((p) => p.serviceId !== undefined) &&
                             (customTime ? (
                                 <div className="flex items-center gap-2">
-                                    <span className="font-medium">Vlastní čas:</span>
+                                    <span className="font-medium">
+                                        Vlastní čas:
+                                    </span>
                                     <Input
                                         type="time"
                                         value={customTimeValue}

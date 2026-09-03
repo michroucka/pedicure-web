@@ -23,13 +23,8 @@ import {
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupInput,
-    InputGroupText,
-} from "@/components/ui/input-group.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
+import { QrPayment } from "@/components/admin/qr-payment.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import {
     AlertCircle,
@@ -42,11 +37,7 @@ import {
     ArrowRightLeft,
     QrCode,
 } from "lucide-react";
-import {
-    formatTime,
-    toUtcMidnight,
-    toTelHref,
-} from "@/lib/utils.ts";
+import { formatTime, toUtcMidnight, toTelHref } from "@/lib/utils.ts";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
@@ -128,27 +119,10 @@ export function BookingDetailDialog({
         const amount =
             target === QR_TOTAL
                 ? groupBookings.reduce((sum, b) => sum + b.service.price, 0)
-                : (groupBookings.find((b) => b.id === target)?.service
-                      .price ?? 0);
+                : (groupBookings.find((b) => b.id === target)?.service.price ??
+                  0);
         setQrAmount(String(amount));
     }
-
-    const qrAmountValue = Number(qrAmount);
-    const qrUrl =
-        qrAmountValue > 0
-            ? `https://api.paylibo.com/paylibo/generator/czech/image?${new URLSearchParams(
-                  {
-                      accountPrefix: process.env.NEXT_PUBLIC_BANK_PREFIX ?? "",
-                      accountNumber: process.env.NEXT_PUBLIC_BANK_ACCOUNT ?? "",
-                      bankCode: process.env.NEXT_PUBLIC_BANK_CODE ?? "",
-                      amount: qrAmount,
-                      currency: "CZK",
-                      message: "Pedikúra",
-                      size: "300",
-                      branding: "false",
-                  }
-              ).toString()}`
-            : undefined;
 
     function pickMoveDate(d: Date | undefined) {
         setMoveDate(d);
@@ -258,9 +232,7 @@ export function BookingDetailDialog({
                                                 ? "default"
                                                 : "outline"
                                         }
-                                        onClick={() =>
-                                            selectQrTarget(QR_TOTAL)
-                                        }
+                                        onClick={() => selectQrTarget(QR_TOTAL)}
                                     >
                                         Celkem
                                     </Button>
@@ -284,41 +256,10 @@ export function BookingDetailDialog({
                                 </div>
                             )}
 
-                            {qrUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element -- dynamic external QR image, no benefit from next/image
-                                <img
-                                    src={qrUrl}
-                                    alt="QR platba"
-                                    className="mx-auto rounded-lg border"
-                                    width={240}
-                                    height={240}
-                                />
-                            ) : (
-                                <div
-                                    className="mx-auto flex items-center justify-center rounded-lg border text-center text-sm text-muted-foreground"
-                                    style={{ width: 240, height: 240 }}
-                                >
-                                    Zadejte částku.
-                                </div>
-                            )}
-
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="font-medium">Částka:</span>
-                                <InputGroup className="w-auto max-w-32">
-                                    <InputGroupInput
-                                        type="number"
-                                        inputMode="numeric"
-                                        value={qrAmount}
-                                        onChange={(e) =>
-                                            setQrAmount(e.target.value)
-                                        }
-                                        onFocus={(e) => e.target.select()}
-                                    />
-                                    <InputGroupAddon align="inline-end">
-                                        <InputGroupText>Kč</InputGroupText>
-                                    </InputGroupAddon>
-                                </InputGroup>
-                            </div>
+                            <QrPayment
+                                amount={qrAmount}
+                                onAmountChange={setQrAmount}
+                            />
                         </div>
                     ) : (
                         <div className="flex flex-col gap-3">
