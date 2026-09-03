@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type MouseEvent } from "react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import {
@@ -159,7 +159,8 @@ export function BookingDetailDialog({
         });
     }
 
-    function doCancel() {
+    function doCancel(e: MouseEvent) {
+        e.preventDefault();
         startTransition(async () => {
             await cancelBookingAction(booking!.id);
             close();
@@ -451,7 +452,12 @@ export function BookingDetailDialog({
                             onClick={doCancel}
                             variant="destructive"
                         >
-                            Zrušit rezervaci
+                            {isPending ? (
+                                <Spinner className="size-4" />
+                            ) : (
+                                <X className="size-4" />
+                            )}
+                            {isPending ? "Ruším…" : "Zrušit rezervaci"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
