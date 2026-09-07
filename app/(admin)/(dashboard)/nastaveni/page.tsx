@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button.tsx";
 import { LogoutButton } from "@/components/admin/logout-button.tsx";
 import { ChangePasswordForm } from "@/components/admin/change-password-form.tsx";
+import { PushSubscribeFlow } from "@/components/admin/push-subscribe-flow.tsx"
 
 export const metadata: Metadata = {
     title: "Nastavení",
@@ -48,6 +49,8 @@ export default function SettingsPage() {
                     </Button>
                 </CardContent>
             </Card>
+
+            <PushSubscribeFlow />
 
             <Card>
                 <CardHeader>

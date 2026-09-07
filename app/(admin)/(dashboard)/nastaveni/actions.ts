@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { auth, signOut } from "@/auth.ts";
 import { prisma } from "@/lib/prisma.ts";
+import { sendPushNotification } from "@/lib/send-push.ts";
 import argon2 from "argon2";
 
 const changePasswordSchema = z
@@ -51,4 +52,49 @@ export async function changePasswordAction(
     });
     await signOut({ redirectTo: "/login?passwordChanged=1" });
     return null;
+}
+
+export async function savePushSubscriptionAction({
+    endpoint,
+    p256dh,
+    auth: subAuth,
+    userAgent,
+}: {
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    userAgent?: string;
+}) {
+    const session = await auth();
+    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+
+    const admin = await prisma.adminUser.findUnique({
+        where: { username: session.user.name },
+    });
+    if (!admin) return { ok: false, error: "Účet nebyl nalezen." };
+
+    await prisma.pushSubscription.upsert({
+        where: { endpoint },
+        update: { p256dh, auth: subAuth, userAgent },
+        create: { adminUserId: admin.id, endpoint , p256dh , auth: subAuth, userAgent }
+    })
+}
+
+export async function deletePushSubscriptionAction(endpoint: string) {
+    const session = await auth();
+    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+
+    await prisma.pushSubscription.deleteMany({ where: { endpoint } });
+}
+
+export async function sendTestPushAction() {
+    const session = await auth();
+    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+
+    await sendPushNotification({
+        title: "Testovací notifikace",
+        body: "Funguje to!",
+        url: "/nastaveni",
+    });
+    return { ok: true };
 }

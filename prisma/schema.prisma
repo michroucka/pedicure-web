@@ -87,18 +87,23 @@ model Booking {
   cancelToken         String          @unique
   reminderSent        Boolean         @default(false)
   createdAt           DateTime        @default(now())
-  // No @@unique([date, startTime]) here — a plain unique constraint would
-  // also apply to CANCELLED rows, permanently blocking that slot from ever
-  // being (re)booked again after one cancellation. Prisma's schema DSL
-  // can't express a partial/filtered unique index, so the real constraint
-  // (unique on date+startTime, but only WHERE status = 'CONFIRMED') is
-  // created by hand in a migration instead — see
-  // prisma/migrations/*_confirmed_only_slot_uniqueness.
 }
 
 model AdminUser {
-  id              String    @id @default(cuid())
-  username        String    @unique
-  email           String    @unique
-  passwordHash    String
+  id                  String              @id @default(cuid())
+  username            String              @unique
+  email               String              @unique
+  passwordHash        String
+  pushSubscriptions   PushSubscription[]
+}
+
+model PushSubscription {
+  id            String      @id @default(cuid())
+  adminUserId   String
+  adminUser     AdminUser   @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  endpoint      String      @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  createdAt     DateTime    @default(now())
 }
