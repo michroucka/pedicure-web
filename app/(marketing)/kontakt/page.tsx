@@ -111,11 +111,20 @@ export default function KontaktPage() {
                     </div>
                 )}
 
-                <p className="mt-10 text-xs text-muted-foreground">
-                    Provozovatel: Miroslav Roučka, Boženy Němcové 204, 331 41
-                    Kralovice, IČO: 13866435 – fyzická osoba zapsaná v
-                    živnostenském rejstříku.
-                </p>
+                <div className="mt-10 border-t border-border/60 pt-6 text-center">
+                    <p className="text-xs font-medium text-foreground/70">
+                        Provozovatel
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        RSDr. Miroslav Roučka
+                        <br />
+                        Boženy Němcové 204, 331 41 Kralovice
+                        <br />
+                        IČO 13866435
+                        <br />
+                        Fyzická osoba zapsaná v živnostenském rejstříku
+                    </p>
+                </div>
             </div>
         </section>
     );
