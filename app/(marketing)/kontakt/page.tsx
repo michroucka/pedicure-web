@@ -110,6 +110,12 @@ export default function KontaktPage() {
                         </Button>
                     </div>
                 )}
+
+                <p className="mt-10 text-xs text-muted-foreground">
+                    Provozovatel: Miroslav Roučka, Boženy Němcové 204, 331 41
+                    Kralovice, IČO: 13866435 – fyzická osoba zapsaná v
+                    živnostenském rejstříku.
+                </p>
             </div>
         </section>
     );
