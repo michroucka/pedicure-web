@@ -11,8 +11,7 @@ export const viewport: Viewport = {
 
 // LocalBusiness structured data — lets Google tie this site to the same
 // business as the Google Business Profile/Firmy.cz listings instead of
-// treating them as unrelated. TODO: once Firmy.cz confirms the listing,
-// add its share link to `sameAs` too.
+// treating them as unrelated.
 const LOCAL_BUSINESS_JSON_LD = {
     "@context": "https://schema.org",
     "@type": "HealthAndBeautyBusiness",
@@ -27,7 +26,17 @@ const LOCAL_BUSINESS_JSON_LD = {
         addressLocality: "Kralovice",
         addressCountry: "CZ",
     },
-    sameAs: ["https://share.google/XDsBQ20HE2i1sQsJj"],
+    // Same coordinates as the mapy.com widget on /kontakt (x = lon, y = lat
+    // in that iframe's URL).
+    geo: {
+        "@type": "GeoCoordinates",
+        latitude: 49.9803738889,
+        longitude: 13.4847511111,
+    },
+    sameAs: [
+        "https://share.google/XDsBQ20HE2i1sQsJj",
+        "https://www.firmy.cz/detail/14057489-nohy-v-cajku-pedikura-kralovice-kralovice.html",
+    ],
 };
 
 export default function MarketingLayout({
