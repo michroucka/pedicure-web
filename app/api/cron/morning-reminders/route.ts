@@ -4,6 +4,7 @@ import { getCzechToday, formatTime } from "@/lib/utils.ts";
 import { sendSms, getSmsCreditCzk } from "@/lib/sms.ts";
 import { sendLowCreditAlertEmail } from "@/lib/send-low-credit-alert-email.ts";
 import type { Booking, Client } from "@/lib/generated/prisma/client.ts";
+import { sendPushNotification } from "@/lib/send-push.ts";
 
 type BookingForReminder = Booking & { client: Client };
 
@@ -66,12 +67,29 @@ export async function GET(request: NextRequest) {
 
     // Checked once per cron run (not per SMS) — plenty granular for
     // catching a draining balance before reminders start silently failing.
-    // TODO: once Web Push is built (see project roadmap), also send a push
-    // notification here alongside the email — don't rely on email alone.
     const creditCzk = await getSmsCreditCzk();
     if (creditCzk !== null && creditCzk < LOW_CREDIT_THRESHOLD_CZK) {
         await sendLowCreditAlertEmail(creditCzk);
+        await sendPushNotification({
+            title: "⚠️ Nízký kredit SMS brány",
+            body: `Zůstatek na SMSManager.cz klesl na ${creditCzk.toFixed(2)} Kč. Doplňte prosím kredit.`,
+            url: "/kalendar",
+        });
     }
+
+    const todaysBookings = await prisma.booking.findMany({
+        where: { date: today, status: "CONFIRMED" },
+        orderBy: { startTime: "asc" },
+    });
+
+    await sendPushNotification({
+        title: "🗓️ Dnešní rozpis",
+        body:
+            todaysBookings.length === 0
+                ? "Dnes máš volno! 🎉"
+                : `Dnes máš objednáno ${todaysBookings.length} klientů od ${formatTime(todaysBookings[0].startTime)} do ${formatTime(todaysBookings[todaysBookings.length - 1].endTime)}`,
+        url: "/kalendar",
+    });
 
     return NextResponse.json({ groups: groups.size, sent: sentCount });
 }

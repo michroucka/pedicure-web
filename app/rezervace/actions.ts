@@ -86,7 +86,7 @@ export async function submitBooking(
         await sendBookingConfirmationEmail([bookingWithRelations]);
         after(() =>
             sendPushNotification({
-                title: "Nová rezervace",
+                title: "📅 Nová rezervace",
                 body: `${bookingWithRelations.client.name} – ${bookingWithRelations.service.name}, ${formatTime(bookingWithRelations.startTime)}`,
                 url: "/kalendar",
             })
@@ -160,7 +160,7 @@ export async function submitGroupBooking(
         await sendBookingConfirmationEmail(bookingsWithRelations);
         after(() =>
             sendPushNotification({
-                title: "Nová skupinová rezervace",
+                title: "👥 Nová skupinová rezervace",
                 body: `${bookingsWithRelations[0].client.name} – ${bookingsWithRelations.length} osoby, ${formatTime(bookingsWithRelations[0].startTime)}`,
                 url: "/kalendar",
             })
