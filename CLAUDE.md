@@ -85,10 +85,28 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 
 ## Push notifikace
 
-- **PWA + Web Push API**, ne nativní appka.
-- iOS 16.4+ funguje jen po přidání appky na plochu (Add to Home Screen).
+- **Hotovo.** PWA + Web Push API, ne nativní appka.
+- iOS 16.4+ funguje jen po přidání appky na plochu (Add to Home Screen) —
+  `PushSubscribeFlow` (`components/admin/push-subscribe-flow.tsx`, v admin
+  `/nastaveni`) to detekuje přes `matchMedia("(display-mode: standalone)")`
+  a mimo standalone mód přepínač zablokuje s instrukcí místo tichého selhání.
 - Skutečný push (APNs/FCM), doručení řádově vteřiny, appka nemusí být otevřená.
-- Potřeba: Service Worker + Web Push subscription + server endpoint.
+- VAPID klíče v env — `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (klient ho potřebuje
+  při `pushManager.subscribe()`), `VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` jen
+  server-side.
+- `lib/send-push.ts` (`sendPushNotification()`) — posílá na všechny
+  subscriptions najednou přes `Promise.allSettled` (jedna mrtvá subscription
+  nezastaví ostatní), na 404/410 od push služby (subscription už neexistuje)
+  smaže záznam z DB, jiné chyby jen loguje.
+- `public/sw.js` — `push` handler zobrazí notifikaci, `notificationclick`
+  nejdřív zkusí zaostřit už otevřené okno appky (`clients.matchAll` +
+  `focus()`), teprve pak otevře nové (`clients.openWindow`) — appka běží
+  trvale na tabletu v provozovně, duplicitní okno by bylo matoucí.
+- Spouští se ze dvou míst: (1) `app/rezervace/actions.ts` při nové online
+  rezervaci, přes Next.js `after()` aby se neprodlužoval redirect klientovi
+  čekáním na odeslání pushe; (2) ranní cron
+  (`app/api/cron/morning-reminders/route.ts`) — denní souhrn a push k
+  low-credit SMS alertu (viz Business logika níže).
 - Pedikérku jednorázově zaškolit (přidání na plochu, povolení notifikací).
 
 ## Datový model
@@ -133,16 +151,26 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - (samostatná tabulka i pro 1 uživatele — standardní pattern pro Auth.js,
   bezpečné hashované heslo v DB, ne v .env; snadné rozšíření do budoucna)
 
+**PushSubscription**
+- id, adminUserId (FK na AdminUser), endpoint, p256dh, auth, userAgent
+  (nullable), createdAt
+- Jeden AdminUser může mít víc řádků (víc zařízení — tablet + mobil
+  najednou), `endpoint` je unique (opětovný subscribe ze stejného zařízení
+  se upsertne, ne duplikuje)
+
 ## Business logika (rozhodnuto)
 
 - **FCFS, auto-confirm** — žádné schvalování rezervací pedikérkou
 - **Race condition při vytváření** — DB transakce nebo unique constraint na
   (date, startTime), insert selže při kolizi → klient dostane chybu a musí
   vybrat jiný slot. Ne aplikační mutex (Vercel = více instancí, nepomůže).
-- **Push pedikérce** při každé nové rezervaci
-- **Ranní cron** (Vercel Cron, denně) — push pedikérce s rozpisem dne
-  (časy od-do) + proklik do kalendáře dne; email verze s plným rozpisem
-  včetně jmen klientů
+- **Push pedikérce** při každé nové rezervaci se `source: "online"` (ne
+  pro telefonické/osobní rezervace zadané pedikérkou ručně — ty už zná)
+- **Ranní cron** (Vercel Cron, denně) — push pedikérce s denním souhrnem
+  (počet klientů + čas od-do, nebo "dnes máš volno") s prokliknutím do
+  kalendáře, plus push (spolu s emailem) při nízkém kreditu SMS brány.
+  Samostatná emailová verze s plným rozpisem dne (jména klientů) se nakonec
+  nestavěla — denní souhrn přes push vyšel jako dostatečný
 - **Email klientovi** — potvrzení rezervace s magic linkem
   (zrušení/přesun); postaveno přes Resend + `@react-email/components`
   (`lib/send-booking-confirmation-email.ts`, `emails/`), voláno jen pro
