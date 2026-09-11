@@ -10,12 +10,10 @@ import {
     FieldTitle,
 } from "@/components/ui/field.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
-import { Button } from "@/components/ui/button.tsx";
 import { useEffect, useState } from "react";
 import {
     savePushSubscriptionAction,
     deletePushSubscriptionAction,
-    sendTestPushAction,
 } from "@/app/(admin)/(dashboard)/nastaveni/actions.ts"
 
 function requestNotificationPermission() {
@@ -38,7 +36,6 @@ export function PushSubscribeFlow() {
     const [isStandalone, setIsStandalone] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [isPending, setIsPending] = useState(false);
-    const [isTestSending, setIsTestSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -106,22 +103,6 @@ export function PushSubscribeFlow() {
         }
     }
 
-    async function handleSendTestPush() {
-        setError(null);
-        setIsTestSending(true);
-        try {
-            const result = await sendTestPushAction();
-            if (!result?.ok) {
-                setError("Odeslání testovací notifikace se nepovedlo.");
-            }
-        } catch (error) {
-            console.error("Send test push failed:", error);
-            setError("Odeslání testovací notifikace se nepovedlo.");
-        } finally {
-            setIsTestSending(false);
-        }
-    }
-
     return (
         <FieldGroup className="w-full">
             {error && (
@@ -152,18 +133,6 @@ export function PushSubscribeFlow() {
                     />
                 </Field>
             </FieldLabel>
-            {isSubscribed && (
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleSendTestPush}
-                    disabled={isTestSending}
-                >
-                    {isTestSending
-                        ? "Odesílám..."
-                        : "Odeslat testovací notifikaci"}
-                </Button>
-            )}
         </FieldGroup>
     );
 }

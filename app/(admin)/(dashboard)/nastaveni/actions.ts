@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { auth, signOut } from "@/auth.ts";
 import { prisma } from "@/lib/prisma.ts";
-import { sendPushNotification } from "@/lib/send-push.ts";
 import argon2 from "argon2";
 
 const changePasswordSchema = z
@@ -85,16 +84,4 @@ export async function deletePushSubscriptionAction(endpoint: string) {
     if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
 
     await prisma.pushSubscription.deleteMany({ where: { endpoint } });
-}
-
-export async function sendTestPushAction() {
-    const session = await auth();
-    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
-
-    await sendPushNotification({
-        title: "Testovací notifikace",
-        body: "Funguje to!",
-        url: "/nastaveni",
-    });
-    return { ok: true };
 }

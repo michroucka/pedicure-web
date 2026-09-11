@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma.ts";
-import { normalizePhoneForMatch } from "@/lib/utils.ts";
+import { formatTime, normalizePhoneForMatch } from "@/lib/utils.ts";
 import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { redirect } from "next/navigation";
@@ -10,6 +10,8 @@ import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
 import { sendBookingConfirmationEmail } from "@/lib/send-booking-confirmation-email.ts";
+import { after } from "next/server";
+import { sendPushNotification } from "@/lib/send-push.ts";
 
 // Builds the redirect back to the slot picker when a chosen slot can't be
 // booked. Distinguishes two causes so the message (and the slot list itself,
@@ -82,6 +84,13 @@ export async function submitBooking(
             include: { client: true, service: true },
         });
         await sendBookingConfirmationEmail([bookingWithRelations]);
+        after(() =>
+            sendPushNotification({
+                title: "Nová rezervace",
+                body: `${bookingWithRelations.client.name} – ${bookingWithRelations.service.name}, ${formatTime(bookingWithRelations.startTime)}`,
+                url: "/kalendar",
+            })
+        );
 
         redirect(`/rezervace/confirmed?id=${booking.id}`);
     } catch (error) {
@@ -149,6 +158,13 @@ export async function submitGroupBooking(
             orderBy: { startTime: "asc" },
         });
         await sendBookingConfirmationEmail(bookingsWithRelations);
+        after(() =>
+            sendPushNotification({
+                title: "Nová skupinová rezervace",
+                body: `${bookingsWithRelations[0].client.name} – ${bookingsWithRelations.length} osoby, ${formatTime(bookingsWithRelations[0].startTime)}`,
+                url: "/kalendar",
+            })
+        );
 
         redirect(`/rezervace/confirmed?groupId=${bookings[0].groupId}`);
     } catch (error) {
