@@ -9,10 +9,11 @@ import {
     moveBookingByTokenAction,
 } from "./actions.ts";
 
-// revalidatePath needs an active Next.js request context, which a plain
-// vitest run doesn't have — mock it out like any other Next.js server
-// action test.
+// revalidatePath and after() both need an active Next.js request context,
+// which a plain vitest run doesn't have — mock them out like any other
+// Next.js server action test.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/server", () => ({ after: vi.fn() }));
 
 // "Now" = 2026-06-15T08:00Z = Monday 10:00 in Europe/Prague.
 // ORIGINAL_DATE (Saturday, +5 days) and TARGET_DATE (Sunday, +6 days) both

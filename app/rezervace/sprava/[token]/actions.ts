@@ -10,9 +10,13 @@ import {
 import { canClientModifyBooking } from "@/lib/booking-modification-window.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
-import { toDateOnly } from "@/lib/utils.ts";
+import { formatTime, toDateOnly } from "@/lib/utils.ts";
 import { revalidatePath } from "next/cache";
 import type { BookingWithRelations } from "@/lib/get-booking-group-by-token.ts";
+import { after } from "next/server";
+import { sendPushNotification } from "@/lib/send-push.ts";
+import { format } from "date-fns";
+import { cs } from "date-fns/locale";
 
 const NOT_FOUND_ERROR = "Rezervace nebyla nalezena.";
 const WINDOW_PASSED_ERROR =
@@ -26,6 +30,19 @@ function serviceContext(bookings: BookingWithRelations[]) {
             0
         ),
     };
+}
+
+// "Jana Nováková – 2 osoby" for a group, "Jana Nováková – Pedikúra klasik"
+// for a solo booking — same shorthand convention as the push sent on
+// booking creation (app/rezervace/actions.ts).
+function pushSubjectLine(bookings: BookingWithRelations[]): string {
+    return bookings.length > 1
+        ? `${bookings[0].client.name} – ${bookings.length} osoby`
+        : `${bookings[0].client.name} – ${bookings[0].service.name}`;
+}
+
+function formatDateTime(date: Date, startTime: number): string {
+    return `${format(date, "d. MMMM yyyy", { locale: cs })} ${formatTime(startTime)}`;
 }
 
 export async function cancelBookingByTokenAction(
@@ -44,6 +61,17 @@ export async function cancelBookingByTokenAction(
     } else {
         await cancelBooking(bookings[0].id);
     }
+
+    after(() =>
+        sendPushNotification({
+            title:
+                bookings.length > 1
+                    ? "❌ Skupinová rezervace zrušena"
+                    : "❌ Rezervace zrušena",
+            body: `${pushSubjectLine(bookings)}, ${formatDateTime(bookings[0].date, bookings[0].startTime)}`,
+            url: "/kalendar",
+        })
+    );
 
     revalidatePath(`/rezervace/sprava/${token}`);
     return { ok: true };
@@ -110,11 +138,25 @@ export async function moveBookingByTokenAction(
                 date,
                 startTime
             );
+            after(() =>
+                sendPushNotification({
+                    title: "🔁 Skupinová rezervace přesunuta",
+                    body: `${pushSubjectLine(bookings)}, ${formatDateTime(bookings[0].date, bookings[0].startTime)} → ${formatDateTime(date, startTime)}`,
+                    url: "/kalendar",
+                })
+            );
             revalidatePath(`/rezervace/sprava/${token}`);
             return { ok: true, newToken: moved[0].cancelToken };
         }
 
         const moved = await moveBooking(bookings[0].id, date, startTime);
+        after(() =>
+            sendPushNotification({
+                title: "🔁 Rezervace přesunuta",
+                body: `${pushSubjectLine(bookings)}, ${formatDateTime(bookings[0].date, bookings[0].startTime)} → ${formatDateTime(date, startTime)}`,
+                url: "/kalendar",
+            })
+        );
         revalidatePath(`/rezervace/sprava/${token}`);
         return { ok: true, newToken: moved.cancelToken };
     } catch (error) {
