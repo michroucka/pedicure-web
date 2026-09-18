@@ -60,7 +60,10 @@ export default async function AvailabilityPage() {
                 </TabsList>
 
                 <TabsContent value="exceptions">
-                    <ExceptionForm exceptions={exceptions} />
+                    <ExceptionForm
+                        exceptions={exceptions}
+                        recurring={recurring}
+                    />
                 </TabsContent>
 
                 <TabsContent value="recurring">

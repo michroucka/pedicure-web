@@ -32,7 +32,10 @@ import {
     type ExceptionConflict,
 } from "@/app/(admin)/(dashboard)/dostupnost/actions.ts";
 import type { ExceptionKind as Kind } from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
-import type { AvailabilityException } from "@/lib/generated/prisma/client";
+import type {
+    AvailabilityException,
+    RecurringAvailability,
+} from "@/lib/generated/prisma/client";
 import type { DayButton } from "react-day-picker";
 import { Spinner } from "@/components/ui/spinner.tsx"
 
@@ -59,6 +62,22 @@ function exceptionColorClass(exception: AvailabilityException) {
     return "bg-warning-foreground";
 }
 
+// Outer span of that day's recurring blocks (earliest start, latest end) —
+// used only as a convenience default when the admin fills in one side of a
+// new exception's time range and leaves the other blank. A day with no
+// recurring availability at all has nothing sensible to default to.
+function dayOpeningHours(
+    recurring: RecurringAvailability[],
+    date: Date
+): { start: number; end: number } | undefined {
+    const blocks = recurring.filter((r) => r.dayOfWeek === date.getUTCDay());
+    if (blocks.length === 0) return undefined;
+    return {
+        start: Math.min(...blocks.map((b) => b.startTime)),
+        end: Math.max(...blocks.map((b) => b.endTime)),
+    };
+}
+
 function ExceptionDayButton({
     modifiers,
     children,
@@ -81,8 +100,10 @@ function ExceptionDayButton({
 
 export function ExceptionForm({
     exceptions,
+    recurring,
 }: {
     exceptions: AvailabilityException[];
+    recurring: RecurringAvailability[];
 }) {
     const [date, setDate] = useState<Date>();
     const [kind, setKind] = useState<Kind>("BLOCKED_ALL_DAY");
@@ -182,6 +203,29 @@ export function ExceptionForm({
     function updateEndTime(v: string) {
         setEndTime(v);
         setConflicts(null);
+    }
+
+    // Rounds the just-entered side to the nearest quarter hour (existing
+    // behavior) and, if the other side is still blank, defaults it to that
+    // day's opening/closing time — so filling in just one side is usually
+    // enough for a "block off the rest of the day" / "open extra until
+    // closing" exception.
+    function blurStartTime(v: string) {
+        const rounded = roundToQuarterHour(v);
+        updateStartTime(rounded);
+        if (rounded && !endTime && date) {
+            const hours = dayOpeningHours(recurring, date);
+            if (hours) updateEndTime(formatTime(hours.end));
+        }
+    }
+
+    function blurEndTime(v: string) {
+        const rounded = roundToQuarterHour(v);
+        updateEndTime(rounded);
+        if (rounded && !startTime && date) {
+            const hours = dayOpeningHours(recurring, date);
+            if (hours) updateStartTime(formatTime(hours.start));
+        }
     }
 
     function submit() {
@@ -433,11 +477,7 @@ export function ExceptionForm({
                                             updateStartTime(e.target.value)
                                         }
                                         onBlur={(e) =>
-                                            updateStartTime(
-                                                roundToQuarterHour(
-                                                    e.target.value
-                                                )
-                                            )
+                                            blurStartTime(e.target.value)
                                         }
                                     />
                                     <span className="text-muted-foreground">
@@ -453,11 +493,7 @@ export function ExceptionForm({
                                             updateEndTime(e.target.value)
                                         }
                                         onBlur={(e) =>
-                                            updateEndTime(
-                                                roundToQuarterHour(
-                                                    e.target.value
-                                                )
-                                            )
+                                            blurEndTime(e.target.value)
                                         }
                                     />
                                 </div>
