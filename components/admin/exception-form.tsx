@@ -152,6 +152,8 @@ export function ExceptionForm({
 
     function updateDate(d: Date | undefined) {
         setDate(d);
+        setStartTime("");
+        setEndTime("");
         setConflicts(null);
         setEditingId(undefined);
     }
