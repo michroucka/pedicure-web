@@ -86,8 +86,8 @@ export function ExceptionForm({
 }) {
     const [date, setDate] = useState<Date>();
     const [kind, setKind] = useState<Kind>("BLOCKED_ALL_DAY");
-    const [startTime, setStartTime] = useState("09:00");
-    const [endTime, setEndTime] = useState("17:00");
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
     const [error, setError] = useState<string>();
     const [conflicts, setConflicts] = useState<ExceptionConflict[] | null>(
         null
@@ -189,9 +189,15 @@ export function ExceptionForm({
             setError("Vyberte datum.");
             return;
         }
-        if (kind !== "BLOCKED_ALL_DAY" && startTime >= endTime) {
-            setError("Konec musí být po začátku.");
-            return;
+        if (kind !== "BLOCKED_ALL_DAY") {
+            if (!startTime || !endTime) {
+                setError("Vyplňte čas od–do.");
+                return;
+            }
+            if (startTime >= endTime) {
+                setError("Konec musí být po začátku.");
+                return;
+            }
         }
         setError(undefined);
 
