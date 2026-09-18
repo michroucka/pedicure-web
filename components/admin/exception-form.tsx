@@ -4,6 +4,7 @@ import { useState, useTransition, type ComponentProps } from "react";
 import { format, addDays } from "date-fns";
 import { cs } from "date-fns/locale";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar.tsx";
+import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
@@ -63,43 +64,17 @@ function ExceptionDayButton({
     children,
     ...props
 }: ComponentProps<typeof DayButton>) {
-    const isSplit =
-        !modifiers.blockedFull && modifiers.blockedPartial && modifiers.extraOpen;
-
-    const dotClassName = modifiers.blockedFull
-        ? "bg-danger-foreground"
-        : isSplit
-          ? undefined
-          : modifiers.blockedPartial
-            ? "bg-warning-foreground"
-            : modifiers.extraOpen
-              ? "bg-success-foreground"
-              : undefined;
-
-    const showDot = dotClassName !== undefined || isSplit;
-
     return (
         <CalendarDayButton
             modifiers={modifiers}
             {...props}
         >
             {children}
-            {showDot && (
-                <span
-                    className={cn(
-                        "size-2 rounded-full ring-1 ring-background",
-                        dotClassName
-                    )}
-                    style={
-                        isSplit
-                            ? {
-                                  background:
-                                      "linear-gradient(-45deg, var(--warning-foreground) 50%, var(--success-foreground) 50%)",
-                              }
-                            : undefined
-                    }
-                />
-            )}
+            <ExceptionDot
+                blockedFull={!!modifiers.blockedFull}
+                blockedPartial={!!modifiers.blockedPartial}
+                extraOpen={!!modifiers.extraOpen}
+            />
         </CalendarDayButton>
     );
 }

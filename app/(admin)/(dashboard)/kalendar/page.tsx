@@ -73,9 +73,32 @@ export default async function AdminHomePage({
         bookings.filter((b) => b.date.getTime() === d.getTime())
     );
 
+    const exceptionsByDay = weekDays.map((d) =>
+        exceptions.filter((e) => e.date.getTime() === d.getTime())
+    );
+
     const dayIndex = weekDays.findIndex((d) => d.getTime() === date.getTime());
     const windows = windowsByDay[dayIndex];
     const dayBookings = bookingsByDay[dayIndex];
+    const dayExceptions = exceptionsByDay[dayIndex];
+
+    // An empty weekend day just eats up column width for nothing — on a
+    // tablet-width screen that's the difference between the week fitting
+    // and needing a horizontal scroll. A weekday stays visible even when
+    // empty (it's still where new bookings get added), and a weekend day
+    // with at least one booking stays too.
+    const weekViewIndexes = weekDays
+        .map((_, i) => i)
+        .filter((i) => {
+            const isWeekend = [0, 6].includes(weekDays[i].getUTCDay());
+            return !isWeekend || bookingsByDay[i].length > 0;
+        });
+    const visibleWeekDays = weekViewIndexes.map((i) => weekDays[i]);
+    const visibleWindowsByDay = weekViewIndexes.map((i) => windowsByDay[i]);
+    const visibleBookingsByDay = weekViewIndexes.map((i) => bookingsByDay[i]);
+    const visibleExceptionsByDay = weekViewIndexes.map(
+        (i) => exceptionsByDay[i]
+    );
 
     return (
         <div className="flex h-full w-full flex-col">
@@ -93,15 +116,17 @@ export default async function AdminHomePage({
                 <DayTimeline
                     windows={windows}
                     bookings={dayBookings}
+                    exceptions={dayExceptions}
                     services={services}
                 />
             </div>
 
             <div className="hidden min-h-0 flex-1 md:block">
                 <WeekTimeline
-                    weekDays={weekDays}
-                    windowsByDay={windowsByDay}
-                    bookingsByDay={bookingsByDay}
+                    weekDays={visibleWeekDays}
+                    windowsByDay={visibleWindowsByDay}
+                    bookingsByDay={visibleBookingsByDay}
+                    exceptionsByDay={visibleExceptionsByDay}
                     services={services}
                 />
             </div>

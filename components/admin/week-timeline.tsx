@@ -10,14 +10,19 @@ import {
     getCzechToday,
     getCzechNowMinutes,
 } from "@/lib/utils.ts";
+import { categorizeExceptions, computeClosedRanges } from "@/lib/availability.ts";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
+import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
 import {
     BookingCard,
     SERVICE_COLORS,
     isBookingPast,
     type BookingItem,
 } from "@/components/admin/booking-card.tsx";
-import type { Service } from "@/lib/generated/prisma/client.ts";
+import type {
+    AvailabilityException,
+    Service,
+} from "@/lib/generated/prisma/client.ts";
 
 const PX_PER_MIN = 2;
 
@@ -25,11 +30,13 @@ export function WeekTimeline({
     weekDays,
     windowsByDay,
     bookingsByDay,
+    exceptionsByDay,
     services,
 }: {
     weekDays: Date[];
     windowsByDay: { start: number; end: number }[][];
     bookingsByDay: BookingItem[][];
+    exceptionsByDay: AvailabilityException[][];
     services: Service[];
 }) {
     const [selected, setSelected] = useState<BookingItem | null>(null);
@@ -104,8 +111,14 @@ export function WeekTimeline({
                 <div className="flex flex-1 gap-px">
                     {weekDays.map((day, dayIndex) => {
                         const windows = windowsByDay[dayIndex];
-                        const closed = windows.length === 0;
                         const isToday = day.getTime() === today.getTime();
+                        const closedRanges = computeClosedRanges(
+                            windows,
+                            gridStart,
+                            gridEnd
+                        );
+                        const { blockedFull, blockedPartial, extraOpen } =
+                            categorizeExceptions(exceptionsByDay[dayIndex]);
 
                         return (
                             <div
@@ -114,22 +127,41 @@ export function WeekTimeline({
                             >
                                 <div
                                     className={cn(
-                                        "sticky top-0 z-10 bg-background pb-1 text-center text-xs",
+                                        "sticky top-0 z-10 flex items-center justify-center gap-1 bg-background pb-1 text-center text-xs",
                                         isToday
                                             ? "font-semibold text-primary"
                                             : "text-muted-foreground"
                                     )}
                                 >
                                     {format(day, "EEE d.", { locale: cs })}
+                                    <ExceptionDot
+                                        blockedFull={blockedFull}
+                                        blockedPartial={blockedPartial}
+                                        extraOpen={extraOpen}
+                                    />
                                 </div>
                                 <div
                                     className={cn(
                                         "relative border-x",
-                                        closed && "bg-muted/40",
                                         isToday && "bg-primary/5"
                                     )}
                                     style={{ height: gridHeight }}
                                 >
+                                    {closedRanges.map((r) => (
+                                        <div
+                                            key={r.start}
+                                            className="absolute inset-x-0 bg-muted/60"
+                                            style={{
+                                                top:
+                                                    (r.start - gridStart) *
+                                                    PX_PER_MIN,
+                                                height:
+                                                    (r.end - r.start) *
+                                                    PX_PER_MIN,
+                                            }}
+                                        />
+                                    ))}
+
                                     {hours.map((h) => (
                                         <div
                                             key={h}

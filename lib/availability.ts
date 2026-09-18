@@ -110,6 +110,52 @@ export function computeGaps(
     return gaps;
 }
 
+// Same categorization as the /dostupnost calendar dot (see ExceptionDot) —
+// a full-day block is a BLOCKED exception with no times set, everything
+// else BLOCKED is partial.
+export function categorizeExceptions(
+    exceptions: { type: "BLOCKED" | "EXTRA_OPEN"; startTime: number | null }[]
+): { blockedFull: boolean; blockedPartial: boolean; extraOpen: boolean } {
+    return {
+        blockedFull: exceptions.some(
+            (e) => e.type === "BLOCKED" && e.startTime === null
+        ),
+        blockedPartial: exceptions.some(
+            (e) => e.type === "BLOCKED" && e.startTime !== null
+        ),
+        extraOpen: exceptions.some((e) => e.type === "EXTRA_OPEN"),
+    };
+}
+
+// The complement of `windows` within [gridStart, gridEnd] — the closed
+// stretches a timeline should shade (before opening, between two windows,
+// after closing), including the whole grid when the day has no windows
+// at all.
+export function computeClosedRanges(
+    windows: TimeSlot[],
+    gridStart: number,
+    gridEnd: number
+): TimeSlot[] {
+    const sorted = [...windows].sort((a, b) => a.start - b.start);
+    const closed: TimeSlot[] = [];
+    let cursor = gridStart;
+
+    for (const w of sorted) {
+        const start = Math.max(w.start, gridStart);
+        const end = Math.min(w.end, gridEnd);
+        if (start > cursor) {
+            closed.push({ start: cursor, end: Math.min(start, gridEnd) });
+        }
+        cursor = Math.max(cursor, end);
+    }
+
+    if (cursor < gridEnd) {
+        closed.push({ start: cursor, end: gridEnd });
+    }
+
+    return closed;
+}
+
 export function computeAvailableSlots(
     slots: TimeSlot[],
     bookings: TimeSlot[],
