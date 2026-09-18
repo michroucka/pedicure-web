@@ -2,16 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
-import { rangesOverlap } from "@/lib/availability.ts";
+import { diffDayBlocks, type TimeSlot } from "@/lib/availability.ts";
 import { parseTime, toDateOnly } from "@/lib/utils.ts";
 import {
     availabilitySchema,
-    editExceptionSchema,
-    exceptionSchema,
+    dayOverrideSchema,
     type AvailabilityFormData,
-    type EditExceptionFormData,
-    type ExceptionFormData,
-    type ExceptionKind,
+    type DayOverrideFormData,
 } from "./schema.ts";
 
 export async function saveRecurringAvailability(data: AvailabilityFormData) {
@@ -33,138 +30,32 @@ export async function saveRecurringAvailability(data: AvailabilityFormData) {
     revalidatePath("/dostupnost");
 }
 
-// A day with a whole-day BLOCKED exception can't have anything else that
-// day (nothing left to combine it with), and any two time ranges on the
-// same day — BLOCKED_PARTIAL or EXTRA_OPEN, regardless of type — must be
-// disjoint. That's what keeps resolveDayTimeSlots's fold order-independent:
-// overlapping ranges would make the result depend on the (unspecified) DB
-// fetch order of the exceptions.
-async function validateNoOverlap(
-    date: Date,
-    kind: ExceptionKind,
-    startTime: number | null,
-    endTime: number | null,
-    excludeId?: string
-): Promise<string | null> {
-    const existing = await prisma.availabilityException.findMany({
-        where: { date, ...(excludeId ? { id: { not: excludeId } } : {}) },
-    });
-
-    if (kind === "BLOCKED_ALL_DAY") {
-        if (existing.length > 0) {
-            return "Pro tento den už existuje jiná výjimka – nejdřív ji smaž.";
-        }
-        return null;
-    }
-
-    const hasAllDayBlock = existing.some(
-        (e) => e.type === "BLOCKED" && e.startTime === null
-    );
-    if (hasAllDayBlock) {
-        return 'Tento den je celý zavřený – nejdřív smaž výjimku "Zavřeno celý den".';
-    }
-
-    const newRange = { start: startTime!, end: endTime! };
-    const overlaps = existing.some(
-        (e) =>
-            e.startTime !== null &&
-            e.endTime !== null &&
-            rangesOverlap(newRange, { start: e.startTime, end: e.endTime })
-    );
-    if (overlaps) {
-        return "Zvolený čas se překrývá s jinou výjimkou tento den.";
-    }
-
-    return null;
-}
-
-export async function createException(
-    data: ExceptionFormData
-): Promise<{ ok: true } | { ok: false; error: string }> {
-    const parsed = exceptionSchema.parse(data);
-    const date = toDateOnly(new Date(parsed.date));
-
-    const startTime =
-        parsed.kind === "BLOCKED_ALL_DAY" ? null : parseTime(parsed.startTime);
-    const endTime =
-        parsed.kind === "BLOCKED_ALL_DAY" ? null : parseTime(parsed.endTime);
-
-    const error = await validateNoOverlap(date, parsed.kind, startTime, endTime);
-    if (error) return { ok: false, error };
-
-    await prisma.availabilityException.create({
-        data: {
-            date,
-            type: parsed.kind === "EXTRA_OPEN" ? "EXTRA_OPEN" : "BLOCKED",
-            startTime,
-            endTime,
-        },
-    });
-
-    revalidatePath("/dostupnost");
-    return { ok: true };
-}
-
-export async function updateException(
-    data: EditExceptionFormData
-): Promise<{ ok: true } | { ok: false; error: string }> {
-    const parsed = editExceptionSchema.parse(data);
-
-    const existing = await prisma.availabilityException.findUniqueOrThrow({
-        where: { id: parsed.id },
-    });
-    if (existing.startTime === null) {
-        throw new Error("Celodenní výjimka nemá čas k úpravě.");
-    }
-
-    const startTime = parseTime(parsed.startTime);
-    const endTime = parseTime(parsed.endTime);
-    const kind: ExceptionKind =
-        existing.type === "EXTRA_OPEN" ? "EXTRA_OPEN" : "BLOCKED_PARTIAL";
-
-    const error = await validateNoOverlap(
-        existing.date,
-        kind,
-        startTime,
-        endTime,
-        existing.id
-    );
-    if (error) return { ok: false, error };
-
-    await prisma.availabilityException.update({
-        where: { id: parsed.id },
-        data: { startTime, endTime },
-    });
-
-    revalidatePath("/dostupnost");
-    return { ok: true };
-}
-
-export async function deleteException(id: string) {
-    await prisma.availabilityException.delete({ where: { id } });
-    revalidatePath("/dostupnost");
-}
-
 export type ExceptionConflict = {
     clientName: string;
     startTime: number;
     endTime: number;
 };
 
-export async function checkExceptionConflicts(
+// Bookings that would be orphaned by blocking the given ranges — checked
+// before saving so the admin gets a chance to cancel/move them first
+// instead of the exception silently leaving them scheduled outside the
+// (new) available hours.
+export async function checkDayOverrideConflicts(
     dateStr: string,
-    startTime: number | null,
-    endTime: number | null
+    blockedRanges: TimeSlot[]
 ): Promise<ExceptionConflict[]> {
+    if (blockedRanges.length === 0) return [];
+
     const date = toDateOnly(new Date(dateStr));
 
     const bookings = await prisma.booking.findMany({
         where: {
             date,
             status: "CONFIRMED",
-            ...(startTime !== null && endTime !== null
-                ? { startTime: { lt: endTime }, endTime: { gt: startTime } }
-                : {}),
+            OR: blockedRanges.map((r) => ({
+                startTime: { lt: r.end },
+                endTime: { gt: r.start },
+            })),
         },
         include: { client: true },
         orderBy: { startTime: "asc" },
@@ -175,4 +66,80 @@ export async function checkExceptionConflicts(
         startTime: b.startTime,
         endTime: b.endTime,
     }));
+}
+
+// Replaces every exception on this date with whatever it takes to make the
+// day's resolved hours match `blocks` exactly — the admin edits the target
+// hours directly, not "block"/"extra open" deltas.
+export async function saveDayOverride(
+    data: DayOverrideFormData
+): Promise<{ ok: true } | { ok: false; error: string }> {
+    const result = dayOverrideSchema.safeParse(data);
+    if (!result.success) {
+        return {
+            ok: false,
+            error: result.error.issues[0]?.message ?? "Neplatná data.",
+        };
+    }
+    const parsed = result.data;
+    const date = toDateOnly(new Date(parsed.date));
+    const dayOfWeek = date.getUTCDay();
+
+    const recurringRows = await prisma.recurringAvailability.findMany({
+        where: { dayOfWeek },
+    });
+    const recurring: TimeSlot[] = recurringRows.map((r) => ({
+        start: r.startTime,
+        end: r.endTime,
+    }));
+
+    const target: TimeSlot[] = parsed.blocks
+        .map((b) => ({
+            start: parseTime(b.startTime),
+            end: parseTime(b.endTime),
+        }))
+        .sort((a, b) => a.start - b.start);
+
+    await prisma.$transaction(async (tx) => {
+        await tx.availabilityException.deleteMany({ where: { date } });
+
+        if (target.length === 0) {
+            // Nothing left open — if the day wasn't already closed by the
+            // recurring schedule, that's a single whole-day block, same as
+            // the old "BLOCKED_ALL_DAY" case.
+            if (recurring.length > 0) {
+                await tx.availabilityException.create({
+                    data: {
+                        date,
+                        type: "BLOCKED",
+                        startTime: null,
+                        endTime: null,
+                    },
+                });
+            }
+            return;
+        }
+
+        const { blocked, extraOpen } = diffDayBlocks(recurring, target);
+
+        await tx.availabilityException.createMany({
+            data: [
+                ...blocked.map((r) => ({
+                    date,
+                    type: "BLOCKED" as const,
+                    startTime: r.start,
+                    endTime: r.end,
+                })),
+                ...extraOpen.map((r) => ({
+                    date,
+                    type: "EXTRA_OPEN" as const,
+                    startTime: r.start,
+                    endTime: r.end,
+                })),
+            ],
+        });
+    });
+
+    revalidatePath("/dostupnost");
+    return { ok: true };
 }

@@ -9,7 +9,7 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs.tsx";
-import { CalendarX, Repeat } from "lucide-react";
+import { CalendarClock, Repeat } from "lucide-react";
 import { saveRecurringAvailability } from "./actions.ts";
 
 export const metadata: Metadata = {
@@ -47,8 +47,8 @@ export default async function AvailabilityPage() {
                         value="exceptions"
                         className="py-2 text-base"
                     >
-                        <CalendarX className="size-4" />
-                        Výjimky
+                        <CalendarClock className="size-4" />
+                        Úprava dne
                     </TabsTrigger>
                     <TabsTrigger
                         value="recurring"

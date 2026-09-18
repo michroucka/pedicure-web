@@ -3,7 +3,7 @@
 import {
     useForm,
     useFieldArray,
-    type UseFormRegister,
+    useWatch,
     type UseFormSetValue,
     type Control,
 } from "react-hook-form";
@@ -14,9 +14,9 @@ import {
     type AvailabilityFormData,
 } from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
 import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import { Slider } from "@/components/ui/slider.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
-import { roundToQuarterHour } from "@/lib/utils.ts";
+import { formatTime, parseTime } from "@/lib/utils.ts";
 import { Plus, Trash2, Save } from "lucide-react";
 
 const DAY_LABELS: Record<number, string> = {
@@ -29,14 +29,75 @@ const DAY_LABELS: Record<number, string> = {
     6: "Sobota",
 };
 
+const TRACK_MIN = 6 * 60; // 06:00
+const TRACK_MAX = 22 * 60; // 22:00
+const SLIDER_STEP = 15;
+
+function BlockField({
+    control,
+    setValue,
+    dayIndex,
+    blockIndex,
+    onRemove,
+}: {
+    control: Control<AvailabilityFormData>;
+    setValue: UseFormSetValue<AvailabilityFormData>;
+    dayIndex: number;
+    blockIndex: number;
+    onRemove: () => void;
+}) {
+    const block = useWatch({
+        control,
+        name: `days.${dayIndex}.blocks.${blockIndex}`,
+    });
+    const start = parseTime(block.startTime);
+    const end = parseTime(block.endTime);
+
+    function handleChange([newStart, newEnd]: number[]) {
+        setValue(
+            `days.${dayIndex}.blocks.${blockIndex}.startTime`,
+            formatTime(newStart)
+        );
+        setValue(
+            `days.${dayIndex}.blocks.${blockIndex}.endTime`,
+            formatTime(newEnd)
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-3 rounded-2xl border p-3">
+            <div className="flex-1">
+                <Slider
+                    value={[start, end]}
+                    onValueChange={handleChange}
+                    min={Math.min(TRACK_MIN, start)}
+                    max={Math.max(TRACK_MAX, end)}
+                    step={SLIDER_STEP}
+                    minStepsBetweenThumbs={1}
+                />
+                <div className="mt-2 flex justify-between text-sm tabular-nums text-muted-foreground">
+                    <span>{formatTime(start)}</span>
+                    <span>{formatTime(end)}</span>
+                </div>
+            </div>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={onRemove}
+            >
+                <Trash2 className="size-4" />
+            </Button>
+        </div>
+    );
+}
+
 function DayField({
-    register,
     control,
     setValue,
     dayIndex,
     dayOfWeek,
 }: {
-    register: UseFormRegister<AvailabilityFormData>;
     control: Control<AvailabilityFormData>;
     setValue: UseFormSetValue<AvailabilityFormData>;
     dayIndex: number;
@@ -46,6 +107,14 @@ function DayField({
         control,
         name: `days.${dayIndex}.blocks`,
     });
+    const blocks = useWatch({ control, name: `days.${dayIndex}.blocks` });
+
+    function addBlock() {
+        const last = blocks[blocks.length - 1];
+        const start = last ? parseTime(last.endTime) : TRACK_MIN;
+        const end = Math.min(start + 120, TRACK_MAX);
+        append({ startTime: formatTime(start), endTime: formatTime(end) });
+    }
 
     return (
         <div className="rounded-2xl border p-3">
@@ -55,9 +124,7 @@ function DayField({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                        append({ startTime: "15:00", endTime: "19:00" })
-                    }
+                    onClick={addBlock}
                 >
                     <Plus className="size-4" />
                     Blok
@@ -70,52 +137,14 @@ function DayField({
 
             <div className="flex flex-col gap-2">
                 {fields.map((field, blockIndex) => (
-                    <div
+                    <BlockField
                         key={field.id}
-                        className="flex items-center gap-2"
-                    >
-                        <Input
-                            type="time"
-                            step="900"
-                            lang="cs"
-                            className="w-auto"
-                            {...register(
-                                `days.${dayIndex}.blocks.${blockIndex}.startTime`,
-                                {
-                                    onBlur: (e) =>
-                                        setValue(
-                                            `days.${dayIndex}.blocks.${blockIndex}.startTime`,
-                                            roundToQuarterHour(e.target.value)
-                                        ),
-                                }
-                            )}
-                        />
-                        <span className="text-foreground">–</span>
-                        <Input
-                            type="time"
-                            step="900"
-                            lang="cs"
-                            className="w-auto"
-                            {...register(
-                                `days.${dayIndex}.blocks.${blockIndex}.endTime`,
-                                {
-                                    onBlur: (e) =>
-                                        setValue(
-                                            `days.${dayIndex}.blocks.${blockIndex}.endTime`,
-                                            roundToQuarterHour(e.target.value)
-                                        ),
-                                }
-                            )}
-                        />
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => remove(blockIndex)}
-                        >
-                            <Trash2 className="size-4" />
-                        </Button>
-                    </div>
+                        control={control}
+                        setValue={setValue}
+                        dayIndex={dayIndex}
+                        blockIndex={blockIndex}
+                        onRemove={() => remove(blockIndex)}
+                    />
                 ))}
             </div>
         </div>
@@ -132,7 +161,7 @@ export function AvailabilityForm({
     }[];
     saveAction: (data: AvailabilityFormData) => Promise<void>;
 }) {
-    const { register, control, setValue, handleSubmit } =
+    const { control, setValue, handleSubmit } =
         useForm<AvailabilityFormData>({
             resolver: zodResolver(availabilitySchema),
             defaultValues: { days },
@@ -153,7 +182,6 @@ export function AvailabilityForm({
             {days.map((day, index) => (
                 <DayField
                     key={day.dayOfWeek}
-                    register={register}
                     control={control}
                     setValue={setValue}
                     dayIndex={index}

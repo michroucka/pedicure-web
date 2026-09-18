@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     computeAvailableSlots,
     computeGaps,
+    diffDayBlocks,
     rangesOverlap,
     resolveDayTimeSlots,
     subtractOne,
@@ -162,5 +163,71 @@ describe("computeAvailableSlots", () => {
         const windows: TimeSlot[] = [{ start: 0, end: 20 }];
 
         expect(computeAvailableSlots(windows, [], 30, 30)).toEqual([]);
+    });
+});
+
+describe("diffDayBlocks", () => {
+    it("returns nothing on either side when target matches recurring exactly", () => {
+        const recurring: TimeSlot[] = [{ start: 540, end: 1020 }]; // 9:00-17:00
+
+        expect(diffDayBlocks(recurring, recurring)).toEqual({
+            blocked: [],
+            extraOpen: [],
+        });
+    });
+
+    it("blocks the part of recurring not covered by target", () => {
+        const recurring: TimeSlot[] = [{ start: 540, end: 1020 }]; // 9:00-17:00
+        const target: TimeSlot[] = [{ start: 540, end: 900 }]; // 9:00-15:00
+
+        expect(diffDayBlocks(recurring, target)).toEqual({
+            blocked: [{ start: 900, end: 1020 }],
+            extraOpen: [],
+        });
+    });
+
+    it("treats a target shifted later as blocking the start and extra-opening the end", () => {
+        const recurring: TimeSlot[] = [{ start: 900, end: 1140 }]; // 15:00-19:00
+        const target: TimeSlot[] = [{ start: 1020, end: 1260 }]; // 17:00-21:00
+
+        expect(diffDayBlocks(recurring, target)).toEqual({
+            blocked: [{ start: 900, end: 1020 }],
+            extraOpen: [{ start: 1140, end: 1260 }],
+        });
+    });
+
+    it("blocks the whole recurring span when the target is empty", () => {
+        const recurring: TimeSlot[] = [{ start: 540, end: 1020 }];
+
+        expect(diffDayBlocks(recurring, [])).toEqual({
+            blocked: recurring,
+            extraOpen: [],
+        });
+    });
+
+    it("treats a lunch-break split target as blocking the gap between blocks", () => {
+        const recurring: TimeSlot[] = [{ start: 540, end: 1020 }]; // 9:00-17:00
+        const target: TimeSlot[] = [
+            { start: 540, end: 720 }, // 9:00-12:00
+            { start: 780, end: 1020 }, // 13:00-17:00
+        ];
+
+        expect(diffDayBlocks(recurring, target)).toEqual({
+            blocked: [{ start: 720, end: 780 }],
+            extraOpen: [],
+        });
+    });
+
+    it("extra-opens a target block entirely outside recurring", () => {
+        const recurring: TimeSlot[] = [{ start: 900, end: 1140 }]; // 15:00-19:00
+        const target: TimeSlot[] = [
+            { start: 900, end: 1140 },
+            { start: 1170, end: 1260 }, // 19:30-21:00
+        ];
+
+        expect(diffDayBlocks(recurring, target)).toEqual({
+            blocked: [],
+            extraOpen: [{ start: 1170, end: 1260 }],
+        });
     });
 });

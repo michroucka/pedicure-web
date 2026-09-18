@@ -25,47 +25,26 @@ export type AvailabilityFormData = z.infer<typeof availabilitySchema>;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export const exceptionSchema = z.discriminatedUnion("kind", [
-    z.object({
-        kind: z.literal("BLOCKED_ALL_DAY"),
-        date: z.string().regex(DATE_RE),
-    }),
-    z
-        .object({
-            kind: z.literal("BLOCKED_PARTIAL"),
-            date: z.string().regex(DATE_RE),
-            startTime: z.string().regex(TIME_RE, "Neplatný čas"),
-            endTime: z.string().regex(TIME_RE, "Neplatný čas"),
-        })
-        .refine((e) => e.startTime < e.endTime, {
-            message: "Konec musí být po začátku",
-            path: ["endTime"],
-        }),
-    z
-        .object({
-            kind: z.literal("EXTRA_OPEN"),
-            date: z.string().regex(DATE_RE),
-            startTime: z.string().regex(TIME_RE, "Neplatný čas"),
-            endTime: z.string().regex(TIME_RE, "Neplatný čas"),
-        })
-        .refine((e) => e.startTime < e.endTime, {
-            message: "Konec musí být po začátku",
-            path: ["endTime"],
-        }),
-]);
-
-export type ExceptionFormData = z.infer<typeof exceptionSchema>;
-export type ExceptionKind = ExceptionFormData["kind"];
-
-export const editExceptionSchema = z
+// The day-override editor works with the day's *target* open blocks
+// directly (see lib/availability.ts's diffDayBlocks for how that gets
+// translated into BLOCKED/EXTRA_OPEN exceptions on save) — same block
+// shape as the recurring schedule, just for one specific date. An empty
+// `blocks` array means "closed all day".
+export const dayOverrideSchema = z
     .object({
-        id: z.string().min(1),
-        startTime: z.string().regex(TIME_RE, "Neplatný čas"),
-        endTime: z.string().regex(TIME_RE, "Neplatný čas"),
+        date: z.string().regex(DATE_RE),
+        blocks: z.array(blockSchema),
     })
-    .refine((e) => e.startTime < e.endTime, {
-        message: "Konec musí být po začátku",
-        path: ["endTime"],
-    });
+    .refine(
+        (d) => {
+            const sorted = [...d.blocks].sort((a, b) =>
+                a.startTime.localeCompare(b.startTime)
+            );
+            return sorted.every(
+                (b, i) => i === 0 || b.startTime >= sorted[i - 1].endTime
+            );
+        },
+        { message: "Bloky se překrývají.", path: ["blocks"] }
+    );
 
-export type EditExceptionFormData = z.infer<typeof editExceptionSchema>;
+export type DayOverrideFormData = z.infer<typeof dayOverrideSchema>;

@@ -7,75 +7,50 @@ import { Calendar, CalendarDayButton } from "@/components/ui/calendar.tsx";
 import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import { Slider } from "@/components/ui/slider.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import { AlertCircle, Plus, Trash2, Check } from "lucide-react";
+import { toUtcMidnight, formatTime } from "@/lib/utils.ts";
 import {
-    AlertCircle,
-    CalendarOff,
-    Clock,
-    CalendarPlus,
-    Pencil,
-    Trash2, X, Check,
-} from "lucide-react";
-import {
-    cn,
-    toUtcMidnight,
-    roundToQuarterHour,
-    parseTime,
-    formatTime,
-} from "@/lib/utils.ts";
-import {
-    createException,
-    deleteException,
-    updateException,
-    checkExceptionConflicts,
+    saveDayOverride,
+    checkDayOverrideConflicts,
     type ExceptionConflict,
 } from "@/app/(admin)/(dashboard)/dostupnost/actions.ts";
-import type { ExceptionKind as Kind } from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
+import {
+    diffDayBlocks,
+    resolveDayTimeSlots,
+    type TimeSlot,
+} from "@/lib/availability.ts";
 import type {
     AvailabilityException,
     RecurringAvailability,
 } from "@/lib/generated/prisma/client";
 import type { DayButton } from "react-day-picker";
-import { Spinner } from "@/components/ui/spinner.tsx"
+import { Spinner } from "@/components/ui/spinner.tsx";
 
-const KIND_OPTIONS: { kind: Kind; label: string; icon: typeof CalendarOff }[] =
-    [
-        { kind: "BLOCKED_ALL_DAY", label: "Celý den", icon: CalendarOff },
-        { kind: "BLOCKED_PARTIAL", label: "Část dne", icon: Clock },
-        { kind: "EXTRA_OPEN", label: "Navíc", icon: CalendarPlus },
+const SLIDER_STEP = 15;
+// Fallback track bounds when a day has no blocks yet to derive a range
+// from — widened automatically (see trackBoundsFor) to always fit whatever
+// real data ends up on it.
+const DEFAULT_TRACK: TimeSlot = { start: 6 * 60, end: 22 * 60 };
+
+type Block = { id: string; start: number; end: number };
+
+function trackBoundsFor(recurringForDay: TimeSlot[], blocks: Block[]) {
+    const times = [
+        DEFAULT_TRACK.start,
+        DEFAULT_TRACK.end,
+        ...recurringForDay.flatMap((r) => [r.start, r.end]),
+        ...blocks.flatMap((b) => [b.start, b.end]),
     ];
-
-function exceptionLabel(exception: AvailabilityException) {
-    if (exception.type === "EXTRA_OPEN") {
-        return `Otevřeno navíc: ${formatTime(exception.startTime!)} – ${formatTime(exception.endTime!)}`;
-    }
-    if (exception.startTime === null) {
-        return "Zavřeno celý den";
-    }
-    return `Zavřeno: ${formatTime(exception.startTime)}–${formatTime(exception.endTime!)}`;
-}
-
-function exceptionColorClass(exception: AvailabilityException) {
-    if (exception.type === "EXTRA_OPEN") return "bg-success-foreground";
-    if (exception.startTime === null) return "bg-danger-foreground";
-    return "bg-warning-foreground";
-}
-
-// Outer span of that day's recurring blocks (earliest start, latest end) —
-// used only as a convenience default when the admin fills in one side of a
-// new exception's time range and leaves the other blank. A day with no
-// recurring availability at all has nothing sensible to default to.
-function dayOpeningHours(
-    recurring: RecurringAvailability[],
-    date: Date
-): { start: number; end: number } | undefined {
-    const blocks = recurring.filter((r) => r.dayOfWeek === date.getUTCDay());
-    if (blocks.length === 0) return undefined;
     return {
-        start: Math.min(...blocks.map((b) => b.startTime)),
-        end: Math.max(...blocks.map((b) => b.endTime)),
+        min: Math.floor(Math.min(...times) / 60) * 60,
+        max: Math.ceil(Math.max(...times) / 60) * 60,
     };
+}
+
+function newBlockId() {
+    return Math.random().toString(36).slice(2);
 }
 
 function ExceptionDayButton({
@@ -106,21 +81,12 @@ export function ExceptionForm({
     recurring: RecurringAvailability[];
 }) {
     const [date, setDate] = useState<Date>();
-    const [kind, setKind] = useState<Kind>("BLOCKED_ALL_DAY");
-    const [startTime, setStartTime] = useState("");
-    const [endTime, setEndTime] = useState("");
+    const [blocks, setBlocks] = useState<Block[]>([]);
     const [error, setError] = useState<string>();
     const [conflicts, setConflicts] = useState<ExceptionConflict[] | null>(
         null
     );
     const [isPending, startTransition] = useTransition();
-    const [isDeleting, startDeleteTransition] = useTransition();
-
-    const [editingId, setEditingId] = useState<string>();
-    const [editStartTime, setEditStartTime] = useState("");
-    const [editEndTime, setEditEndTime] = useState("");
-    const [editError, setEditError] = useState<string>();
-    const [isEditPending, startEditTransition] = useTransition();
 
     const minDate = addDays(toUtcMidnight(new Date()), 1);
 
@@ -144,90 +110,72 @@ export function ExceptionForm({
             .map((e) => e.date),
     };
 
-    const existingForDate = date
-        ? [...(exceptionsByDate.get(toUtcMidnight(date).getTime()) ?? [])].sort(
-              (a, b) => (a.startTime ?? -1) - (b.startTime ?? -1)
-          )
-        : [];
+    function recurringFor(d: Date): TimeSlot[] {
+        const dayOfWeek = d.getUTCDay();
+        return recurring
+            .filter((r) => r.dayOfWeek === dayOfWeek)
+            .map((r) => ({ start: r.startTime, end: r.endTime }));
+    }
 
     function updateDate(d: Date | undefined) {
         setDate(d);
-        setStartTime("");
-        setEndTime("");
         setConflicts(null);
-        setEditingId(undefined);
-    }
+        setError(undefined);
 
-    function startEdit(exception: AvailabilityException) {
-        setEditingId(exception.id);
-        setEditStartTime(formatTime(exception.startTime!));
-        setEditEndTime(formatTime(exception.endTime!));
-        setEditError(undefined);
-    }
-
-    function cancelEdit() {
-        setEditingId(undefined);
-        setEditError(undefined);
-    }
-
-    function saveEdit() {
-        if (!editingId) return;
-        if (editStartTime >= editEndTime) {
-            setEditError("Konec musí být po začátku.");
+        if (!d) {
+            setBlocks([]);
             return;
         }
-        setEditError(undefined);
 
-        startEditTransition(async () => {
-            const result = await updateException({
-                id: editingId,
-                startTime: editStartTime,
-                endTime: editEndTime,
-            });
-            if (!result.ok) {
-                setEditError(result.error);
-                return;
-            }
-            setEditingId(undefined);
-        });
+        const existing =
+            exceptionsByDate.get(toUtcMidnight(d).getTime()) ?? [];
+        const resolved = resolveDayTimeSlots(
+            recurringFor(d),
+            existing.map((e) => ({
+                type: e.type,
+                start: e.startTime,
+                end: e.endTime,
+            }))
+        );
+        setBlocks(
+            resolved.map((slot) => ({
+                id: newBlockId(),
+                start: slot.start,
+                end: slot.end,
+            }))
+        );
     }
 
-    function updateKind(k: Kind) {
-        setKind(k);
+    function updateBlock(id: string, start: number, end: number) {
+        setBlocks((prev) =>
+            prev.map((b) => (b.id === id ? { ...b, start, end } : b))
+        );
         setConflicts(null);
     }
 
-    function updateStartTime(v: string) {
-        setStartTime(v);
+    function removeBlock(id: string) {
+        setBlocks((prev) => prev.filter((b) => b.id !== id));
         setConflicts(null);
     }
 
-    function updateEndTime(v: string) {
-        setEndTime(v);
+    function addBlock() {
         setConflicts(null);
-    }
-
-    // Rounds the just-entered side to the nearest quarter hour (existing
-    // behavior) and, if the other side is still blank, defaults it to that
-    // day's opening/closing time — so filling in just one side is usually
-    // enough for a "block off the rest of the day" / "open extra until
-    // closing" exception.
-    function blurStartTime(v: string) {
-        const rounded = roundToQuarterHour(v);
-        updateStartTime(rounded);
-        if (rounded && !endTime && date) {
-            const hours = dayOpeningHours(recurring, date);
-            if (hours) updateEndTime(formatTime(hours.end));
+        if (blocks.length === 0) {
+            // Nothing open yet on this day — the recurring schedule (if
+            // any) is the most useful starting point, otherwise fall back
+            // to the default track's own span.
+            const base = date ? recurringFor(date)[0] : undefined;
+            const start = base?.start ?? DEFAULT_TRACK.start;
+            const end = base?.end ?? DEFAULT_TRACK.start + 240;
+            setBlocks([{ id: newBlockId(), start, end }]);
+            return;
         }
-    }
 
-    function blurEndTime(v: string) {
-        const rounded = roundToQuarterHour(v);
-        updateEndTime(rounded);
-        if (rounded && !startTime && date) {
-            const hours = dayOpeningHours(recurring, date);
-            if (hours) updateStartTime(formatTime(hours.start));
-        }
+        const last = blocks.reduce((a, b) => (b.end > a.end ? b : a));
+        const bounds = trackBoundsFor(date ? recurringFor(date) : [], blocks);
+        const start = Math.min(last.end, bounds.max - SLIDER_STEP);
+        const end = Math.min(start + 120, bounds.max);
+        setBlocks((prev) => [...prev, { id: newBlockId(), start, end }]);
     }
 
     function submit() {
@@ -235,34 +183,35 @@ export function ExceptionForm({
             setError("Vyberte datum.");
             return;
         }
-        if (kind !== "BLOCKED_ALL_DAY") {
-            if (!startTime || !endTime) {
-                setError("Vyplňte čas od–do.");
-                return;
-            }
-            if (startTime >= endTime) {
-                setError("Konec musí být po začátku.");
+        setError(undefined);
+
+        const target: TimeSlot[] = [...blocks]
+            .sort((a, b) => a.start - b.start)
+            .map((b) => ({ start: b.start, end: b.end }));
+
+        for (let i = 1; i < target.length; i++) {
+            if (target[i].start < target[i - 1].end) {
+                setError("Bloky se překrývají.");
                 return;
             }
         }
-        setError(undefined);
 
-        const payload =
-            kind === "BLOCKED_ALL_DAY"
-                ? { kind, date: format(date, "yyyy-MM-dd") }
-                : {
-                      kind,
-                      date: format(date, "yyyy-MM-dd"),
-                      startTime,
-                      endTime,
-                  };
+        const dateStr = format(date, "yyyy-MM-dd");
+        const payload = {
+            date: dateStr,
+            blocks: target.map((t) => ({
+                startTime: formatTime(t.start),
+                endTime: formatTime(t.end),
+            })),
+        };
 
         startTransition(async () => {
-            if (conflicts === null && kind !== "EXTRA_OPEN") {
-                const found = await checkExceptionConflicts(
-                    payload.date,
-                    kind === "BLOCKED_ALL_DAY" ? null : parseTime(startTime),
-                    kind === "BLOCKED_ALL_DAY" ? null : parseTime(endTime)
+            if (conflicts === null) {
+                const { blocked } = diffDayBlocks(recurringFor(date), target);
+
+                const found = await checkDayOverrideConflicts(
+                    dateStr,
+                    blocked
                 );
                 if (found.length > 0) {
                     setConflicts(found);
@@ -270,15 +219,18 @@ export function ExceptionForm({
                 }
             }
 
-            const result = await createException(payload);
+            const result = await saveDayOverride(payload);
             if (!result.ok) {
                 setError(result.error);
                 return;
             }
             setDate(undefined);
+            setBlocks([]);
             setConflicts(null);
         });
     }
+
+    const bounds = trackBoundsFor(date ? recurringFor(date) : [], blocks);
 
     return (
         <Card>
@@ -304,202 +256,70 @@ export function ExceptionForm({
                         </p>
                     ) : (
                         <>
-                            {existingForDate.length > 0 && (
-                                <div className="mb-4 flex flex-col gap-2">
-                                    {existingForDate.map((exception) =>
-                                        editingId === exception.id ? (
-                                            <div
-                                                key={exception.id}
-                                                className="flex flex-col gap-2 px-3"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <Input
-                                                        type="time"
-                                                        step="900"
-                                                        lang="cs"
-                                                        className="w-auto"
-                                                        value={editStartTime}
-                                                        onChange={(e) =>
-                                                            setEditStartTime(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        onBlur={(e) =>
-                                                            setEditStartTime(
-                                                                roundToQuarterHour(
-                                                                    e.target
-                                                                        .value
-                                                                )
-                                                            )
-                                                        }
-                                                    />
-                                                    <span className="text-muted-foreground">
-                                                        –
-                                                    </span>
-                                                    <Input
-                                                        type="time"
-                                                        step="900"
-                                                        lang="cs"
-                                                        className="w-auto"
-                                                        value={editEndTime}
-                                                        onChange={(e) =>
-                                                            setEditEndTime(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        onBlur={(e) =>
-                                                            setEditEndTime(
-                                                                roundToQuarterHour(
-                                                                    e.target
-                                                                        .value
-                                                                )
-                                                            )
-                                                        }
-                                                    />
-                                                    <Button
-                                                        type="button"
-                                                        size="icon-lg"
-                                                        variant="ghost"
-                                                        disabled={
-                                                            isEditPending
-                                                        }
-                                                        onClick={cancelEdit}
-                                                    >
-                                                        <X className="size-5" />
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        size="icon-lg"
-                                                        variant="ghost"
-                                                        disabled={
-                                                            isEditPending
-                                                        }
-                                                        onClick={saveEdit}
-                                                    >
-                                                        {isEditPending ? (
-                                                            <Spinner className="size-5" />
-                                                        ) : (
-                                                            <Check className="size-5 text-success-foreground" />
-                                                        )}
-                                                    </Button>
-                                                </div>
-                                                {editError && (
-                                                    <Alert variant="destructive">
-                                                        <AlertCircle />
-                                                        <AlertTitle>
-                                                            {editError}
-                                                        </AlertTitle>
-                                                    </Alert>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div
-                                                key={exception.id}
-                                                className="flex items-center gap-2 px-3"
-                                            >
-                                                <span
-                                                    className={cn(
-                                                        "h-6 w-1 shrink-0 rounded-full",
-                                                        exceptionColorClass(
-                                                            exception
-                                                        )
-                                                    )}
-                                                />
-                                                <span className="flex-1 text-sm">
-                                                    {exceptionLabel(exception)}
-                                                </span>
-                                                {exception.startTime !==
-                                                    null && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon-sm"
-                                                        disabled={isDeleting}
-                                                        onClick={() =>
-                                                            startEdit(
-                                                                exception
-                                                            )
-                                                        }
-                                                    >
-                                                        <Pencil className="size-4" />
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon-sm"
-                                                    disabled={isDeleting}
-                                                    onClick={() =>
-                                                        startDeleteTransition(
-                                                            async () => {
-                                                                await deleteException(
-                                                                    exception.id
-                                                                );
-                                                            }
-                                                        )
-                                                    }
-                                                >
-                                                    <Trash2 className="size-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
+                            {blocks.length === 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                    Tento den je zavřený.
+                                </p>
                             )}
 
-                            <div className="grid grid-cols-3 gap-2">
-                                {KIND_OPTIONS.map(
-                                    ({ kind: k, label, icon: Icon }) => (
+                            <div className="flex flex-col gap-3">
+                                {blocks.map((block) => (
+                                    <div
+                                        key={block.id}
+                                        className="flex items-center gap-3 rounded-2xl border p-3"
+                                    >
+                                        <div className="flex-1">
+                                            <Slider
+                                                value={[
+                                                    block.start,
+                                                    block.end,
+                                                ]}
+                                                onValueChange={([
+                                                    start,
+                                                    end,
+                                                ]) =>
+                                                    updateBlock(
+                                                        block.id,
+                                                        start,
+                                                        end
+                                                    )
+                                                }
+                                                min={bounds.min}
+                                                max={bounds.max}
+                                                step={SLIDER_STEP}
+                                                minStepsBetweenThumbs={1}
+                                            />
+                                            <div className="mt-2 flex justify-between text-sm tabular-nums text-muted-foreground">
+                                                <span>
+                                                    {formatTime(block.start)}
+                                                </span>
+                                                <span>
+                                                    {formatTime(block.end)}
+                                                </span>
+                                            </div>
+                                        </div>
                                         <Button
-                                            key={k}
                                             type="button"
-                                            variant={
-                                                kind === k
-                                                    ? "default"
-                                                    : "outline"
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            onClick={() =>
+                                                removeBlock(block.id)
                                             }
-                                            onClick={() => updateKind(k)}
                                         >
-                                            <Icon className="size-4" />
-                                            {label}
+                                            <Trash2 className="size-4" />
                                         </Button>
-                                    )
-                                )}
+                                    </div>
+                                ))}
                             </div>
 
-                            {kind !== "BLOCKED_ALL_DAY" && (
-                                <div className="flex items-center gap-2">
-                                    <Input
-                                        type="time"
-                                        step="900"
-                                        lang="cs"
-                                        className="w-auto"
-                                        value={startTime}
-                                        onChange={(e) =>
-                                            updateStartTime(e.target.value)
-                                        }
-                                        onBlur={(e) =>
-                                            blurStartTime(e.target.value)
-                                        }
-                                    />
-                                    <span className="text-muted-foreground">
-                                        –
-                                    </span>
-                                    <Input
-                                        type="time"
-                                        step="900"
-                                        lang="cs"
-                                        className="w-auto"
-                                        value={endTime}
-                                        onChange={(e) =>
-                                            updateEndTime(e.target.value)
-                                        }
-                                        onBlur={(e) =>
-                                            blurEndTime(e.target.value)
-                                        }
-                                    />
-                                </div>
-                            )}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={addBlock}
+                            >
+                                <Plus className="size-4" />
+                                Blok
+                            </Button>
 
                             {error && (
                                 <Alert variant="destructive">
@@ -534,16 +354,15 @@ export function ExceptionForm({
 
                             <Button
                                 type="button"
-                                size="lg"
                                 disabled={isPending}
                                 onClick={submit}
                             >
-                                {isPending && <Spinner className="size-4" />}
-                                {isPending
-                                    ? "Ukládám…"
-                                    : conflicts && conflicts.length > 0
-                                      ? "Přesto uložit"
-                                      : "Přidat výjimku"}
+                                {isPending ? (
+                                    <Spinner className="size-4" />
+                                ) : (
+                                    <Check className="size-4" />
+                                )}
+                                {isPending ? "Ukládám…" : "Uložit"}
                             </Button>
                         </>
                     )}

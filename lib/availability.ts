@@ -156,6 +156,31 @@ export function computeClosedRanges(
     return closed;
 }
 
+// The day-override editor shows the day's *target* open blocks directly
+// (prefilled from the resolved current state, then dragged around by the
+// admin) instead of asking her to think in terms of "block" vs "extra open"
+// deltas. Saving needs to translate that target back into the exceptions
+// that would resolve to it: whatever's in `recurring` but not covered by
+// `target` becomes a BLOCKED range, and whatever's in `target` but not
+// covered by `recurring` becomes an EXTRA_OPEN range. Order-independent —
+// each side is just "these minus the union of those".
+export function diffDayBlocks(
+    recurring: TimeSlot[],
+    target: TimeSlot[]
+): { blocked: TimeSlot[]; extraOpen: TimeSlot[] } {
+    let blocked = recurring;
+    for (const t of target) {
+        blocked = subtractFromSlots(blocked, t);
+    }
+
+    let extraOpen = target;
+    for (const r of recurring) {
+        extraOpen = subtractFromSlots(extraOpen, r);
+    }
+
+    return { blocked, extraOpen };
+}
+
 export function computeAvailableSlots(
     slots: TimeSlot[],
     bookings: TimeSlot[],
