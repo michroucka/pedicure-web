@@ -19,7 +19,10 @@ import { toDateOnly, getCzechToday } from "@/lib/utils.ts";
 export async function getMoveSlotsAction(
     id: string,
     groupId: string | null,
-    dateStr: string
+    dateStr: string,
+    // Lets the edit dialog preview slots for services the person hasn't
+    // saved yet — same order as bookings sorted by startTime.
+    overrideServiceIds?: number[]
 ): Promise<number[]> {
     const date = toDateOnly(new Date(dateStr));
 
@@ -27,8 +30,10 @@ export async function getMoveSlotsAction(
         const bookings = await prisma.booking.findMany({
             where: { groupId, status: "CONFIRMED" },
             include: { client: true },
+            orderBy: { startTime: "asc" },
         });
-        const serviceIds = bookings.map((b) => b.serviceId);
+        const serviceIds =
+            overrideServiceIds ?? bookings.map((b) => b.serviceId);
         const extraMinutes = bookings.reduce(
             (sum, b) => sum + b.client.extraTimeMinutes,
             0
@@ -44,7 +49,7 @@ export async function getMoveSlotsAction(
     });
     return getAvailableSlots(
         date,
-        [booking.serviceId],
+        [overrideServiceIds?.[0] ?? booking.serviceId],
         booking.client.extraTimeMinutes,
         { allowToday: true }
     );
@@ -55,20 +60,78 @@ export async function cancelBookingAction(id: string) {
     revalidatePath("/kalendar");
 }
 
-export async function moveBookingAction(
-    id: string,
-    groupId: string | null,
-    dateStr: string,
-    startTime: number,
-    outsideHours?: boolean
-): Promise<{ ok: true } | { ok: false; error: string }> {
-    const date = toDateOnly(new Date(dateStr));
+export async function updateBookingAction(input: {
+    groupId: string | null;
+    // In the same order as bookings sorted by startTime — matches how
+    // BookingDetailDialog builds groupBookings.
+    people: { bookingId: string; name: string; serviceId: number }[];
+    phone: string;
+    note: string;
+    dateStr: string;
+    startTime: number;
+    outsideHours?: boolean;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+    const date = toDateOnly(new Date(input.dateStr));
+
+    if (date.getTime() < getCzechToday().getTime()) {
+        return { ok: false, error: "Nelze přesunout rezervaci do minulosti." };
+    }
+
+    const existing = await prisma.booking.findMany({
+        where: input.groupId
+            ? { groupId: input.groupId, status: "CONFIRMED" }
+            : { id: input.people[0].bookingId },
+        include: { client: true },
+        orderBy: { startTime: "asc" },
+    });
+
+    if (existing.length !== input.people.length) {
+        return { ok: false, error: "Rezervace nenalezena." };
+    }
+
+    // Name/phone/note are plain Client updates regardless of whether the
+    // slot itself changes — a typo fix shouldn't touch the Booking at all
+    // (and so shouldn't invalidate its cancelToken). Phone is shared across
+    // the whole group (see findOrCreateClient), so it's written to every
+    // member's Client; note is collected only for the main contact.
+    const trimmedPhone = input.phone.trim() || null;
+    const trimmedNote = input.note.trim() || null;
+    await Promise.all(
+        existing.map((b, i) =>
+            prisma.client.update({
+                where: { id: b.clientId },
+                data: {
+                    name: input.people[i].name,
+                    phone: trimmedPhone,
+                    ...(i === 0 ? { note: trimmedNote } : {}),
+                },
+            })
+        )
+    );
+
+    const scheduleChanged =
+        existing[0].date.getTime() !== date.getTime() ||
+        existing[0].startTime !== input.startTime ||
+        existing.some((b, i) => b.serviceId !== input.people[i].serviceId);
+
+    if (!scheduleChanged) {
+        revalidatePath("/kalendar");
+        return { ok: true };
+    }
 
     try {
-        if (groupId) {
-            await moveGroupBooking(groupId, date, startTime, { outsideHours });
+        if (input.groupId) {
+            await moveGroupBooking(input.groupId, date, input.startTime, {
+                outsideHours: input.outsideHours,
+                serviceOverrides: Object.fromEntries(
+                    existing.map((b, i) => [b.id, input.people[i].serviceId])
+                ),
+            });
         } else {
-            await moveBooking(id, date, startTime, { outsideHours });
+            await moveBooking(input.people[0].bookingId, date, input.startTime, {
+                outsideHours: input.outsideHours,
+                serviceId: input.people[0].serviceId,
+            });
         }
     } catch (error) {
         if (error instanceof SlotUnavailableError) {
@@ -91,6 +154,7 @@ export async function getManualBookingSlotsAction(
 
 export async function createManualBookingAction(input: {
     phone?: string;
+    note?: string;
     people: { name: string; serviceId: number }[];
     dateStr: string;
     startTime: number;
@@ -103,8 +167,17 @@ export async function createManualBookingAction(input: {
         return { ok: false, error: "Nelze vytvořit rezervaci v minulosti." };
     }
 
+    // Note is only ever collected for the main contact, same as phone —
+    // the rest of the group shares their contact but gets its own name.
     const clients = await Promise.all(
-        input.people.map((p) => findOrCreateClient(input.phone, p.name))
+        input.people.map((p, i) =>
+            findOrCreateClient(
+                input.phone,
+                p.name,
+                undefined,
+                i === 0 ? input.note : undefined
+            )
+        )
     );
 
     const serviceIds = input.people.map((p) => p.serviceId);

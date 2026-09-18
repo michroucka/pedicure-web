@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
@@ -33,6 +34,7 @@ import {
     UserRound,
     Phone,
     Sparkles,
+    StickyNote,
     X,
 } from "lucide-react";
 import {
@@ -71,6 +73,7 @@ export function AddBookingDialog({
 }) {
     const [open, setOpen] = useState(false);
     const [phone, setPhone] = useState("");
+    const [note, setNote] = useState("");
     const [people, setPeople] = useState<PersonInput[]>([emptyPerson()]);
     const [date, setDate] = useState<Date | undefined>(defaultDate);
     const [source, setSource] = useState<"PHONE" | "IN_PERSON">("PHONE");
@@ -131,6 +134,7 @@ export function AddBookingDialog({
 
     function reset() {
         setPhone("");
+        setNote("");
         setPeople([emptyPerson()]);
         setDate(defaultDate);
         setSource("PHONE");
@@ -164,6 +168,7 @@ export function AddBookingDialog({
         startTransition(async () => {
             const result = await createManualBookingAction({
                 phone: phone.trim() || undefined,
+                note: note.trim() || undefined,
                 people: people.map((p) => ({
                     name: p.name.trim(),
                     serviceId: p.serviceId!,
@@ -292,6 +297,14 @@ export function AddBookingDialog({
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
+                            <span className="flex items-center gap-1 text-sm font-medium">
+                                <StickyNote className="size-4" />
+                                Poznámka (nepovinné)
+                            </span>
+                            <Textarea
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                            />
                         </div>
 
                         {people.slice(1).map((person, i) => (

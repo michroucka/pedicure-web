@@ -23,6 +23,16 @@ import {
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
 import { QrPayment } from "@/components/admin/qr-payment.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
@@ -34,16 +44,19 @@ import {
     Check,
     X,
     Plus,
-    ArrowRightLeft,
+    Pencil,
+    Sparkles,
+    StickyNote,
     QrCode,
 } from "lucide-react";
 import { formatTime, toUtcMidnight, toTelHref } from "@/lib/utils.ts";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
-    moveBookingAction,
+    updateBookingAction,
 } from "@/app/(admin)/(dashboard)/kalendar/actions.ts";
 import type { BookingItem } from "@/components/admin/booking-card.tsx";
+import type { Service } from "@/lib/generated/prisma/client.ts";
 
 const SOURCE_LABELS: Record<string, string> = {
     ONLINE: "Online",
@@ -53,19 +66,31 @@ const SOURCE_LABELS: Record<string, string> = {
 
 const QR_TOTAL = "total";
 
+type EditPerson = {
+    bookingId: string;
+    name: string;
+    serviceId: number | undefined;
+};
+
 export function BookingDetailDialog({
     booking,
     allBookings,
+    services,
     onOpenChange,
 }: {
     booking: BookingItem | null;
     allBookings: BookingItem[];
+    services: Service[];
     onOpenChange: (open: boolean) => void;
 }) {
-    const [mode, setMode] = useState<"detail" | "move" | "qr">("detail");
+    const [mode, setMode] = useState<"detail" | "edit" | "qr">("detail");
     const [confirmCancel, setConfirmCancel] = useState(false);
-    const [moveDate, setMoveDate] = useState<Date>();
-    const [moveSlots, setMoveSlots] = useState<number[]>();
+    const [confirmSave, setConfirmSave] = useState(false);
+    const [editPhone, setEditPhone] = useState("");
+    const [editNote, setEditNote] = useState("");
+    const [editPeople, setEditPeople] = useState<EditPerson[]>([]);
+    const [editDate, setEditDate] = useState<Date>();
+    const [editSlots, setEditSlots] = useState<number[]>();
     const [selectedSlot, setSelectedSlot] = useState<number>();
     const [customTime, setCustomTime] = useState(false);
     const [customTimeValue, setCustomTimeValue] = useState("");
@@ -78,8 +103,12 @@ export function BookingDetailDialog({
     function reset() {
         setMode("detail");
         setConfirmCancel(false);
-        setMoveDate(undefined);
-        setMoveSlots(undefined);
+        setConfirmSave(false);
+        setEditPhone("");
+        setEditNote("");
+        setEditPeople([]);
+        setEditDate(undefined);
+        setEditSlots(undefined);
         setSelectedSlot(undefined);
         setCustomTime(false);
         setCustomTimeValue("");
@@ -124,34 +153,113 @@ export function BookingDetailDialog({
         setQrAmount(String(amount));
     }
 
-    function pickMoveDate(d: Date | undefined) {
-        setMoveDate(d);
-        setSelectedSlot(undefined);
-        setMoveSlots(undefined);
-        setCustomTime(false);
-        setCustomTimeValue("");
+    function refreshEditSlots(d: Date | undefined, serviceIds: number[]) {
+        setEditSlots(undefined);
         if (!d || !booking) return;
         startSlotsTransition(async () => {
-            const slots = await getMoveSlotsAction(
+            const result = await getMoveSlotsAction(
                 booking.id,
                 booking.groupId,
-                format(d, "yyyy-MM-dd")
+                format(d, "yyyy-MM-dd"),
+                serviceIds
             );
-            setMoveSlots(slots);
+            setEditSlots(result);
         });
     }
 
-    function confirmMove() {
-        if (!booking || !moveDate || selectedSlot === undefined) return;
-        startTransition(async () => {
-            const result = await moveBookingAction(
-                booking.id,
-                booking.groupId,
-                format(moveDate, "yyyy-MM-dd"),
-                selectedSlot,
-                customTime
+    function openEdit() {
+        setMode("edit");
+        setEditPhone(booking!.client.phone ?? "");
+        setEditNote(booking!.client.note ?? "");
+        const people = groupBookings.map((b) => ({
+            bookingId: b.id,
+            name: b.client.name,
+            serviceId: b.serviceId as number | undefined,
+        }));
+        setEditPeople(people);
+        setEditDate(booking!.date);
+        setSelectedSlot(booking!.startTime);
+        setCustomTime(false);
+        setCustomTimeValue("");
+        // Preloaded so alternative slots show right away, without the admin
+        // having to touch the calendar first.
+        refreshEditSlots(
+            booking!.date,
+            people.map((p) => p.serviceId!)
+        );
+    }
+
+    function updateEditPersonService(i: number, serviceId: number) {
+        const next = editPeople.map((p, idx) =>
+            idx === i ? { ...p, serviceId } : p
+        );
+        setEditPeople(next);
+        setSelectedSlot(undefined);
+        setCustomTime(false);
+        setCustomTimeValue("");
+        refreshEditSlots(editDate, next.map((p) => p.serviceId!));
+    }
+
+    function updateEditPersonName(i: number, name: string) {
+        setEditPeople((prev) =>
+            prev.map((p, idx) => (idx === i ? { ...p, name } : p))
+        );
+    }
+
+    function pickEditDate(d: Date | undefined) {
+        setEditDate(d);
+        setSelectedSlot(undefined);
+        setCustomTime(false);
+        setCustomTimeValue("");
+        refreshEditSlots(d, editPeople.map((p) => p.serviceId!));
+    }
+
+    function submitEdit() {
+        setError(undefined);
+
+        if (!booking) return;
+        if (editPeople.some((p) => !p.name.trim() || !p.serviceId)) {
+            setError("Vyplňte jméno a službu pro každou osobu.");
+            return;
+        }
+        if (!editDate || selectedSlot === undefined) {
+            setError("Vyberte datum a čas.");
+            return;
+        }
+
+        const scheduleChanged =
+            format(editDate, "yyyy-MM-dd") !==
+                format(booking.date, "yyyy-MM-dd") ||
+            selectedSlot !== booking.startTime ||
+            editPeople.some(
+                (p, i) => p.serviceId !== groupBookings[i].serviceId
             );
+
+        if (scheduleChanged) {
+            setConfirmSave(true);
+            return;
+        }
+        doSaveEdit();
+    }
+
+    function doSaveEdit() {
+        if (!editDate || selectedSlot === undefined) return;
+        startTransition(async () => {
+            const result = await updateBookingAction({
+                groupId: booking!.groupId,
+                people: editPeople.map((p) => ({
+                    bookingId: p.bookingId,
+                    name: p.name.trim(),
+                    serviceId: p.serviceId!,
+                })),
+                phone: editPhone.trim(),
+                note: editNote.trim(),
+                dateStr: format(editDate, "yyyy-MM-dd"),
+                startTime: selectedSlot,
+                outsideHours: customTime,
+            });
             if (!result.ok) {
+                setConfirmSave(false);
                 setError(result.error);
                 return;
             }
@@ -173,13 +281,13 @@ export function BookingDetailDialog({
                 open={!!booking}
                 onOpenChange={(open) => !open && close()}
             >
-                <DialogContent>
+                <DialogContent className="max-h-[90svh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
                             {mode === "detail"
                                 ? "Rezervace"
-                                : mode === "move"
-                                  ? "Přesunout rezervaci"
+                                : mode === "edit"
+                                  ? "Upravit rezervaci"
                                   : "QR platba"}
                         </DialogTitle>
                     </DialogHeader>
@@ -266,11 +374,136 @@ export function BookingDetailDialog({
                         </div>
                     ) : (
                         <div className="flex flex-col gap-3">
+                            <div className="flex flex-col gap-2 rounded-2xl border p-3">
+                                <span className="flex items-center gap-1 text-sm font-medium">
+                                    <UserRound className="size-4" />
+                                    {editPeople.length > 1
+                                        ? "Hlavní kontakt"
+                                        : "Jméno"}
+                                </span>
+                                <Input
+                                    placeholder="Jméno"
+                                    value={editPeople[0]?.name ?? ""}
+                                    onChange={(e) =>
+                                        updateEditPersonName(
+                                            0,
+                                            e.target.value
+                                        )
+                                    }
+                                />
+                                <span className="flex items-center gap-1 text-sm font-medium">
+                                    <Phone className="size-4" />
+                                    Telefonní číslo (nepovinné)
+                                </span>
+                                <Input
+                                    placeholder="+420 123 456 789"
+                                    value={editPhone}
+                                    onChange={(e) =>
+                                        setEditPhone(e.target.value)
+                                    }
+                                />
+                                <span className="flex items-center gap-1 text-sm font-medium">
+                                    <Sparkles className="size-4" />
+                                    Služba
+                                </span>
+                                <Select
+                                    value={
+                                        editPeople[0]?.serviceId
+                                            ? String(editPeople[0].serviceId)
+                                            : ""
+                                    }
+                                    onValueChange={(v) =>
+                                        updateEditPersonService(0, Number(v))
+                                    }
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Vyberte službu" />
+                                    </SelectTrigger>
+                                    <SelectContent position="popper">
+                                        <SelectGroup>
+                                            <SelectLabel>Služby</SelectLabel>
+                                            {services.map((s) => (
+                                                <SelectItem
+                                                    key={s.id}
+                                                    value={String(s.id)}
+                                                >
+                                                    {s.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                                <span className="flex items-center gap-1 text-sm font-medium">
+                                    <StickyNote className="size-4" />
+                                    Poznámka (nepovinné)
+                                </span>
+                                <Textarea
+                                    value={editNote}
+                                    onChange={(e) =>
+                                        setEditNote(e.target.value)
+                                    }
+                                />
+                            </div>
+
+                            {editPeople.slice(1).map((person, i) => (
+                                <div
+                                    key={person.bookingId}
+                                    className="flex flex-col gap-2 rounded-2xl border p-3"
+                                >
+                                    <span className="flex items-center gap-1 text-sm font-medium">
+                                        <UserRound className="size-4" />
+                                        Osoba {i + 2}
+                                    </span>
+                                    <Input
+                                        placeholder="Jméno"
+                                        value={person.name}
+                                        onChange={(e) =>
+                                            updateEditPersonName(
+                                                i + 1,
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                    <Select
+                                        value={
+                                            person.serviceId
+                                                ? String(person.serviceId)
+                                                : ""
+                                        }
+                                        onValueChange={(v) =>
+                                            updateEditPersonService(
+                                                i + 1,
+                                                Number(v)
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Vyberte službu" />
+                                        </SelectTrigger>
+                                        <SelectContent position="popper">
+                                            <SelectGroup>
+                                                <SelectLabel>
+                                                    Služby
+                                                </SelectLabel>
+                                                {services.map((s) => (
+                                                    <SelectItem
+                                                        key={s.id}
+                                                        value={String(s.id)}
+                                                    >
+                                                        {s.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            ))}
+
                             <Calendar
                                 mode="single"
                                 locale={cs}
-                                selected={moveDate}
-                                onSelect={pickMoveDate}
+                                selected={editDate}
+                                onSelect={pickEditDate}
                                 disabled={(day) =>
                                     toUtcMidnight(day).getTime() <
                                     toUtcMidnight(new Date()).getTime()
@@ -278,7 +511,7 @@ export function BookingDetailDialog({
                                 className="w-full bg-transparent"
                             />
 
-                            {moveDate &&
+                            {editDate &&
                                 (customTime ? (
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium">
@@ -312,12 +545,12 @@ export function BookingDetailDialog({
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-4 gap-2">
-                                        {moveSlots?.length === 0 && (
+                                        {editSlots?.length === 0 && (
                                             <p className="col-span-4 text-center text-sm text-muted-foreground">
                                                 Žádné volné termíny.
                                             </p>
                                         )}
-                                        {moveSlots?.map((s) => (
+                                        {editSlots?.map((s) => (
                                             <Button
                                                 key={s}
                                                 type="button"
@@ -388,10 +621,10 @@ export function BookingDetailDialog({
                                 <Button
                                     type="button"
                                     className="order-3"
-                                    onClick={() => setMode("move")}
+                                    onClick={openEdit}
                                 >
-                                    <ArrowRightLeft className="size-4" />
-                                    Přesunout
+                                    <Pencil className="size-4" />
+                                    Upravit
                                 </Button>
                             </>
                         ) : mode === "qr" ? (
@@ -416,16 +649,14 @@ export function BookingDetailDialog({
                                     disabled={
                                         selectedSlot === undefined || isPending
                                     }
-                                    onClick={confirmMove}
+                                    onClick={submitEdit}
                                 >
                                     {isPending ? (
                                         <Spinner className="size-4" />
                                     ) : (
                                         <Check className="size-4" />
                                     )}
-                                    {isPending
-                                        ? "Přesouvám…"
-                                        : "Potvrdit přesun"}
+                                    {isPending ? "Ukládám…" : "Uložit"}
                                 </Button>
                             </>
                         )}
@@ -460,6 +691,37 @@ export function BookingDetailDialog({
                                 <X className="size-4" />
                             )}
                             {isPending ? "Ruším…" : "Zrušit rezervaci"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog
+                open={confirmSave}
+                onOpenChange={setConfirmSave}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Uložit změny?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Měníš termín nebo službu rezervace. Klient se o
+                            téhle změně automaticky nedozví — nepošle se mu
+                            žádný email, SMS ani push. Pokud potřebuje vědět,
+                            dej mu vědět sama.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Zpět</AlertDialogCancel>
+                        <AlertDialogAction
+                            disabled={isPending}
+                            onClick={doSaveEdit}
+                        >
+                            {isPending ? (
+                                <Spinner className="size-4" />
+                            ) : (
+                                <Check className="size-4" />
+                            )}
+                            {isPending ? "Ukládám…" : "Uložit změny"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

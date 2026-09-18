@@ -17,7 +17,7 @@ export async function moveBooking(
     bookingId: string,
     newDate: Date,
     newStartTime: number,
-    options: { outsideHours?: boolean } = {}
+    options: { outsideHours?: boolean; serviceId?: number } = {}
 ): Promise<Booking> {
     return prisma.$transaction(async (tx) => {
         const booking = await tx.booking.findUniqueOrThrow({
@@ -36,13 +36,19 @@ export async function moveBooking(
             data: { status: "CANCELLED" },
         });
 
+        const serviceId = options.serviceId ?? booking.serviceId;
+
         // Checked after cancelling (inside the same transaction) so the
         // booking being moved never collides with its own old slot.
         if (options.outsideHours) {
             if (newDate.getTime() < getCzechToday().getTime()) {
                 throw new SlotUnavailableError();
             }
-            const duration = booking.endTime - booking.startTime;
+            const service = await tx.service.findUniqueOrThrow({
+                where: { id: serviceId },
+            });
+            const duration =
+                service.durationMinutes + booking.client.extraTimeMinutes;
             const overlaps = await hasOverlappingBooking(
                 newDate,
                 newStartTime,
@@ -55,7 +61,7 @@ export async function moveBooking(
         } else {
             const validSlots = await getAvailableSlots(
                 newDate,
-                [booking.serviceId],
+                [serviceId],
                 booking.client.extraTimeMinutes,
                 { allowToday: true, db: tx }
             );
@@ -67,7 +73,7 @@ export async function moveBooking(
         return createBooking(
             {
                 clientId: booking.clientId,
-                serviceId: booking.serviceId,
+                serviceId,
                 date: newDate,
                 startTime: newStartTime,
                 source: booking.source,
@@ -79,13 +85,18 @@ export async function moveBooking(
 }
 
 // Moves every booking in the group together, preserving each person's own
-// service/extraTimeMinutes and re-laying them out sequentially from the new
-// start — same allocation as createGroupBooking.
+// extraTimeMinutes and re-laying them out sequentially from the new start —
+// same allocation as createGroupBooking. `serviceOverrides` (bookingId ->
+// new serviceId) lets the edit dialog change a person's service in the same
+// step, since that also needs the slot re-validated.
 export async function moveGroupBooking(
     groupId: string,
     newDate: Date,
     newGroupStart: number,
-    options: { outsideHours?: boolean } = {}
+    options: {
+        outsideHours?: boolean;
+        serviceOverrides?: Record<string, number>;
+    } = {}
 ): Promise<Booking[]> {
     return prisma.$transaction(async (tx) => {
         const bookings = await tx.booking.findMany({
@@ -103,12 +114,26 @@ export async function moveGroupBooking(
             data: { status: "CANCELLED" },
         });
 
+        const serviceIds = bookings.map(
+            (b) => options.serviceOverrides?.[b.id] ?? b.serviceId
+        );
+        const totalExtraMinutes = bookings.reduce(
+            (sum, b) => sum + b.client.extraTimeMinutes,
+            0
+        );
+
         if (options.outsideHours) {
             if (newDate.getTime() < getCzechToday().getTime()) {
                 throw new SlotUnavailableError();
             }
+            const services = await tx.service.findMany({
+                where: { id: { in: serviceIds } },
+            });
             const groupDuration =
-                bookings[bookings.length - 1].endTime - bookings[0].startTime;
+                serviceIds.reduce((sum, id) => {
+                    const service = services.find((s) => s.id === id);
+                    return sum + (service?.durationMinutes ?? 0);
+                }, 0) + totalExtraMinutes;
             const overlaps = await hasOverlappingBooking(
                 newDate,
                 newGroupStart,
@@ -119,12 +144,6 @@ export async function moveGroupBooking(
                 throw new SlotUnavailableError();
             }
         } else {
-            const serviceIds = bookings.map((b) => b.serviceId);
-            const totalExtraMinutes = bookings.reduce(
-                (sum, b) => sum + b.client.extraTimeMinutes,
-                0
-            );
-
             const validSlots = await getAvailableSlots(
                 newDate,
                 serviceIds,
@@ -139,11 +158,12 @@ export async function moveGroupBooking(
         const created: Booking[] = [];
         let startTime = newGroupStart;
 
-        for (const booking of bookings) {
+        for (let i = 0; i < bookings.length; i++) {
+            const booking = bookings[i];
             const newBooking = await createBooking(
                 {
                     clientId: booking.clientId,
-                    serviceId: booking.serviceId,
+                    serviceId: serviceIds[i],
                     date: newDate,
                     startTime,
                     source: booking.source,
