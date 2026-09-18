@@ -90,12 +90,12 @@ function BlockField({
                     step={SLIDER_STEP}
                     minStepsBetweenThumbs={1}
                 />
-                <div className="mt-2 flex justify-between gap-2">
+                <div className="mt-3 flex justify-between gap-2">
                     <Input
                         type="time"
                         step="900"
                         lang="cs"
-                        className="h-auto w-auto border-none p-0 text-sm tabular-nums text-muted-foreground shadow-none"
+                        className="h-auto w-auto border-none px-1.5 py-0.5 text-sm text-muted-foreground tabular-nums shadow-none"
                         value={formatTime(start)}
                         onChange={(e) => typeStart(e.target.value)}
                     />
@@ -103,7 +103,7 @@ function BlockField({
                         type="time"
                         step="900"
                         lang="cs"
-                        className="h-auto w-auto border-none p-0 text-right text-sm tabular-nums text-muted-foreground shadow-none"
+                        className="h-auto w-auto border-none px-1.5 py-0.5 text-right text-sm text-muted-foreground tabular-nums shadow-none"
                         value={formatTime(end)}
                         onChange={(e) => typeEnd(e.target.value)}
                     />

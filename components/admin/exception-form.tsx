@@ -309,12 +309,12 @@ export function ExceptionForm({
                                                 step={SLIDER_STEP}
                                                 minStepsBetweenThumbs={1}
                                             />
-                                            <div className="mt-2 flex justify-between gap-2">
+                                            <div className="mt-3 flex justify-between gap-2">
                                                 <Input
                                                     type="time"
                                                     step="900"
                                                     lang="cs"
-                                                    className="h-auto w-auto border-none p-0 text-sm tabular-nums text-muted-foreground shadow-none"
+                                                    className="h-auto w-auto border-none px-1.5 py-0.5 text-sm tabular-nums text-muted-foreground shadow-none"
                                                     value={formatTime(
                                                         block.start
                                                     )}
@@ -329,7 +329,7 @@ export function ExceptionForm({
                                                     type="time"
                                                     step="900"
                                                     lang="cs"
-                                                    className="h-auto w-auto border-none p-0 text-right text-sm tabular-nums text-muted-foreground shadow-none"
+                                                    className="h-auto w-auto border-none px-1.5 py-0.5 text-right text-sm tabular-nums text-muted-foreground shadow-none"
                                                     value={formatTime(
                                                         block.end
                                                     )}
