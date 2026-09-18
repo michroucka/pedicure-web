@@ -101,6 +101,7 @@ export function AddBookingDialog({
     const [customTimeValue, setCustomTimeValue] = useState("");
     const [error, setError] = useState<string>();
     const [isPending, startTransition] = useTransition();
+    const [isLoadingSlots, startSlotsTransition] = useTransition();
 
     function refreshSlots(d: Date | undefined, ppl: PersonInput[]) {
         setSelectedSlot(undefined);
@@ -109,7 +110,7 @@ export function AddBookingDialog({
         setSlots(undefined);
         const serviceIds = ppl.map((p) => p.serviceId);
         if (!d || serviceIds.some((id) => id === undefined)) return;
-        startTransition(async () => {
+        startSlotsTransition(async () => {
             const result = await getManualBookingSlotsAction(
                 serviceIds as number[],
                 format(d, "yyyy-MM-dd")
@@ -495,6 +496,11 @@ export function AddBookingDialog({
                                     >
                                         <X className="size-4" />
                                     </Button>
+                                </div>
+                            ) : isLoadingSlots ? (
+                                <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                                    <Spinner className="size-4" />
+                                    Načítám dostupné termíny…
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-4 gap-2">
