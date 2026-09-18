@@ -40,6 +40,7 @@ export async function getMoveSlotsAction(
         );
         return getAvailableSlots(date, serviceIds, extraMinutes, {
             allowToday: true,
+            excludeBookingIds: bookings.map((b) => b.id),
         });
     }
 
@@ -51,7 +52,7 @@ export async function getMoveSlotsAction(
         date,
         [overrideServiceIds?.[0] ?? booking.serviceId],
         booking.client.extraTimeMinutes,
-        { allowToday: true }
+        { allowToday: true, excludeBookingIds: [booking.id] }
     );
 }
 

@@ -17,6 +17,12 @@ export async function getAvailableSlots(
         // actions (manual add, move) may book/move into today.
         allowToday?: boolean;
         db?: Prisma.TransactionClient;
+        // Bookings to leave out of the "already occupied" set — the edit
+        // dialog's slot preview needs this so a booking's own current slot
+        // doesn't show up as unavailable to itself. The real move/update
+        // path doesn't need this: it cancels the booking first, inside the
+        // same transaction, before ever calling this function.
+        excludeBookingIds?: string[];
     } = {}
 ): Promise<number[]> {
     const db = options.db ?? prisma;
@@ -48,7 +54,11 @@ export async function getAvailableSlots(
                 where: { date: day },
             }),
             db.booking.findMany({
-                where: { date: day, status: "CONFIRMED" },
+                where: {
+                    date: day,
+                    status: "CONFIRMED",
+                    id: { notIn: options.excludeBookingIds ?? [] },
+                },
             }),
         ]);
 
