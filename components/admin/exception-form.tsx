@@ -8,9 +8,15 @@ import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { AlertCircle, Plus, Trash2, Check } from "lucide-react";
-import { toUtcMidnight, formatTime } from "@/lib/utils.ts";
+import {
+    toUtcMidnight,
+    formatTime,
+    parseTime,
+    roundToQuarterHour,
+} from "@/lib/utils.ts";
 import {
     saveDayOverride,
     checkDayOverrideConflicts,
@@ -32,7 +38,7 @@ const SLIDER_STEP = 15;
 // Fallback track bounds when a day has no blocks yet to derive a range
 // from — widened automatically (see trackBoundsFor) to always fit whatever
 // real data ends up on it.
-const DEFAULT_TRACK: TimeSlot = { start: 6 * 60, end: 22 * 60 };
+const DEFAULT_TRACK: TimeSlot = { start: 13 * 60, end: 20 * 60 };
 
 type Block = { id: string; start: number; end: number };
 
@@ -156,6 +162,20 @@ export function ExceptionForm({
     function removeBlock(id: string) {
         setBlocks((prev) => prev.filter((b) => b.id !== id));
         setConflicts(null);
+    }
+
+    // Typing an exact time bypasses the slider's own min-gap enforcement,
+    // so clamp here to keep start < end by at least one step.
+    function typeStart(block: Block, value: string) {
+        if (!value) return;
+        const start = parseTime(roundToQuarterHour(value));
+        updateBlock(block.id, Math.min(start, block.end - SLIDER_STEP), block.end);
+    }
+
+    function typeEnd(block: Block, value: string) {
+        if (!value) return;
+        const end = parseTime(roundToQuarterHour(value));
+        updateBlock(block.id, block.start, Math.max(end, block.start + SLIDER_STEP));
     }
 
     function addBlock() {
@@ -289,13 +309,37 @@ export function ExceptionForm({
                                                 step={SLIDER_STEP}
                                                 minStepsBetweenThumbs={1}
                                             />
-                                            <div className="mt-2 flex justify-between text-sm tabular-nums text-muted-foreground">
-                                                <span>
-                                                    {formatTime(block.start)}
-                                                </span>
-                                                <span>
-                                                    {formatTime(block.end)}
-                                                </span>
+                                            <div className="mt-2 flex justify-between gap-2">
+                                                <Input
+                                                    type="time"
+                                                    step="900"
+                                                    lang="cs"
+                                                    className="h-auto w-auto border-none p-0 text-sm tabular-nums text-muted-foreground shadow-none"
+                                                    value={formatTime(
+                                                        block.start
+                                                    )}
+                                                    onChange={(e) =>
+                                                        typeStart(
+                                                            block,
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+                                                <Input
+                                                    type="time"
+                                                    step="900"
+                                                    lang="cs"
+                                                    className="h-auto w-auto border-none p-0 text-right text-sm tabular-nums text-muted-foreground shadow-none"
+                                                    value={formatTime(
+                                                        block.end
+                                                    )}
+                                                    onChange={(e) =>
+                                                        typeEnd(
+                                                            block,
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
                                             </div>
                                         </div>
                                         <Button

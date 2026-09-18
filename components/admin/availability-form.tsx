@@ -15,8 +15,9 @@ import {
 } from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
-import { formatTime, parseTime } from "@/lib/utils.ts";
+import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils.ts";
 import { Plus, Trash2, Save } from "lucide-react";
 
 const DAY_LABELS: Record<number, string> = {
@@ -29,8 +30,8 @@ const DAY_LABELS: Record<number, string> = {
     6: "Sobota",
 };
 
-const TRACK_MIN = 6 * 60; // 06:00
-const TRACK_MAX = 22 * 60; // 22:00
+const TRACK_MIN = 13 * 60; // 13:00
+const TRACK_MAX = 20 * 60; // 20:00
 const SLIDER_STEP = 15;
 
 function BlockField({
@@ -64,6 +65,20 @@ function BlockField({
         );
     }
 
+    // Typing an exact time bypasses the slider's own min-gap enforcement,
+    // so clamp here to keep start < end by at least one step.
+    function typeStart(value: string) {
+        if (!value) return;
+        const newStart = parseTime(roundToQuarterHour(value));
+        handleChange([Math.min(newStart, end - SLIDER_STEP), end]);
+    }
+
+    function typeEnd(value: string) {
+        if (!value) return;
+        const newEnd = parseTime(roundToQuarterHour(value));
+        handleChange([start, Math.max(newEnd, start + SLIDER_STEP)]);
+    }
+
     return (
         <div className="flex items-center gap-3 rounded-2xl border p-3">
             <div className="flex-1">
@@ -75,9 +90,23 @@ function BlockField({
                     step={SLIDER_STEP}
                     minStepsBetweenThumbs={1}
                 />
-                <div className="mt-2 flex justify-between text-sm tabular-nums text-muted-foreground">
-                    <span>{formatTime(start)}</span>
-                    <span>{formatTime(end)}</span>
+                <div className="mt-2 flex justify-between gap-2">
+                    <Input
+                        type="time"
+                        step="900"
+                        lang="cs"
+                        className="h-auto w-auto border-none p-0 text-sm tabular-nums text-muted-foreground shadow-none"
+                        value={formatTime(start)}
+                        onChange={(e) => typeStart(e.target.value)}
+                    />
+                    <Input
+                        type="time"
+                        step="900"
+                        lang="cs"
+                        className="h-auto w-auto border-none p-0 text-right text-sm tabular-nums text-muted-foreground shadow-none"
+                        value={formatTime(end)}
+                        onChange={(e) => typeEnd(e.target.value)}
+                    />
                 </div>
             </div>
             <Button
