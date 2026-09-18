@@ -117,7 +117,11 @@ export function ExceptionForm({
     };
 
     function recurringFor(d: Date): TimeSlot[] {
-        const dayOfWeek = d.getUTCDay();
+        // `d` comes straight from the Calendar's onSelect, which is local
+        // midnight, not UTC midnight — reading getUTCDay() on it directly
+        // shifts the weekday back a day in any timezone ahead of UTC
+        // (Czech local time included). Normalize first.
+        const dayOfWeek = toUtcMidnight(d).getUTCDay();
         return recurring
             .filter((r) => r.dayOfWeek === dayOfWeek)
             .map((r) => ({ start: r.startTime, end: r.endTime }));
@@ -278,7 +282,7 @@ export function ExceptionForm({
                         <>
                             {blocks.length === 0 && (
                                 <p className="text-sm text-muted-foreground">
-                                    Tento den je zavřený.
+                                    Tento den je zavřeno.
                                 </p>
                             )}
 
