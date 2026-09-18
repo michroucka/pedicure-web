@@ -19,7 +19,7 @@ import {
 } from "@/components/admin/booking-card.tsx";
 import type { Service } from "@/lib/generated/prisma/client.ts";
 
-const PX_PER_MIN = 1.5;
+const PX_PER_MIN = 2;
 
 export function WeekTimeline({
     weekDays,
