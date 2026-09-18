@@ -22,11 +22,11 @@ export function isBookingPast(
 }
 
 export const SERVICE_COLORS = [
-    "border-chart-1/25 border-l-chart-1 bg-chart-1/8",
-    "border-chart-2/25 border-l-chart-2 bg-chart-2/8",
-    "border-chart-3/25 border-l-chart-3 bg-chart-3/8",
-    "border-chart-4/25 border-l-chart-4 bg-chart-4/8",
-    "border-chart-5/25 border-l-chart-5 bg-chart-5/8",
+    "border-chart-1/25 border-l-chart-1 bg-chart-1/3",
+    "border-chart-2/25 border-l-chart-2 bg-chart-2/3",
+    "border-chart-3/25 border-l-chart-3 bg-chart-3/3",
+    "border-chart-4/25 border-l-chart-4 bg-chart-4/3",
+    "border-chart-5/25 border-l-chart-5 bg-chart-5/3",
 ];
 
 export function BookingCard({
