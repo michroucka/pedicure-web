@@ -17,7 +17,7 @@ export async function updateClientAction(
         where: { id },
         data: {
             name: data.name,
-            phone: data.phone,
+            phone: data.phone || null,
             email: data.email || null,
             extraTimeMinutes: data.extraTimeMinutes,
             note: data.note || null,

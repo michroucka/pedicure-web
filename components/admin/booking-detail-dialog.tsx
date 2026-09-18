@@ -195,15 +195,17 @@ export function BookingDetailDialog({
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Phone className="size-4 text-muted-foreground" />
-                                <a
-                                    href={toTelHref(booking.client.phone)}
-                                    className="hover:underline"
-                                >
-                                    {booking.client.phone}
-                                </a>
-                            </div>
+                            {booking.client.phone && (
+                                <div className="flex items-center gap-2">
+                                    <Phone className="size-4 text-muted-foreground" />
+                                    <a
+                                        href={toTelHref(booking.client.phone)}
+                                        className="hover:underline"
+                                    >
+                                        {booking.client.phone}
+                                    </a>
+                                </div>
+                            )}
                             <div className="flex items-center gap-2">
                                 <Clock className="size-4 text-muted-foreground" />
                                 {formatTime(booking.startTime)} –{" "}

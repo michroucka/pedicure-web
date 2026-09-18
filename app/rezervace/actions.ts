@@ -211,6 +211,7 @@ export async function getExtraMinutesAction(
         const match = candidates.find(
             (c) =>
                 c.name === e.name &&
+                c.phone &&
                 normalizePhoneForMatch(c.phone) === normalizedPhone
         );
         return sum + (match?.extraTimeMinutes ?? 0);

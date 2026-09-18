@@ -16,7 +16,7 @@ export function ClientList({ clients }: { clients: Client[] }) {
         ? clients.filter(
               (c) =>
                   normalizeForSearch(c.name).includes(normalized) ||
-                  c.phone.includes(normalized)
+                  (c.phone?.includes(normalized) ?? false)
           )
         : clients;
 
@@ -55,10 +55,12 @@ export function ClientList({ clients }: { clients: Client[] }) {
                                         {client.extraTimeMinutes} min
                                     </span>
                                 )}
-                                <span className="flex items-center gap-1">
-                                    <Phone className="size-3.5" />
-                                    {client.phone}
-                                </span>
+                                {client.phone && (
+                                    <span className="flex items-center gap-1">
+                                        <Phone className="size-3.5" />
+                                        {client.phone}
+                                    </span>
+                                )}
                             </div>
                         </button>
                     ))}

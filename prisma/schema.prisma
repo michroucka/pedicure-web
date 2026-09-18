@@ -29,11 +29,12 @@ model Service {
 model Client {
   id                String    @id @default(cuid())
   name              String
-  phone             String
   // Nullable in the DB because PHONE/IN_PERSON bookings entered by the
-  // pedikérka may not collect it. The online booking form enforces it
-  // as required on the client, since that flow depends on email for
-  // confirmation, magic links, and reminders.
+  // pedikérka may not collect it (e.g. a quick in-person rebooking with
+  // a client she already knows). The online booking form still enforces
+  // it as required on the client, since the morning reminder SMS and
+  // (for email) confirmation/magic-link flow depend on it.
+  phone             String?
   email             String?
   extraTimeMinutes  Int       @default(0)
   note              String?

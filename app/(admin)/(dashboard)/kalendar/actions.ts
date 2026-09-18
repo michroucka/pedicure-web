@@ -90,7 +90,7 @@ export async function getManualBookingSlotsAction(
 }
 
 export async function createManualBookingAction(input: {
-    phone: string;
+    phone?: string;
     people: { name: string; serviceId: number }[];
     dateStr: string;
     startTime: number;

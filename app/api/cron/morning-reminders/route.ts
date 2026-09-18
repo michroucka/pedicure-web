@@ -52,10 +52,14 @@ export async function GET(request: NextRequest) {
 
     let sentCount = 0;
     for (const group of groups.values()) {
-        const sent = await sendSms(
-            group[0].client.phone,
-            buildReminderMessage(group)
-        );
+        const phone = group[0].client.phone;
+        // No phone on file (e.g. an in-person booking taken without one) —
+        // nothing to text, skip. Doesn't need reminderSent tracking either:
+        // this cron only ever looks at today's date, so there's no later
+        // run that would retry it.
+        if (!phone) continue;
+
+        const sent = await sendSms(phone, buildReminderMessage(group));
         if (sent) {
             await prisma.booking.updateMany({
                 where: { id: { in: group.map((b) => b.id) } },

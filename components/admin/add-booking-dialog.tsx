@@ -152,10 +152,6 @@ export function AddBookingDialog({
     function submit() {
         setError(undefined);
 
-        if (!phone.trim()) {
-            setError("Vyplňte telefon.");
-            return;
-        }
         if (people.some((p) => !p.name.trim() || !p.serviceId)) {
             setError("Vyplňte jméno a službu pro každou osobu.");
             return;
@@ -167,7 +163,7 @@ export function AddBookingDialog({
 
         startTransition(async () => {
             const result = await createManualBookingAction({
-                phone: phone.trim(),
+                phone: phone.trim() || undefined,
                 people: people.map((p) => ({
                     name: p.name.trim(),
                     serviceId: p.serviceId!,
@@ -256,7 +252,7 @@ export function AddBookingDialog({
                             />
                             <span className="flex items-center gap-1 text-sm font-medium">
                                 <Phone className="size-4" />
-                                Telefonní číslo
+                                Telefonní číslo (nepovinné)
                             </span>
                             <Input
                                 placeholder="+420 123 456 789"

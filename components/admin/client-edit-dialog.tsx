@@ -44,7 +44,7 @@ export function ClientEditDialog({
     if (client && client.id !== lastLoadedId) {
         setLastLoadedId(client.id);
         setName(client.name);
-        setPhone(client.phone);
+        setPhone(client.phone ?? "");
         setEmail(client.email ?? "");
         setExtraTime(client.extraTimeMinutes > 0);
         setExtraTimeMinutes(client.extraTimeMinutes || DEFAULT_EXTRA_MINUTES);
@@ -95,7 +95,7 @@ export function ClientEditDialog({
                     <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-1 text-sm font-medium">
                             <Phone className="size-4" />
-                            Telefon
+                            Telefon (nepovinné)
                         </span>
                         <Input
                             value={phone}
