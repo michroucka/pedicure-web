@@ -27,6 +27,10 @@ export default async function AdminHomePage({
     const date = dateParam ? toDateOnly(new Date(dateParam)) : getCzechToday();
 
     const services = await prisma.service.findMany({ orderBy: { id: "asc" } });
+    const clients = await prisma.client.findMany({
+        select: { id: true, name: true, phone: true, email: true },
+        orderBy: { name: "asc" },
+    });
 
     const weekStart = startOfWeekUtc(date);
     const weekDays = Array.from({ length: 7 }, (_, i) =>
@@ -106,6 +110,7 @@ export default async function AdminHomePage({
                 <QuickQrDialog />
                 <AddBookingDialog
                     services={services}
+                    clients={clients}
                     defaultDate={date}
                 />
             </FloatingActions>

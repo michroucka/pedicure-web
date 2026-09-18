@@ -42,7 +42,12 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip.tsx";
-import { formatPhoneNumber, formatTime, toUtcMidnight } from "@/lib/utils.ts";
+import {
+    formatPhoneNumber,
+    formatTime,
+    normalizeForSearch,
+    toUtcMidnight,
+} from "@/lib/utils.ts";
 import {
     createManualBookingAction,
     getManualBookingSlotsAction,
@@ -52,6 +57,13 @@ import type { Service } from "@/lib/generated/prisma/client.ts";
 type PersonInput = {
     name: string;
     serviceId: number | undefined;
+};
+
+type ClientOption = {
+    id: string;
+    name: string;
+    phone: string | null;
+    email: string | null;
 };
 
 const emptyPerson = (): PersonInput => ({
@@ -66,14 +78,20 @@ const SOURCE_OPTIONS: { value: "PHONE" | "IN_PERSON"; label: string }[] = [
 
 export function AddBookingDialog({
     services,
+    clients,
     defaultDate,
 }: {
     services: Service[];
+    clients: ClientOption[];
     defaultDate: Date;
 }) {
     const [open, setOpen] = useState(false);
     const [phone, setPhone] = useState("");
     const [note, setNote] = useState("");
+    // Carried silently from an autocomplete pick, never shown/edited in
+    // this form — see pickClient below.
+    const [pickedEmail, setPickedEmail] = useState<string>();
+    const [suggestOpen, setSuggestOpen] = useState(false);
     const [people, setPeople] = useState<PersonInput[]>([emptyPerson()]);
     const [date, setDate] = useState<Date | undefined>(defaultDate);
     const [source, setSource] = useState<"PHONE" | "IN_PERSON">("PHONE");
@@ -114,6 +132,23 @@ export function AddBookingDialog({
         );
     }
 
+    function updateMainContactName(name: string) {
+        updatePersonField(0, { name });
+        // Typing after a pick means it might not be the same person anymore
+        // — the phone the admin sees stays as-is (she can just edit it),
+        // but the silently-carried email shouldn't follow a name that no
+        // longer matches who it came from.
+        setPickedEmail(undefined);
+        setSuggestOpen(true);
+    }
+
+    function pickClient(client: ClientOption) {
+        updatePersonField(0, { name: client.name });
+        setPhone(formatPhoneNumber(client.phone ?? ""));
+        setPickedEmail(client.email ?? undefined);
+        setSuggestOpen(false);
+    }
+
     function addPerson() {
         if (people.length >= 4) return;
         const next = [...people, emptyPerson()];
@@ -135,6 +170,8 @@ export function AddBookingDialog({
     function reset() {
         setPhone("");
         setNote("");
+        setPickedEmail(undefined);
+        setSuggestOpen(false);
         setPeople([emptyPerson()]);
         setDate(defaultDate);
         setSource("PHONE");
@@ -168,6 +205,7 @@ export function AddBookingDialog({
         startTransition(async () => {
             const result = await createManualBookingAction({
                 phone: phone.trim() || undefined,
+                email: pickedEmail,
                 note: note.trim() || undefined,
                 people: people.map((p) => ({
                     name: p.name.trim(),
@@ -186,6 +224,15 @@ export function AddBookingDialog({
             reset();
         });
     }
+
+    const normalizedMainName = normalizeForSearch(people[0].name.trim());
+    const suggestions = normalizedMainName
+        ? clients
+              .filter((c) =>
+                  normalizeForSearch(c.name).includes(normalizedMainName)
+              )
+              .slice(0, 6)
+        : [];
 
     return (
         <>
@@ -246,15 +293,46 @@ export function AddBookingDialog({
                                     Hlavní kontakt
                                 </span>
                             </div>
-                            <Input
-                                placeholder="Jméno"
-                                value={people[0].name}
-                                onChange={(e) =>
-                                    updatePersonField(0, {
-                                        name: e.target.value,
-                                    })
-                                }
-                            />
+                            <div className="relative">
+                                <Input
+                                    placeholder="Jméno"
+                                    value={people[0].name}
+                                    onChange={(e) =>
+                                        updateMainContactName(e.target.value)
+                                    }
+                                    onFocus={() => setSuggestOpen(true)}
+                                    onBlur={() => setSuggestOpen(false)}
+                                />
+                                {suggestOpen && suggestions.length > 0 && (
+                                    <div
+                                        className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-md border bg-popover shadow-md"
+                                        // Keeps the name Input focused on tap
+                                        // so onBlur doesn't close this list
+                                        // before the click below registers.
+                                        onMouseDown={(e) =>
+                                            e.preventDefault()
+                                        }
+                                    >
+                                        {suggestions.map((c) => (
+                                            <button
+                                                key={c.id}
+                                                type="button"
+                                                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition hover:bg-muted/50"
+                                                onClick={() => pickClient(c)}
+                                            >
+                                                <span className="truncate font-medium">
+                                                    {c.name}
+                                                </span>
+                                                {c.phone && (
+                                                    <span className="shrink-0 text-xs text-muted-foreground">
+                                                        {c.phone}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             <span className="flex items-center gap-1 text-sm font-medium">
                                 <Phone className="size-4" />
                                 Telefonní číslo (nepovinné)

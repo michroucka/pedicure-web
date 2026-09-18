@@ -154,6 +154,7 @@ export async function getManualBookingSlotsAction(
 
 export async function createManualBookingAction(input: {
     phone?: string;
+    email?: string;
     note?: string;
     people: { name: string; serviceId: number }[];
     dateStr: string;
@@ -167,14 +168,17 @@ export async function createManualBookingAction(input: {
         return { ok: false, error: "Nelze vytvořit rezervaci v minulosti." };
     }
 
-    // Note is only ever collected for the main contact, same as phone —
-    // the rest of the group shares their contact but gets its own name.
+    // Email and note are only ever collected for the main contact, same as
+    // phone — the rest of the group shares their contact but gets its own
+    // name. Email itself isn't a form field here; it's only ever carried
+    // through silently when the admin picked an existing client from the
+    // name autocomplete.
     const clients = await Promise.all(
         input.people.map((p, i) =>
             findOrCreateClient(
                 input.phone,
                 p.name,
-                undefined,
+                i === 0 ? input.email : undefined,
                 i === 0 ? input.note : undefined
             )
         )
