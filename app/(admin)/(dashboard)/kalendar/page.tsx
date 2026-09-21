@@ -24,7 +24,26 @@ export default async function AdminHomePage({
     searchParams: Promise<{ date?: string }>;
 }) {
     const { date: dateParam } = await searchParams;
-    const date = dateParam ? toDateOnly(new Date(dateParam)) : getCzechToday();
+    let today = getCzechToday();
+    if ([6, 0].includes(today.getUTCDay())) {
+        const weekend = [
+            today,
+            today.getUTCDay() === 0 ?
+                addUtcDays(today, -1) :
+                addUtcDays(today, 1)
+        ];
+        const weekendBookings = await prisma.booking.count({
+            where: {
+                date: { in: weekend },
+                status: "CONFIRMED",
+            },
+        });
+        if (weekendBookings === 0) {
+            today = addUtcDays(today, today.getUTCDay() === 6 ? 2 : 1);
+        }
+    }
+
+    const date = dateParam ? toDateOnly(new Date(dateParam)) : today;
 
     const services = await prisma.service.findMany({ orderBy: { id: "asc" } });
     const clients = await prisma.client.findMany({
