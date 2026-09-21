@@ -1,4 +1,8 @@
 import { defineConfig } from "vitest/config";
+import { config } from "dotenv";
+
+config({ path: ".env.local" });
+config({ path: ".env.test.local", override: true });
 
 export default defineConfig({
     resolve: {

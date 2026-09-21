@@ -80,8 +80,10 @@ export async function getAvailableSlots(
 
     const dayWindows = resolveDayTimeSlots(recurringWindows, exceptionRanges);
 
+    const durationById = new Map(services.map((s) => [s.id, s.durationMinutes]));
     const serviceDuration =
-        services.reduce((sum, s) => sum + s.durationMinutes, 0) + extraMinutes;
+        serviceIds.reduce((sum, id) => sum + (durationById.get(id) ?? 0), 0) +
+        extraMinutes;
 
     const result = computeAvailableSlots(
         dayWindows,
