@@ -1,0 +1,17 @@
+od sobotty zobrazovat dalsi tyden
+duplikaty klientu - pokud neni tel. cislo - matchovat jen podle jmena (potreba opravit existujici duplicity)
+kopirovat jmeno pri pridani osoby
+bug: group booking ukazuje volny cas pro 2 bookingy kam se nevejdou (pr. zabrany cas od 15:30 - 16:00, vytvarim booking pro 2 osoby po 30min (celkem 60min) - ukazuje volno od 15:00)
+dialog pridavani rezervace nezobrazuje v kalendari mesic vybrany v kalendari ale current date - opravit
+prepinani dnu v jednom tydnu v week timeline view ukazuje loading, pritom neni potreba nic nacitat - jiz je videt cely tyden jen se meni vybrane jednotlive datum - uzitecne napr pri vytvareni rezervaci pro predvyplneni datumu v vytvarecim dialogu
+bylo by dobre v date pickeru v kalendari take zobrazovat tecky indikujici otevreno/zavreno stejne jako v dostupnosti, pokud to neprinese zbytecne fetchovani nejakych velkych dat ktere by zpusobilo zpomaleni systemu
+pridat skeletony pri loadingu - napr pri prepinani datumu v kalendari - ted zustane zobrazeny puvodni tyden/den nez se nacte novy vybrany, jen se toci nahore kolecko - lepsi je zobrazit neco jako skeleton
+na strance klienti pridat moznost sjednotit rucne klienty?
+v dostupnosti pridat moznost rychle zavrit rozsah dni - napr o vanocich nemuset klikat zavreno od 22 do 31 rucne kazdy den + odebrat nutnost ukladat? aby se zmeny ulozily samy??
+v uprave bookingu pridat moznost pridat/odebrat osobu???
+v uprave bookingu nechat vybrany casovy slot - sice mi to necha ulozit a zustane na stejnem case ale ukazuje to ze nejsou zadne dostupne terminy, chci aby se zobrazil volny ten slot ve kterem uz rezervace je udelana a byl predvybrany
+misto (Nepovinne) zobrazit * u povinnych
+nezobrazovat zbytecne pole pro poznamku, staci tlacitko pridat poznamku ktere ji v pripade potreby zobrazi
+pridat low sms manager credit notification cooldown - pridat do db last_reminder_sent a posilat kazdych 5 dni?, ne kazdy den
+week view - rozsah datumy na prelomu mesice ukazuje jen 2. mesic, napr. 27. - 4. rijna, pritom 27. je jeste zari
+povolit nechavat na konci dne nezaplnitelny gap - dostupnost je do 19:00 ale volno je uz jen od 18:15, chci pedikuru klasik - povol dat to od 18:15 s tim ze bude do 18:45 ale do 18:45-19:00 uz se nic nevejde - to nevadi
