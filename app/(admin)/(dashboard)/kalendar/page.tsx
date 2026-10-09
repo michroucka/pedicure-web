@@ -13,6 +13,10 @@ import { WeekTimeline } from "@/components/admin/week-timeline.tsx";
 import { AddBookingDialog } from "@/components/admin/add-booking-dialog.tsx";
 import { QuickQrDialog } from "@/components/admin/quick-qr-dialog.tsx";
 import { FloatingActions } from "@/components/admin/floating-actions.tsx";
+import {
+    CalendarBody,
+    CalendarNavigationProvider,
+} from "@/components/admin/calendar-navigation.tsx";
 
 export const metadata: Metadata = {
     title: "Kalendář",
@@ -68,8 +72,12 @@ export default async function AdminHomePage({
             orderBy: { startTime: "asc" },
         }),
         prisma.recurringAvailability.findMany(),
+        // Scoped to "from today on", not just this week — the date picker's
+        // Calendar shows open/closed dots across whole months, and this
+        // table is tiny for a single-provider business, so fetching further
+        // out than the visible week costs nothing.
         prisma.availabilityException.findMany({
-            where: { date: { in: weekDays } },
+            where: { date: { gte: today } },
         }),
     ]);
 
@@ -105,12 +113,18 @@ export default async function AdminHomePage({
     // tablet-width screen that's the difference between the week fitting
     // and needing a horizontal scroll. A weekday stays visible even when
     // empty (it's still where new bookings get added), and a weekend day
-    // with at least one booking stays too.
+    // stays too if it has a booking or is open at all (e.g. an EXTRA_OPEN
+    // exception with nothing booked into it yet — it still needs to be
+    // clickable).
     const weekViewIndexes = weekDays
         .map((_, i) => i)
         .filter((i) => {
             const isWeekend = [0, 6].includes(weekDays[i].getUTCDay());
-            return !isWeekend || bookingsByDay[i].length > 0;
+            return (
+                !isWeekend ||
+                bookingsByDay[i].length > 0 ||
+                windowsByDay[i].length > 0
+            );
         });
     const visibleWeekDays = weekViewIndexes.map((i) => weekDays[i]);
     const visibleWindowsByDay = weekViewIndexes.map((i) => windowsByDay[i]);
@@ -120,44 +134,49 @@ export default async function AdminHomePage({
     );
 
     return (
-        <div className="flex h-full w-full flex-col">
-            <div className="sticky top-0 z-10 bg-background">
-                <div className="mx-auto w-full max-w-lg">
-                    <DayNav
-                        date={date}
-                        weekStart={weekStart}
-                        weekEnd={weekEnd}
-                    />
+        <CalendarNavigationProvider serverDate={date}>
+            <div className="flex h-full w-full flex-col">
+                <div className="sticky top-0 z-10 bg-background">
+                    <div className="mx-auto w-full max-w-lg">
+                        <DayNav
+                            weekStart={weekStart}
+                            weekEnd={weekEnd}
+                            exceptions={dayExceptions}
+                            allExceptions={exceptions}
+                        />
+                    </div>
                 </div>
-            </div>
 
-            <div className="mx-auto w-full max-w-lg md:hidden">
-                <DayTimeline
-                    windows={windows}
-                    bookings={dayBookings}
-                    exceptions={dayExceptions}
-                    services={services}
-                />
-            </div>
+                <CalendarBody>
+                    <div className="mx-auto w-full max-w-lg md:hidden">
+                        <DayTimeline
+                            windows={windows}
+                            bookings={dayBookings}
+                            services={services}
+                            date={date}
+                        />
+                    </div>
 
-            <div className="hidden min-h-0 flex-1 md:block">
-                <WeekTimeline
-                    weekDays={visibleWeekDays}
-                    windowsByDay={visibleWindowsByDay}
-                    bookingsByDay={visibleBookingsByDay}
-                    exceptionsByDay={visibleExceptionsByDay}
-                    services={services}
-                />
-            </div>
+                    <div className="hidden min-h-0 flex-1 md:block">
+                        <WeekTimeline
+                            weekDays={visibleWeekDays}
+                            windowsByDay={visibleWindowsByDay}
+                            bookingsByDay={visibleBookingsByDay}
+                            exceptionsByDay={visibleExceptionsByDay}
+                            services={services}
+                        />
+                    </div>
+                </CalendarBody>
 
-            <FloatingActions>
-                <QuickQrDialog />
-                <AddBookingDialog
-                    services={services}
-                    clients={clients}
-                    defaultDate={date}
-                />
-            </FloatingActions>
-        </div>
+                <FloatingActions>
+                    <QuickQrDialog />
+                    <AddBookingDialog
+                        services={services}
+                        clients={clients}
+                        defaultDate={date}
+                    />
+                </FloatingActions>
+            </div>
+        </CalendarNavigationProvider>
     );
 }
