@@ -23,6 +23,9 @@ export async function getAvailableSlots(
         // path doesn't need this: it cancels the booking first, inside the
         // same transaction, before ever calling this function.
         excludeBookingIds?: string[];
+        // Admin-only: skip the "would leave an unfillable gap" guardrail.
+        // See computeAvailableSlots for why this doesn't apply to clients.
+        allowUnfillableGaps?: boolean;
     } = {}
 ): Promise<number[]> {
     const db = options.db ?? prisma;
@@ -89,7 +92,8 @@ export async function getAvailableSlots(
         dayWindows,
         bookedSlots,
         serviceDuration,
-        minServiceDuration._min.durationMinutes ?? serviceDuration
+        minServiceDuration._min.durationMinutes ?? serviceDuration,
+        options.allowUnfillableGaps
     );
 
     if (options.allowToday && day.getTime() === today.getTime()) {

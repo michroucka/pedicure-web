@@ -203,7 +203,13 @@ export function computeAvailableSlots(
     slots: TimeSlot[],
     bookings: TimeSlot[],
     serviceDuration: number,
-    minServiceDuration: number
+    minServiceDuration: number,
+    // Admin-only escape hatch (see lib/get-available-slots.ts): she can see
+    // the whole day's layout before picking a time, unlike an online client
+    // clicking a bare list of slots, so the "don't strand an unfillable gap"
+    // guardrail below can be skipped for her without leaving anyone
+    // confused about a slot that quietly vanished.
+    allowUnfillableGaps: boolean = false
 ): number[] {
     const gaps: TimeSlot[] = computeGaps(slots, bookings);
     const result: number[] = [];
@@ -220,7 +226,7 @@ export function computeAvailableSlots(
             const beforeOk = before === 0 || before >= minServiceDuration;
             const afterOk = after === 0 || after >= minServiceDuration;
 
-            if (beforeOk && afterOk) {
+            if (allowUnfillableGaps || (beforeOk && afterOk)) {
                 result.push(start);
             }
         }

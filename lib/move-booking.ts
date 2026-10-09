@@ -17,7 +17,11 @@ export async function moveBooking(
     bookingId: string,
     newDate: Date,
     newStartTime: number,
-    options: { outsideHours?: boolean; serviceId?: number } = {}
+    options: {
+        outsideHours?: boolean;
+        serviceId?: number;
+        allowUnfillableGaps?: boolean;
+    } = {}
 ): Promise<Booking> {
     return prisma.$transaction(async (tx) => {
         const booking = await tx.booking.findUniqueOrThrow({
@@ -63,7 +67,11 @@ export async function moveBooking(
                 newDate,
                 [serviceId],
                 booking.client.extraTimeMinutes,
-                { allowToday: true, db: tx }
+                {
+                    allowToday: true,
+                    db: tx,
+                    allowUnfillableGaps: options.allowUnfillableGaps,
+                }
             );
             if (!validSlots.includes(newStartTime)) {
                 throw new SlotUnavailableError();
@@ -96,6 +104,7 @@ export async function moveGroupBooking(
     options: {
         outsideHours?: boolean;
         serviceOverrides?: Record<string, number>;
+        allowUnfillableGaps?: boolean;
     } = {}
 ): Promise<Booking[]> {
     return prisma.$transaction(async (tx) => {
@@ -148,7 +157,11 @@ export async function moveGroupBooking(
                 newDate,
                 serviceIds,
                 totalExtraMinutes,
-                { allowToday: true, db: tx }
+                {
+                    allowToday: true,
+                    db: tx,
+                    allowUnfillableGaps: options.allowUnfillableGaps,
+                }
             );
             if (!validSlots.includes(newGroupStart)) {
                 throw new SlotUnavailableError();
