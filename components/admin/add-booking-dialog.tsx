@@ -489,8 +489,8 @@ export function AddBookingDialog({
                         />
 
                         {date &&
-                            people.every((p) => p.serviceId !== undefined) &&
-                            (customTime ? (
+                        people.every((p) => p.serviceId !== undefined) ? (
+                            customTime ? (
                                 <div className="flex items-center gap-2">
                                     <span className="font-medium">
                                         Vlastní čas:
@@ -556,7 +556,12 @@ export function AddBookingDialog({
                                         <Plus className="size-4 text-primary" />
                                     </Button>
                                 </div>
-                            ))}
+                            )
+                        ) : (
+                            <p className="col-span-4 text-center text-sm text-muted-foreground">
+                                Vyplňte službu a datum.
+                            </p>
+                        )}
 
                         {error && (
                             <Alert variant="destructive">
