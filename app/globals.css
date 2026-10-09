@@ -161,7 +161,7 @@
         @apply bg-background text-foreground;
     }
     html {
-        @apply font-sans;
+        @apply font-sans scrollbar-gutter-stable;
     }
     h1 {
         @apply text-4xl font-medium font-display;
