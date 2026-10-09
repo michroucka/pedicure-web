@@ -13,6 +13,7 @@ const DAY_OF_WEEK = 6;
 
 describe("getAvailableSlots", () => {
     let serviceId: number;
+    let service2Id: number | undefined;
     // Tests run in parallel with other test files — a broad deleteMany by
     // name (like "Test Klient") can race with another file's fixture using
     // the same literal name, so this tracks exactly the client this test
@@ -25,6 +26,7 @@ describe("getAvailableSlots", () => {
         });
         serviceId = service.id;
         clientId = undefined;
+        service2Id = undefined;
     });
 
     afterEach(async () => {
@@ -39,6 +41,9 @@ describe("getAvailableSlots", () => {
             where: { dayOfWeek: DAY_OF_WEEK },
         });
         await prisma.service.delete({ where: { id: serviceId } });
+        if (service2Id) {
+            await prisma.service.delete({ where: { id: service2Id } });
+        }
     });
 
     it("returns nothing for a day with no recurring availability", async () => {
@@ -123,6 +128,68 @@ describe("getAvailableSlots", () => {
 
         const slots = await getAvailableSlots(SATURDAY, [serviceId]);
         expect(slots).toEqual([570]);
+    });
+
+    it("does not offer a group-booking start that would overflow into an existing booking", async () => {
+        // Window: 09:00-10:00 (540-600). Existing booking fills 09:30-10:00 (570-600),
+        // leaving only a 30-min gap at 09:00. A group of 2 × 30 min needs 60 min
+        // continuously — 09:00 would overflow, so no slot should be returned.
+        await prisma.recurringAvailability.create({
+            data: { dayOfWeek: DAY_OF_WEEK, startTime: 540, endTime: 600 },
+        });
+        const service2 = await prisma.service.create({
+            data: { name: "Test Service 30b", durationMinutes: 30, price: 100 },
+        });
+        service2Id = service2.id;
+        const client = await prisma.client.create({
+            data: { name: "Test Klient", phone: "999999998" },
+        });
+        clientId = client.id;
+        await prisma.booking.create({
+            data: {
+                clientId: client.id,
+                serviceId,
+                date: SATURDAY,
+                startTime: 570,
+                endTime: 600,
+                status: "CONFIRMED",
+                source: "ONLINE",
+                cancelToken: crypto.randomUUID(),
+            },
+        });
+
+        const slots = await getAvailableSlots(SATURDAY, [serviceId, service2Id]);
+        expect(slots).toEqual([]);
+    });
+
+    it("correctly sums duration when both group members share the same service", async () => {
+        // Window: 09:00-10:00 (540-600). Existing booking fills 09:30-10:00 (570-600).
+        // Two people with the SAME 30-min service → needs 60 min total. The only gap
+        // is 30 min, so no valid start should exist.
+        await prisma.recurringAvailability.create({
+            data: { dayOfWeek: DAY_OF_WEEK, startTime: 540, endTime: 600 },
+        });
+        const client = await prisma.client.create({
+            data: { name: "Test Klient", phone: "999999998" },
+        });
+        clientId = client.id;
+        await prisma.booking.create({
+            data: {
+                clientId: client.id,
+                serviceId,
+                date: SATURDAY,
+                startTime: 570,
+                endTime: 600,
+                status: "CONFIRMED",
+                source: "ONLINE",
+                cancelToken: crypto.randomUUID(),
+            },
+        });
+
+        // Both people share the same serviceId — before the fix, findMany
+        // deduplicated the ID and computed only 30 min instead of 60.
+        const slots = await getAvailableSlots(SATURDAY, [serviceId, serviceId]);
+        expect(slots).toEqual([]);
     });
 
     it("adds time opened up by an EXTRA_OPEN exception", async () => {

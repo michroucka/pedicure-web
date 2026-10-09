@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import {
@@ -40,6 +40,15 @@ export function WeekTimeline({
     services: Service[];
 }) {
     const [selected, setSelected] = useState<BookingItem | null>(null);
+    const [nowMinutes, setNowMinutes] = useState<number>(getCzechNowMinutes);
+
+    useEffect(() => {
+        const id = setInterval(
+            () => setNowMinutes(getCzechNowMinutes()),
+            10_000
+        );
+        return () => clearInterval(id);
+    }, []);
 
     const allWindows = windowsByDay.flat();
     const allBookings = bookingsByDay.flat();
@@ -77,7 +86,6 @@ export function WeekTimeline({
     const gridHeight = (gridEnd - gridStart) * PX_PER_MIN;
     const today = toUtcMidnight(new Date());
     const todayCzech = getCzechToday();
-    const nowMinutes = getCzechNowMinutes();
 
     // The header row (weekday labels) and the time-axis both need to stay
     // in view while scrolling — the header pinned vertically, the axis
@@ -200,6 +208,32 @@ export function WeekTimeline({
                                             }
                                         />
                                     ))}
+                                    {isToday &&
+                                        nowMinutes >= gridStart &&
+                                        nowMinutes <= gridEnd && (
+                                            <>
+                                                <div
+                                                    className="absolute inset-x-0 z-10 border-t border-red-500"
+                                                    style={{
+                                                        top:
+                                                            (nowMinutes -
+                                                                gridStart) *
+                                                            PX_PER_MIN,
+                                                    }}
+                                                />
+                                                <div
+                                                    className="absolute -translate-y-1/2 left-0 -translate-x-9.5 z-10 bg-red-500 rounded-full text-[11px] text-white tabular-nums px-1 py-1/2"
+                                                    style={{
+                                                        top:
+                                                            (nowMinutes -
+                                                                gridStart) *
+                                                            PX_PER_MIN,
+                                                    }}
+                                                >
+                                                    {formatTime(nowMinutes)}
+                                                </div>
+                                            </>
+                                        )}
                                 </div>
                             </div>
                         );

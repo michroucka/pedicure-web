@@ -84,7 +84,7 @@ export function ClientEditDialog({
                     <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-1 text-sm font-medium">
                             <UserRound className="size-4" />
-                            Jméno
+                            Jméno <span className="text-red-500">*</span>
                         </span>
                         <Input
                             value={name}
@@ -95,7 +95,7 @@ export function ClientEditDialog({
                     <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-1 text-sm font-medium">
                             <Phone className="size-4" />
-                            Telefon (nepovinné)
+                            Telefon
                         </span>
                         <Input
                             value={phone}
@@ -108,7 +108,7 @@ export function ClientEditDialog({
                     <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-1 text-sm font-medium">
                             <Mail className="size-4" />
-                            Email (nepovinné)
+                            Email
                         </span>
                         <Input
                             type="email"

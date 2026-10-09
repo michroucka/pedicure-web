@@ -47,7 +47,7 @@ import {
     Pencil,
     Sparkles,
     StickyNote,
-    QrCode,
+    QrCode, ChevronDownIcon,
 } from "lucide-react";
 import { formatTime, toUtcMidnight, toTelHref } from "@/lib/utils.ts";
 import {
@@ -57,6 +57,11 @@ import {
 } from "@/app/(admin)/(dashboard)/kalendar/actions.ts";
 import type { BookingItem } from "@/components/admin/booking-card.tsx";
 import type { Service } from "@/lib/generated/prisma/client.ts";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible.tsx";
 
 const SOURCE_LABELS: Record<string, string> = {
     ONLINE: "Online",
@@ -99,6 +104,7 @@ export function BookingDetailDialog({
     const [error, setError] = useState<string>();
     const [isPending, startTransition] = useTransition();
     const [isLoadingSlots, startSlotsTransition] = useTransition();
+    const [isNoteOpen, setIsNoteOpen] = useState(false);
 
     function reset() {
         setMode("detail");
@@ -115,6 +121,7 @@ export function BookingDetailDialog({
         setQrTarget(QR_TOTAL);
         setQrAmount("");
         setError(undefined);
+        setIsNoteOpen(false);
     }
 
     function pickCustomTime(value: string) {
@@ -170,6 +177,7 @@ export function BookingDetailDialog({
     function openEdit() {
         setMode("edit");
         setEditPhone(booking!.client.phone ?? "");
+        if (booking!.client.note) setIsNoteOpen(true);
         setEditNote(booking!.client.note ?? "");
         const people = groupBookings.map((b) => ({
             bookingId: b.id,
@@ -380,20 +388,18 @@ export function BookingDetailDialog({
                                     {editPeople.length > 1
                                         ? "Hlavní kontakt"
                                         : "Jméno"}
+                                    <span className="text-red-500">*</span>
                                 </span>
                                 <Input
                                     placeholder="Jméno"
                                     value={editPeople[0]?.name ?? ""}
                                     onChange={(e) =>
-                                        updateEditPersonName(
-                                            0,
-                                            e.target.value
-                                        )
+                                        updateEditPersonName(0, e.target.value)
                                     }
                                 />
                                 <span className="flex items-center gap-1 text-sm font-medium">
                                     <Phone className="size-4" />
-                                    Telefonní číslo (nepovinné)
+                                    Telefonní číslo
                                 </span>
                                 <Input
                                     placeholder="+420 123 456 789"
@@ -404,7 +410,8 @@ export function BookingDetailDialog({
                                 />
                                 <span className="flex items-center gap-1 text-sm font-medium">
                                     <Sparkles className="size-4" />
-                                    Služba
+                                    Služba{" "}
+                                    <span className="text-red-500">*</span>
                                 </span>
                                 <Select
                                     value={
@@ -433,16 +440,31 @@ export function BookingDetailDialog({
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
-                                <span className="flex items-center gap-1 text-sm font-medium">
-                                    <StickyNote className="size-4" />
-                                    Poznámka (nepovinné)
-                                </span>
-                                <Textarea
-                                    value={editNote}
-                                    onChange={(e) =>
-                                        setEditNote(e.target.value)
-                                    }
-                                />
+
+                                <Collapsible
+                                    open={isNoteOpen}
+                                    onOpenChange={setIsNoteOpen}
+                                    className="rounded-md data-[state=open]:bg-muted"
+                                >
+                                    <CollapsibleTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            className="group w-full"
+                                        >
+                                            <StickyNote className="size-4" />
+                                            Poznámka
+                                            <ChevronDownIcon className="ml-auto group-data-[state=open]:rotate-180" />
+                                        </Button>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent className="flex flex-col items-start gap-2 p-2.5 pt-0 text-sm">
+                                        <Textarea
+                                            value={editNote}
+                                            onChange={(e) =>
+                                                setEditNote(e.target.value)
+                                            }
+                                        />
+                                    </CollapsibleContent>
+                                </Collapsible>
                             </div>
 
                             {editPeople.slice(1).map((person, i) => (
@@ -544,42 +566,62 @@ export function BookingDetailDialog({
                                         Načítám dostupné termíny…
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {editSlots?.length === 0 && (
-                                            <p className="col-span-4 text-center text-sm text-muted-foreground">
-                                                Žádné volné termíny.
-                                            </p>
-                                        )}
-                                        {editSlots?.map((s) => (
-                                            <Button
-                                                key={s}
-                                                type="button"
-                                                size="sm"
-                                                variant={
-                                                    s === selectedSlot
-                                                        ? "default"
-                                                        : "outline"
-                                                }
-                                                onClick={() =>
-                                                    setSelectedSlot(s)
-                                                }
-                                            >
-                                                {formatTime(s)}
-                                            </Button>
-                                        ))}
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            className="hover:bg-accent"
-                                            onClick={() => {
-                                                setCustomTime(true);
-                                                setSelectedSlot(undefined);
-                                            }}
-                                        >
-                                            <Plus className="size-4 text-primary" />
-                                        </Button>
-                                    </div>
+                                    (() => {
+                                        const sameDate =
+                                            editDate?.getTime() ===
+                                            booking.date.getTime();
+                                        const displaySlots =
+                                            sameDate &&
+                                            editSlots &&
+                                            !editSlots.includes(
+                                                booking.startTime
+                                            )
+                                                ? [
+                                                      ...editSlots,
+                                                      booking.startTime,
+                                                  ].sort((a, b) => a - b)
+                                                : editSlots;
+                                        return (
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {displaySlots?.length === 0 && (
+                                                    <p className="col-span-4 text-center text-sm text-muted-foreground">
+                                                        Žádné volné termíny.
+                                                    </p>
+                                                )}
+                                                {displaySlots?.map((s) => (
+                                                    <Button
+                                                        key={s}
+                                                        type="button"
+                                                        size="sm"
+                                                        variant={
+                                                            s === selectedSlot
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        onClick={() =>
+                                                            setSelectedSlot(s)
+                                                        }
+                                                    >
+                                                        {formatTime(s)}
+                                                    </Button>
+                                                ))}
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="hover:bg-accent"
+                                                    onClick={() => {
+                                                        setCustomTime(true);
+                                                        setSelectedSlot(
+                                                            undefined
+                                                        );
+                                                    }}
+                                                >
+                                                    <Plus className="size-4 text-primary" />
+                                                </Button>
+                                            </div>
+                                        );
+                                    })()
                                 ))}
 
                             {error && (
@@ -705,7 +747,7 @@ export function BookingDetailDialog({
                         <AlertDialogTitle>Uložit změny?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Měníš termín nebo službu rezervace. Klient se o
-                            téhle změně automaticky nedozví — nepošle se mu
+                            téhle změně automaticky nedozví – nepošle se mu
                             žádný email, SMS ani push. Pokud potřebuje vědět,
                             dej mu vědět sama.
                         </AlertDialogDescription>

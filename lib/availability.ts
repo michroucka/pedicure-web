@@ -55,6 +55,24 @@ export function subtractFromSlots(
     return result;
 }
 
+export function mergeSubsequentSlots(slots: TimeSlot[]): TimeSlot[] {
+    const result: TimeSlot[] = [...slots];
+    result.sort((a, b) => a.start - b.start);
+
+    for (let i = 0; i < result.length - 1; i++) {
+        const s = result[i];
+        const next = result[i + 1];
+        if (s.end >= next.start) {
+            const newStart = s.start;
+            result[i + 1] = { start: newStart, end: Math.max(s.end, next.end) };
+            result.splice(i, 1);
+            i--;
+        }
+    }
+
+    return result;
+}
+
 export function resolveDayTimeSlots(
     recurring: TimeSlot[],
     exceptions: Exception[]
@@ -71,7 +89,7 @@ export function resolveDayTimeSlots(
         }
     }
 
-    return slots;
+    return mergeSubsequentSlots(slots);
 }
 
 export function filterBookings(
@@ -185,7 +203,13 @@ export function computeAvailableSlots(
     slots: TimeSlot[],
     bookings: TimeSlot[],
     serviceDuration: number,
-    minServiceDuration: number
+    minServiceDuration: number,
+    // Admin-only escape hatch (see lib/get-available-slots.ts): she can see
+    // the whole day's layout before picking a time, unlike an online client
+    // clicking a bare list of slots, so the "don't strand an unfillable gap"
+    // guardrail below can be skipped for her without leaving anyone
+    // confused about a slot that quietly vanished.
+    allowUnfillableGaps: boolean = false
 ): number[] {
     const gaps: TimeSlot[] = computeGaps(slots, bookings);
     const result: number[] = [];
@@ -202,7 +226,7 @@ export function computeAvailableSlots(
             const beforeOk = before === 0 || before >= minServiceDuration;
             const afterOk = after === 0 || after >= minServiceDuration;
 
-            if (beforeOk && afterOk) {
+            if (allowUnfillableGaps || (beforeOk && afterOk)) {
                 result.push(start);
             }
         }

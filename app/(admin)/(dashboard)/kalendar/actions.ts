@@ -41,6 +41,7 @@ export async function getMoveSlotsAction(
         return getAvailableSlots(date, serviceIds, extraMinutes, {
             allowToday: true,
             excludeBookingIds: bookings.map((b) => b.id),
+            allowUnfillableGaps: true,
         });
     }
 
@@ -52,7 +53,11 @@ export async function getMoveSlotsAction(
         date,
         [overrideServiceIds?.[0] ?? booking.serviceId],
         booking.client.extraTimeMinutes,
-        { allowToday: true, excludeBookingIds: [booking.id] }
+        {
+            allowToday: true,
+            excludeBookingIds: [booking.id],
+            allowUnfillableGaps: true,
+        }
     );
 }
 
@@ -127,11 +132,13 @@ export async function updateBookingAction(input: {
                 serviceOverrides: Object.fromEntries(
                     existing.map((b, i) => [b.id, input.people[i].serviceId])
                 ),
+                allowUnfillableGaps: true,
             });
         } else {
             await moveBooking(input.people[0].bookingId, date, input.startTime, {
                 outsideHours: input.outsideHours,
                 serviceId: input.people[0].serviceId,
+                allowUnfillableGaps: true,
             });
         }
     } catch (error) {
@@ -150,7 +157,10 @@ export async function getManualBookingSlotsAction(
     dateStr: string
 ): Promise<number[]> {
     const date = toDateOnly(new Date(dateStr));
-    return getAvailableSlots(date, serviceIds, 0, { allowToday: true });
+    return getAvailableSlots(date, serviceIds, 0, {
+        allowToday: true,
+        allowUnfillableGaps: true,
+    });
 }
 
 export async function createManualBookingAction(input: {
@@ -215,7 +225,7 @@ export async function createManualBookingAction(input: {
             date,
             serviceIds,
             extraMinutes,
-            { allowToday: true }
+            { allowToday: true, allowUnfillableGaps: true }
         );
         if (!validSlots.includes(input.startTime)) {
             return { ok: false, error: "Zvolený termín už není volný." };

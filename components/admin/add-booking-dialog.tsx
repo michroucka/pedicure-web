@@ -36,6 +36,7 @@ import {
     Sparkles,
     StickyNote,
     X,
+    ChevronDownIcon,
 } from "lucide-react";
 import {
     Tooltip,
@@ -53,6 +54,11 @@ import {
     getManualBookingSlotsAction,
 } from "@/app/(admin)/(dashboard)/kalendar/actions.ts";
 import type { Service } from "@/lib/generated/prisma/client.ts";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible.tsx";
 
 type PersonInput = {
     name: string;
@@ -152,7 +158,7 @@ export function AddBookingDialog({
 
     function addPerson() {
         if (people.length >= 4) return;
-        const next = [...people, emptyPerson()];
+        const next = [...people, { name: people[0].name, serviceId: undefined, }];
         setPeople(next);
         refreshSlots(date, next);
     }
@@ -291,7 +297,8 @@ export function AddBookingDialog({
                             <div className="flex items-center justify-between">
                                 <span className="flex items-center gap-1 text-sm font-medium">
                                     <UserRound className="size-4" />
-                                    Hlavní kontakt
+                                    Hlavní kontakt{" "}
+                                    <span className="text-red-500">*</span>
                                 </span>
                             </div>
                             <div className="relative">
@@ -310,9 +317,7 @@ export function AddBookingDialog({
                                         // Keeps the name Input focused on tap
                                         // so onBlur doesn't close this list
                                         // before the click below registers.
-                                        onMouseDown={(e) =>
-                                            e.preventDefault()
-                                        }
+                                        onMouseDown={(e) => e.preventDefault()}
                                     >
                                         {suggestions.map((c) => (
                                             <button
@@ -336,7 +341,7 @@ export function AddBookingDialog({
                             </div>
                             <span className="flex items-center gap-1 text-sm font-medium">
                                 <Phone className="size-4" />
-                                Telefonní číslo (nepovinné)
+                                Telefonní číslo
                             </span>
                             <Input
                                 placeholder="+420 123 456 789"
@@ -347,7 +352,7 @@ export function AddBookingDialog({
                             />
                             <span className="flex items-center gap-1 text-sm font-medium">
                                 <Sparkles className="size-4" />
-                                Služba
+                                Služba <span className="text-red-500">*</span>
                             </span>
                             <Select
                                 value={
@@ -376,14 +381,27 @@ export function AddBookingDialog({
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
-                            <span className="flex items-center gap-1 text-sm font-medium">
-                                <StickyNote className="size-4" />
-                                Poznámka (nepovinné)
-                            </span>
-                            <Textarea
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                            />
+
+                            <Collapsible className="rounded-md data-[state=open]:bg-muted">
+                                <CollapsibleTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        className="group w-full"
+                                    >
+                                        <StickyNote className="size-4" />
+                                        Poznámka
+                                        <ChevronDownIcon className="ml-auto group-data-[state=open]:rotate-180" />
+                                    </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="flex flex-col items-start gap-2 p-2.5 pt-0 text-sm">
+                                    <Textarea
+                                        value={note}
+                                        onChange={(e) =>
+                                            setNote(e.target.value)
+                                        }
+                                    />
+                                </CollapsibleContent>
+                            </Collapsible>
                         </div>
 
                         {people.slice(1).map((person, i) => (
@@ -461,6 +479,7 @@ export function AddBookingDialog({
                             mode="single"
                             locale={cs}
                             selected={date}
+                            defaultMonth={date}
                             onSelect={pickDate}
                             disabled={(day) =>
                                 toUtcMidnight(day).getTime() <
@@ -470,8 +489,8 @@ export function AddBookingDialog({
                         />
 
                         {date &&
-                            people.every((p) => p.serviceId !== undefined) &&
-                            (customTime ? (
+                        people.every((p) => p.serviceId !== undefined) ? (
+                            customTime ? (
                                 <div className="flex items-center gap-2">
                                     <span className="font-medium">
                                         Vlastní čas:
@@ -537,7 +556,12 @@ export function AddBookingDialog({
                                         <Plus className="size-4 text-primary" />
                                     </Button>
                                 </div>
-                            ))}
+                            )
+                        ) : (
+                            <p className="col-span-4 text-center text-sm text-muted-foreground">
+                                Vyplňte službu a datum.
+                            </p>
+                        )}
 
                         {error && (
                             <Alert variant="destructive">

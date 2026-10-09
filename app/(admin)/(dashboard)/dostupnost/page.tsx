@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma.ts";
-import { formatTime, getCzechToday } from "@/lib/utils.ts";
+import { addUtcDays, formatTime, getCzechToday } from "@/lib/utils.ts";
 import { AvailabilityForm } from "@/components/admin/availability-form.tsx";
 import { ExceptionForm } from "@/components/admin/exception-form.tsx";
 import {
@@ -24,7 +24,7 @@ export default async function AvailabilityPage() {
             orderBy: { startTime: "asc" },
         }),
         prisma.availabilityException.findMany({
-            where: { date: { gte: getCzechToday() } },
+            where: { date: { gte: addUtcDays(getCzechToday(), -14) } },
             orderBy: { date: "asc" },
         }),
     ]);

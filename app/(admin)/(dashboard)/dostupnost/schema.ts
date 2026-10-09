@@ -48,3 +48,17 @@ export const dayOverrideSchema = z
     );
 
 export type DayOverrideFormData = z.infer<typeof dayOverrideSchema>;
+
+// Bulk "close every day in this range" — always a full-day block, no time
+// blocks to configure (unlike dayOverrideSchema's per-block editing).
+export const closeRangeSchema = z
+    .object({
+        startDate: z.string().regex(DATE_RE),
+        endDate: z.string().regex(DATE_RE),
+    })
+    .refine((d) => d.startDate <= d.endDate, {
+        message: "Konec rozsahu musí být po jeho začátku.",
+        path: ["endDate"],
+    });
+
+export type CloseRangeFormData = z.infer<typeof closeRangeSchema>;

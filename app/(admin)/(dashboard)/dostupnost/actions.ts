@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
 import { diffDayBlocks, type TimeSlot } from "@/lib/availability.ts";
-import { parseTime, toDateOnly } from "@/lib/utils.ts";
+import { parseTime, toDateOnly, addUtcDays } from "@/lib/utils.ts";
 import {
     availabilitySchema,
     dayOverrideSchema,
+    closeRangeSchema,
     type AvailabilityFormData,
     type DayOverrideFormData,
+    type CloseRangeFormData,
 } from "./schema.ts";
 
 export async function saveRecurringAvailability(data: AvailabilityFormData) {
@@ -139,6 +141,71 @@ export async function saveDayOverride(
             ],
         });
     });
+
+    revalidatePath("/dostupnost");
+    return { ok: true };
+}
+
+function datesInRange(startDateStr: string, endDateStr: string): Date[] {
+    const start = toDateOnly(new Date(startDateStr));
+    const end = toDateOnly(new Date(endDateStr));
+    const dates: Date[] = [];
+    for (let d = start; d.getTime() <= end.getTime(); d = addUtcDays(d, 1)) {
+        dates.push(d);
+    }
+    return dates;
+}
+
+// Closing a range is always a full day block, so any CONFIRMED booking
+// anywhere in the range is a conflict — no per-time-range overlap math
+// needed like checkDayOverrideConflicts does for partial blocks.
+export async function checkRangeConflicts(
+    startDateStr: string,
+    endDateStr: string
+): Promise<ExceptionConflict[]> {
+    const dates = datesInRange(startDateStr, endDateStr);
+
+    const bookings = await prisma.booking.findMany({
+        where: { date: { in: dates }, status: "CONFIRMED" },
+        include: { client: true },
+        orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    });
+
+    return bookings.map((b) => ({
+        clientName: b.client.name,
+        startTime: b.startTime,
+        endTime: b.endTime,
+    }));
+}
+
+// Full-day BLOCKED exception on every date in the range, replacing whatever
+// exceptions (if any) were already there — same "target state, not delta"
+// convention as saveDayOverride, just for many days at once.
+export async function saveCloseRange(
+    data: CloseRangeFormData
+): Promise<{ ok: true } | { ok: false; error: string }> {
+    const result = closeRangeSchema.safeParse(data);
+    if (!result.success) {
+        return {
+            ok: false,
+            error: result.error.issues[0]?.message ?? "Neplatná data.",
+        };
+    }
+    const dates = datesInRange(result.data.startDate, result.data.endDate);
+
+    await prisma.$transaction([
+        prisma.availabilityException.deleteMany({
+            where: { date: { in: dates } },
+        }),
+        prisma.availabilityException.createMany({
+            data: dates.map((date) => ({
+                date,
+                type: "BLOCKED" as const,
+                startTime: null,
+                endTime: null,
+            })),
+        }),
+    ]);
 
     revalidatePath("/dostupnost");
     return { ok: true };

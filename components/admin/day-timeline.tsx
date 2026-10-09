@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatTime, getCzechToday, getCzechNowMinutes } from "@/lib/utils.ts";
-import { categorizeExceptions, computeClosedRanges } from "@/lib/availability.ts";
+import { computeClosedRanges } from "@/lib/availability.ts";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
-import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
 import {
     BookingCard,
     SERVICE_COLORS,
@@ -12,45 +11,36 @@ import {
     type BookingItem,
 } from "@/components/admin/booking-card.tsx";
 import type {
-    AvailabilityException,
     Service,
 } from "@/lib/generated/prisma/client.ts";
 
-const PX_PER_MIN = 1.5;
-
-const EXCEPTION_LABELS = {
-    blockedFull: "Zavřeno celý den",
-    mixed: "Upravená dostupnost",
-    blockedPartial: "Částečně zablokováno",
-    extraOpen: "Otevřeno navíc",
-};
+const PX_PER_MIN = 2.25;
 
 export function DayTimeline({
     windows,
     bookings,
-    exceptions,
     services,
+    date
 }: {
     windows: { start: number; end: number }[];
     bookings: BookingItem[];
-    exceptions: AvailabilityException[];
     services: Service[];
+    date: Date;
 }) {
     const [selected, setSelected] = useState<BookingItem | null>(null);
+    const [nowMinutes, setNowMinutes] = useState<number>(15 * 60 + 30); // TODO: remove, temp for testing
 
-    const { blockedFull, blockedPartial, extraOpen } =
-        categorizeExceptions(exceptions);
+    useEffect(() => {
+        const id = setInterval(
+            () => setNowMinutes(getCzechNowMinutes()),
+            10_000
+        );
+        return () => clearInterval(id);
+    }, []);
 
     if (windows.length === 0 && bookings.length === 0) {
         return (
             <div className="flex flex-col items-center gap-1 p-6 text-center text-sm text-muted-foreground">
-                {blockedFull && (
-                    <ExceptionDot
-                        blockedFull={blockedFull}
-                        blockedPartial={blockedPartial}
-                        extraOpen={extraOpen}
-                    />
-                )}
                 Zavřeno
             </div>
         );
@@ -81,31 +71,10 @@ export function DayTimeline({
     );
 
     const today = getCzechToday();
-    const nowMinutes = getCzechNowMinutes();
-
-    const exceptionLabel = blockedFull
-        ? EXCEPTION_LABELS.blockedFull
-        : blockedPartial && extraOpen
-          ? EXCEPTION_LABELS.mixed
-          : blockedPartial
-            ? EXCEPTION_LABELS.blockedPartial
-            : extraOpen
-              ? EXCEPTION_LABELS.extraOpen
-              : undefined;
+    const isToday = date.getTime() === today.getTime();
 
     return (
-        <div className="flex flex-col px-4 py-3 mb-16">
-            {exceptionLabel && (
-                <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    <ExceptionDot
-                        blockedFull={blockedFull}
-                        blockedPartial={blockedPartial}
-                        extraOpen={extraOpen}
-                    />
-                    {exceptionLabel}
-                </div>
-            )}
-
+        <div className="mb-16 flex flex-col px-4 py-3">
             <div className="flex">
                 <div
                     className="relative w-12 shrink-0"
@@ -159,6 +128,30 @@ export function DayTimeline({
                             onSelectAction={() => setSelected(b)}
                         />
                     ))}
+                    {isToday &&
+                        nowMinutes >= gridStart &&
+                        nowMinutes <= gridEnd && (
+                            <>
+                                <div
+                                    className="absolute inset-x-0 z-10 border-t border-red-500"
+                                    style={{
+                                        top:
+                                            (nowMinutes - gridStart) *
+                                            PX_PER_MIN,
+                                    }}
+                                />
+                                <div
+                                    className="py-1/2 absolute left-0 z-10 -translate-x-9.5 -translate-y-1/2 rounded-full bg-red-500 px-1 text-[11px] text-white tabular-nums"
+                                    style={{
+                                        top:
+                                            (nowMinutes - gridStart) *
+                                            PX_PER_MIN,
+                                    }}
+                                >
+                                    {formatTime(nowMinutes)}
+                                </div>
+                            </>
+                        )}
                 </div>
             </div>
 
