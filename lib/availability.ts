@@ -55,6 +55,24 @@ export function subtractFromSlots(
     return result;
 }
 
+export function mergeSubsequentSlots(slots: TimeSlot[]): TimeSlot[] {
+    const result: TimeSlot[] = [...slots];
+    result.sort((a, b) => a.start - b.start);
+
+    for (let i = 0; i < result.length - 1; i++) {
+        const s = result[i];
+        const next = result[i + 1];
+        if (s.end >= next.start) {
+            const newStart = s.start;
+            result[i + 1] = { start: newStart, end: Math.max(s.end, next.end) };
+            result.splice(i, 1);
+            i--;
+        }
+    }
+
+    return result;
+}
+
 export function resolveDayTimeSlots(
     recurring: TimeSlot[],
     exceptions: Exception[]
@@ -71,7 +89,7 @@ export function resolveDayTimeSlots(
         }
     }
 
-    return slots;
+    return mergeSubsequentSlots(slots);
 }
 
 export function filterBookings(
