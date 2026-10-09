@@ -6,6 +6,7 @@ export default function ClientsLoading() {
         <div className="mx-auto w-full max-w-lg">
             <h2 className="px-4 pt-4 text-center">Klienti</h2>
             <div className="flex flex-col gap-3 p-4">
+            <Skeleton className="h-9 w-full rounded-md" />
             <div className="divide-y overflow-hidden rounded-md border">
                 {Array.from({ length: 8 }).map((_, i) => (
                     <div className="flex items-center justify-between gap-2 px-3 py-2" key={i}>
