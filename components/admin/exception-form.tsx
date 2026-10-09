@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useTransition, type ComponentProps } from "react";
+import { useState, useTransition } from "react";
 import { format, addDays } from "date-fns";
 import { cs } from "date-fns/locale";
-import { Calendar, CalendarDayButton } from "@/components/ui/calendar.tsx";
-import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
+import type { DateRange } from "react-day-picker";
+import { Calendar } from "@/components/ui/calendar.tsx";
+import { ExceptionDayButton } from "@/components/admin/exception-day-button.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
-import { AlertCircle, Plus, Trash2, Check } from "lucide-react";
+import { AlertCircle, Plus, Trash2, Check, CalendarX } from "lucide-react";
 import {
     toUtcMidnight,
     formatTime,
@@ -20,6 +21,8 @@ import {
 import {
     saveDayOverride,
     checkDayOverrideConflicts,
+    saveCloseRange,
+    checkRangeConflicts,
     type ExceptionConflict,
 } from "@/app/(admin)/(dashboard)/dostupnost/actions.ts";
 import {
@@ -31,7 +34,6 @@ import type {
     AvailabilityException,
     RecurringAvailability,
 } from "@/lib/generated/prisma/client";
-import type { DayButton } from "react-day-picker";
 import { Spinner } from "@/components/ui/spinner.tsx";
 
 const SLIDER_STEP = 15;
@@ -59,26 +61,6 @@ function newBlockId() {
     return Math.random().toString(36).slice(2);
 }
 
-function ExceptionDayButton({
-    modifiers,
-    children,
-    ...props
-}: ComponentProps<typeof DayButton>) {
-    return (
-        <CalendarDayButton
-            modifiers={modifiers}
-            {...props}
-        >
-            {children}
-            <ExceptionDot
-                blockedFull={!!modifiers.blockedFull}
-                blockedPartial={!!modifiers.blockedPartial}
-                extraOpen={!!modifiers.extraOpen}
-            />
-        </CalendarDayButton>
-    );
-}
-
 export function ExceptionForm({
     exceptions,
     recurring,
@@ -88,6 +70,8 @@ export function ExceptionForm({
 }) {
     const [date, setDate] = useState<Date>();
     const [blocks, setBlocks] = useState<Block[]>([]);
+    const [rangeMode, setRangeMode] = useState(false);
+    const [range, setRange] = useState<DateRange>();
     const [error, setError] = useState<string>();
     const [conflicts, setConflicts] = useState<ExceptionConflict[] | null>(
         null
@@ -154,6 +138,50 @@ export function ExceptionForm({
                 end: slot.end,
             }))
         );
+    }
+
+    function toggleRangeMode() {
+        setRangeMode((prev) => !prev);
+        setDate(undefined);
+        setBlocks([]);
+        setRange(undefined);
+        setError(undefined);
+        setConflicts(null);
+    }
+
+    function updateRange(r: DateRange | undefined) {
+        setRange(r);
+        setConflicts(null);
+        setError(undefined);
+    }
+
+    function submitRange() {
+        if (!range?.from || !range?.to) {
+            setError("Vyber celý rozsah dní.");
+            return;
+        }
+        setError(undefined);
+
+        const startDate = format(range.from, "yyyy-MM-dd");
+        const endDate = format(range.to, "yyyy-MM-dd");
+
+        startTransition(async () => {
+            if (conflicts === null) {
+                const found = await checkRangeConflicts(startDate, endDate);
+                if (found.length > 0) {
+                    setConflicts(found);
+                    return;
+                }
+            }
+
+            const result = await saveCloseRange({ startDate, endDate });
+            if (!result.ok) {
+                setError(result.error);
+                return;
+            }
+            setRange(undefined);
+            setConflicts(null);
+        });
     }
 
     function updateBlock(id: string, start: number, end: number) {
@@ -258,27 +286,102 @@ export function ExceptionForm({
 
     return (
         <Card>
-            <CardContent className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
-                <Calendar
-                    mode="single"
-                    locale={cs}
-                    selected={date}
-                    onSelect={updateDate}
-                    disabled={(day) =>
-                        toUtcMidnight(day).getTime() < minDate.getTime()
-                    }
-                    modifiers={modifiers}
-                    components={{ DayButton: ExceptionDayButton }}
-                    className="w-full bg-transparent"
-                    fixedWeeks
-                />
+            <CardContent className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:gap-6">
+                {rangeMode ? (
+                    <Calendar
+                        mode="range"
+                        locale={cs}
+                        selected={range}
+                        onSelect={updateRange}
+                        disabled={(day) =>
+                            toUtcMidnight(day).getTime() < minDate.getTime()
+                        }
+                        modifiers={modifiers}
+                        components={{ DayButton: ExceptionDayButton }}
+                        className="w-full bg-transparent"
+                        fixedWeeks
+                    />
+                ) : (
+                    <Calendar
+                        mode="single"
+                        locale={cs}
+                        selected={date}
+                        onSelect={updateDate}
+                        disabled={(day) =>
+                            toUtcMidnight(day).getTime() < minDate.getTime()
+                        }
+                        modifiers={modifiers}
+                        components={{ DayButton: ExceptionDayButton }}
+                        className="w-full bg-transparent"
+                        fixedWeeks
+                    />
+                )}
 
-                <div className="flex flex-col gap-3">
-                    {!date ? (
-                        <p className="text-sm text-muted-foreground">
-                            Vyber datum v kalendáři.
+                <div className="flex flex-col gap-3 h-full">
+                    {(rangeMode ? !range?.from || !range?.to : !date) && (
+                        <p className="text-sm text-muted-foreground max-lg:text-center">
+                            {rangeMode
+                                ? "Vyber rozsah v kalendáři."
+                                : "Vyber datum v kalendáři."}
                         </p>
-                    ) : (
+                    )}
+
+                    {rangeMode ? (
+                        !range?.from || !range?.to ? null : (
+                            <>
+                                <p className="text-sm">
+                                    Zavřít {format(range.from, "d. M. yyyy")}
+                                    {" – "}
+                                    {format(range.to, "d. M. yyyy")}
+                                </p>
+
+                                {error && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle />
+                                        <AlertTitle>{error}</AlertTitle>
+                                    </Alert>
+                                )}
+
+                                {conflicts && conflicts.length > 0 && (
+                                    <Alert variant="warning">
+                                        <AlertCircle />
+                                        <AlertTitle>
+                                            V tomto rozsahu{" "}
+                                            {conflicts.length > 1
+                                                ? "jsou"
+                                                : "je"}{" "}
+                                            rezervace
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            {conflicts.map((c, i) => (
+                                                <div key={i}>
+                                                    {c.clientName} •{" "}
+                                                    {formatTime(c.startTime)}–
+                                                    {formatTime(c.endTime)}
+                                                </div>
+                                            ))}
+                                            Rezervace je potřeba zrušit nebo
+                                            přesunout ručně.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    disabled={isPending}
+                                    onClick={submitRange}
+                                >
+                                    {isPending ? (
+                                        <Spinner className="size-4" />
+                                    ) : (
+                                        <CalendarX className="size-4" />
+                                    )}
+                                    {isPending ? "Zavírám…" : "Zavřít rozsah"}
+                                </Button>
+                            </>
+                        )
+                    ) : !date ? null : (
                         <>
                             {blocks.length === 0 && (
                                 <p className="text-sm text-muted-foreground">
@@ -414,6 +517,17 @@ export function ExceptionForm({
                             </Button>
                         </>
                     )}
+
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-auto self-end"
+                        onClick={toggleRangeMode}
+                    >
+                        <CalendarX className="size-4" />
+                        {rangeMode ? "Jeden den" : "Zavřít rozsah"}
+                    </Button>
                 </div>
             </CardContent>
         </Card>
