@@ -527,7 +527,7 @@ export function ExceptionForm({
 
                     <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         className="mt-auto self-end"
                         onClick={toggleRangeMode}
