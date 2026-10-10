@@ -15,7 +15,7 @@ import {
 } from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import { TimePicker } from "@/components/ui/time-picker.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils.ts";
 import { Plus, Trash2, Save } from "lucide-react";
@@ -91,21 +91,24 @@ function BlockField({
                     minStepsBetweenThumbs={1}
                 />
                 <div className="mt-3 flex justify-between gap-2">
-                    <Input
-                        type="time"
-                        step="900"
-                        lang="cs"
-                        className="h-auto w-auto border-none px-1.5 py-0.5 text-sm text-muted-foreground tabular-nums shadow-none"
+                    <TimePicker
+                        step={SLIDER_STEP}
+                        allowTyping
+                        icon={null}
+                        variant="ghost"
+                        max={formatTime(end - SLIDER_STEP)}
                         value={formatTime(start)}
-                        onChange={(e) => typeStart(e.target.value)}
+                        onChange={typeStart}
                     />
-                    <Input
-                        type="time"
-                        step="900"
-                        lang="cs"
-                        className="h-auto w-auto border-none px-1.5 py-0.5 text-right text-sm text-muted-foreground tabular-nums shadow-none"
+                    <TimePicker
+                        step={SLIDER_STEP}
+                        allowTyping
+                        icon={null}
+                        variant="ghost"
+                        className="text-right"
+                        min={formatTime(start + SLIDER_STEP)}
                         value={formatTime(end)}
-                        onChange={(e) => typeEnd(e.target.value)}
+                        onChange={typeEnd}
                     />
                 </div>
             </div>
