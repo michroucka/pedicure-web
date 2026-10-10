@@ -1,7 +1,7 @@
 "use client";
 
 // Self-contained on purpose — only depends on other shadcn/ui primitives
-// (Input, Button, Popover) + lucide-react + `cn`, no project-specific types
+// (Button, Popover) + lucide-react + `cn`, no project-specific types
 // or logic. Drop the file into another shadcn project as-is.
 //
 // Behaves like <input type="time">, but:
@@ -12,17 +12,15 @@
 //   fewer swipes than one long flat list of times
 // - picking on the wheel only commits when you tap the checkmark —
 //   scrolling it around is just "dialing in" a value, same as iOS
-// - typing is still free-form (any digits) independent of the wheel; it
-//   commits on blur/Enter and gets snapped to the nearest step, same as a
-//   native stepped input would reject out-of-grid values. Typed digits
-//   also live-preview on the wheel as you type.
+// - the trigger is a button, not a text field — no free typing. On mobile
+//   a text field pops the on-screen keyboard, which then covers the
+//   popover it's supposed to open. Arrow up/down still nudge by one step.
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Check, Clock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
     Popover,
@@ -37,20 +35,24 @@ const VISIBLE_ROWS = 5;
 // Two looks the trigger ships with out of the box — `className` is for a
 // one-off tweak on top (e.g. `text-right`), not for rebuilding a whole
 // style from scratch at every call site.
-const timePickerTriggerVariants = cva("tabular-nums", {
+const timePickerTriggerVariants = cva(
+    "inline-block cursor-pointer text-left whitespace-nowrap tabular-nums outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-invalid:ring-3 data-invalid:ring-destructive/20 dark:data-invalid:ring-destructive/40",
+    {
     variants: {
         variant: {
-            // The regular boxed Input look — no overrides needed.
-            default: "",
+            // Same box as the shadcn Input, so it sits naturally next to
+            // regular form fields.
+            default: "h-8 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 focus-visible:border-ring data-invalid:border-destructive md:text-sm dark:data-invalid:border-destructive/50",
             // Compact, borderless, muted — a small inline time label (e.g.
             // sitting right under a Slider) rather than a standalone field.
-            ghost: "h-auto rounded-md border-none bg-transparent px-1.5 py-0.5 text-sm text-muted-foreground shadow-none transition-colors hover:bg-accent",
+            ghost: "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent",
         },
     },
     defaultVariants: {
         variant: "default",
     },
-});
+    }
+);
 
 function clampToDay(total: number) {
     return ((total % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
@@ -69,34 +71,6 @@ function parseHHMM(value: string): number | null {
     const minutes = Number(match[2]);
     if (hours > 23 || minutes > 59) return null;
     return hours * 60 + minutes;
-}
-
-// Accepts whatever a user is likely to type: "9", "14", "905", "0905",
-// "9:5", "09:05"... and turns it into minutes-from-midnight.
-function parseTypedTime(raw: string): number | null {
-    const cleaned = raw.trim();
-    if (!cleaned) return null;
-
-    const withSeparator = /^(\d{1,2})[:.](\d{1,2})$/.exec(cleaned);
-    if (withSeparator) {
-        const hours = Number(withSeparator[1]);
-        const minutes = Number(withSeparator[2]);
-        if (hours > 23 || minutes > 59) return null;
-        return hours * 60 + minutes;
-    }
-
-    if (/^\d+$/.test(cleaned) && cleaned.length <= 4) {
-        if (cleaned.length <= 2) {
-            const hours = Number(cleaned);
-            return hours > 23 ? null : hours * 60;
-        }
-        const minutes = Number(cleaned.slice(-2));
-        const hours = Number(cleaned.slice(0, -2));
-        if (hours > 23 || minutes > 59) return null;
-        return hours * 60 + minutes;
-    }
-
-    return null;
 }
 
 // Snaps to the nearest step mark (remainder in the lower half rounds down,
@@ -313,12 +287,6 @@ export interface TimePickerProps {
     placeholder?: string;
     disabled?: boolean;
     /**
-     * Allow free typing into the field (any digits, parsed + snapped to
-     * `step` on blur/Enter). Default off — the field is `readOnly` and the
-     * wheel popover is the only way to change the value.
-     */
-    allowTyping?: boolean;
-    /**
      * Leading icon shown inside the trigger. Defaults to a clock icon; pass
      * `null` to render no icon at all.
      */
@@ -342,7 +310,6 @@ function TimePicker({
     defaultValue,
     placeholder = "--:--",
     disabled,
-    allowTyping = false,
     icon = <Clock className="size-4" />,
     variant,
     className,
@@ -352,10 +319,9 @@ function TimePicker({
     "aria-invalid": ariaInvalid,
 }: TimePickerProps) {
     const [open, setOpen] = React.useState(false);
-    const [draft, setDraft] = React.useState(value);
     const [pendingHour, setPendingHour] = React.useState(0);
     const [pendingMinute, setPendingMinute] = React.useState(0);
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const triggerRef = React.useRef<HTMLButtonElement>(null);
     const contentRef = React.useRef<HTMLDivElement>(null);
     const sizerRef = React.useRef<HTMLSpanElement>(null);
     const [measuredWidth, setMeasuredWidth] = React.useState<number | null>(
@@ -366,14 +332,14 @@ function TimePicker({
     // guessed width class — callers vary padding/font-size (compact inline
     // labels vs. a roomy standalone field) enough that one hardcoded width
     // never fit all of them evenly on both sides. The sizer span mirrors
-    // the input's real computed font so the measurement matches exactly;
-    // reading the input's own padding/border (rather than special-casing
+    // the trigger's real computed font so the measurement matches exactly;
+    // reading the trigger's own padding/border (rather than special-casing
     // the icon) means it stays correct automatically either way.
     React.useLayoutEffect(() => {
         const sizer = sizerRef.current;
-        const input = inputRef.current;
-        if (!sizer || !input) return;
-        const inputStyles = window.getComputedStyle(input);
+        const trigger = triggerRef.current;
+        if (!sizer || !trigger) return;
+        const inputStyles = window.getComputedStyle(trigger);
         sizer.style.fontSize = inputStyles.fontSize;
         sizer.style.fontFamily = inputStyles.fontFamily;
         sizer.style.fontWeight = inputStyles.fontWeight;
@@ -399,7 +365,7 @@ function TimePicker({
         if (!open) return;
         function handlePointerDown(e: PointerEvent) {
             const target = e.target as Node;
-            if (inputRef.current?.contains(target)) return;
+            if (triggerRef.current?.contains(target)) return;
             if (contentRef.current?.contains(target)) return;
             setOpen(false);
         }
@@ -446,14 +412,6 @@ function TimePicker({
         ? pendingMinute
         : minuteValues[nearestIndex(minuteValues, pendingMinute)];
 
-    // Keep the draft in sync with external value changes, but don't clobber
-    // what the user is actively typing.
-    React.useEffect(() => {
-        if (document.activeElement !== inputRef.current) {
-            setDraft(value);
-        }
-    }, [value]);
-
     function seedPending(fromMinutes: number) {
         setPendingHour(Math.floor(fromMinutes / 60));
         setPendingMinute(fromMinutes % 60);
@@ -462,36 +420,17 @@ function TimePicker({
     function handleOpenChange(next: boolean) {
         setOpen(next);
         if (next) {
-            seedPending(
-                parseTypedTime(draft) ?? parseHHMM(value) ?? fallbackMinutes
-            );
+            seedPending(parseHHMM(value) ?? fallbackMinutes);
         }
-    }
-
-    function commit(raw: string) {
-        const parsed = parseTypedTime(raw);
-        if (parsed === null) {
-            setDraft(value);
-            return;
-        }
-        const rounded = Math.min(
-            maxMinutes,
-            Math.max(minMinutes, roundToStep(parsed, step))
-        );
-        const formatted = formatMinutes(rounded);
-        setDraft(formatted);
-        if (formatted !== value) onChange(formatted);
     }
 
     function nudge(direction: 1 | -1) {
-        const base = parseHHMM(draft) ?? parseHHMM(value) ?? fallbackMinutes;
+        const base = parseHHMM(value) ?? fallbackMinutes;
         const next = Math.min(
             maxMinutes,
             Math.max(minMinutes, clampToDay(base + direction * step))
         );
-        const formatted = formatMinutes(next);
-        setDraft(formatted);
-        onChange(formatted);
+        onChange(formatMinutes(next));
     }
 
     function confirmWheel() {
@@ -500,11 +439,8 @@ function TimePicker({
             maxMinutes,
             Math.max(minMinutes, roundToStep(combined, step))
         );
-        const formatted = formatMinutes(rounded);
-        setDraft(formatted);
-        onChange(formatted);
+        onChange(formatMinutes(rounded));
         setOpen(false);
-        inputRef.current?.blur();
     }
 
     return (
@@ -524,7 +460,7 @@ function TimePicker({
                     )}
                     {/* Invisible, out-of-flow — exists only so its
                         offsetWidth tells us how wide "00:00" actually
-                        renders in this input's real font. */}
+                        renders in the trigger's real font. */}
                     <span
                         ref={sizerRef}
                         aria-hidden
@@ -532,16 +468,16 @@ function TimePicker({
                     >
                         00:00
                     </span>
-                    <Input
-                        ref={inputRef}
+                    <button
+                        ref={triggerRef}
+                        type="button"
                         id={id}
-                        name={name}
                         aria-label={ariaLabel}
-                        aria-invalid={ariaInvalid}
-                        inputMode="numeric"
-                        autoComplete="off"
-                        readOnly={!allowTyping}
-                        placeholder={placeholder}
+                        // aria-invalid isn't valid on role=button, so the
+                        // invalid look keys off a data attribute instead.
+                        data-invalid={ariaInvalid || undefined}
+                        aria-haspopup="dialog"
+                        aria-expanded={open}
                         disabled={disabled}
                         style={{
                             paddingLeft: icon !== null ? "1.75rem" : undefined,
@@ -549,18 +485,10 @@ function TimePicker({
                         }}
                         className={cn(
                             timePickerTriggerVariants({ variant }),
+                            !value && "text-muted-foreground",
                             className
                         )}
-                        value={draft}
-                        onFocus={() => handleOpenChange(true)}
-                        onChange={(e) => {
-                            setDraft(e.target.value);
-                            // Live-preview on the wheel as the user types,
-                            // without committing yet.
-                            const parsed = parseTypedTime(e.target.value);
-                            if (parsed !== null) seedPending(parsed);
-                        }}
-                        onBlur={(e) => commit(e.target.value)}
+                        onClick={() => handleOpenChange(!open)}
                         onKeyDown={(e) => {
                             if (e.key === "ArrowUp") {
                                 e.preventDefault();
@@ -568,16 +496,14 @@ function TimePicker({
                             } else if (e.key === "ArrowDown") {
                                 e.preventDefault();
                                 nudge(-1);
-                            } else if (e.key === "Enter") {
-                                e.preventDefault();
-                                commit(e.currentTarget.value);
-                                setOpen(false);
                             } else if (e.key === "Escape") {
-                                setDraft(value);
                                 setOpen(false);
                             }
                         }}
-                    />
+                    >
+                        {value || placeholder}
+                    </button>
+                    {name && <input type="hidden" name={name} value={value} />}
                 </div>
             </PopoverAnchor>
             <PopoverContent

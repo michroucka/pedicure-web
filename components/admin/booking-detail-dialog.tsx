@@ -543,7 +543,6 @@ export function BookingDetailDialog({
                                         <TimePicker
                                             value={customTimeValue}
                                             onChange={pickCustomTime}
-                                            allowTyping
                                             defaultValue="15:00"
                                         />
                                         <Button

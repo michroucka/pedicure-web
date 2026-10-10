@@ -93,7 +93,6 @@ function BlockField({
                 <div className="mt-3 flex justify-between gap-2">
                     <TimePicker
                         step={SLIDER_STEP}
-                        allowTyping
                         icon={null}
                         variant="ghost"
                         max={formatTime(end - SLIDER_STEP)}
@@ -102,7 +101,6 @@ function BlockField({
                     />
                     <TimePicker
                         step={SLIDER_STEP}
-                        allowTyping
                         icon={null}
                         variant="ghost"
                         className="text-right"
