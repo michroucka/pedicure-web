@@ -23,6 +23,7 @@ import {
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
+import { TimePicker } from "@/components/ui/time-picker.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import {
     Select,
@@ -539,13 +540,11 @@ export function BookingDetailDialog({
                                         <span className="font-medium">
                                             Vlastní čas:
                                         </span>
-                                        <Input
-                                            type="time"
+                                        <TimePicker
                                             value={customTimeValue}
-                                            onChange={(e) =>
-                                                pickCustomTime(e.target.value)
-                                            }
-                                            className="w-auto"
+                                            onChange={pickCustomTime}
+                                            allowTyping
+                                            defaultValue="15:00"
                                         />
                                         <Button
                                             type="button"
