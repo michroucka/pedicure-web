@@ -11,25 +11,14 @@ import {
 } from "@/components/ui/field.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { useEffect, useState } from "react";
-import {
-    savePushSubscriptionAction,
-    deletePushSubscriptionAction,
-} from "@/app/(admin)/(dashboard)/nastaveni/actions.ts"
+import { deletePushSubscriptionAction } from "@/app/(admin)/(dashboard)/nastaveni/actions.ts"
+import { subscribeAndSave } from "@/lib/push-client.ts"
 
 function requestNotificationPermission() {
     return new Promise((resolve, reject) => {
         const result = Notification.requestPermission(resolve);
         if (result) result.then(resolve, reject);
     });
-}
-
-function urlBase64ToUint8Array(base64String: Base64URLString) {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding)
-        .replace(/-/g, "+")
-        .replace(/_/g, "/");
-    const rawData = atob(base64);
-    return Uint8Array.from(rawData, (char) => char.charCodeAt(0));
 }
 
 export function PushSubscribeFlow() {
@@ -60,20 +49,7 @@ export function PushSubscribeFlow() {
                 return;
             }
             const registration = await navigator.serviceWorker.ready;
-            const applicationServerKey = urlBase64ToUint8Array(
-                process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
-            );
-            const pushSubscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey,
-            });
-            const pushSubscriptionJSON = pushSubscription.toJSON();
-            await savePushSubscriptionAction({
-                endpoint: pushSubscriptionJSON.endpoint ?? "",
-                p256dh: pushSubscriptionJSON.keys?.p256dh ?? "",
-                auth: pushSubscriptionJSON.keys?.auth ?? "",
-                userAgent: navigator.userAgent,
-            });
+            await subscribeAndSave(registration);
             setIsSubscribed(true);
         } catch (error) {
             console.error("Push subscribe failed:", error);

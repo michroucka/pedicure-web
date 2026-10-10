@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth.ts";
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav.tsx";
+import { PushResubscribe } from "@/components/admin/push-resubscribe.tsx";
 
 export const metadata: Metadata = {
     title: {
@@ -30,6 +31,7 @@ export default async function AdminDashboardLayout({
                 {children}
             </main>
             <AdminBottomNav />
+            <PushResubscribe />
         </div>
     );
 }
