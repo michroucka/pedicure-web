@@ -10,7 +10,7 @@ import {
     FieldTitle,
 } from "@/components/ui/field.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
     savePushSubscriptionAction,
     deletePushSubscriptionAction,
@@ -32,17 +32,35 @@ function urlBase64ToUint8Array(base64String: Base64URLString) {
     return Uint8Array.from(rawData, (char) => char.charCodeAt(0));
 }
 
+const STANDALONE_QUERY = "(display-mode: standalone)";
+
+function subscribeToStandalone(onChange: () => void) {
+    const mediaQuery = window.matchMedia(STANDALONE_QUERY);
+    mediaQuery.addEventListener("change", onChange);
+    return () => mediaQuery.removeEventListener("change", onChange);
+}
+
+function getStandaloneSnapshot() {
+    return window.matchMedia(STANDALONE_QUERY).matches;
+}
+
+// No `window` on the server — render as "not standalone" there; React
+// swaps in the real value during hydration without a mismatch.
+function getStandaloneServerSnapshot() {
+    return false;
+}
+
 export function PushSubscribeFlow() {
-    const [isStandalone, setIsStandalone] = useState(false);
+    const isStandalone = useSyncExternalStore(
+        subscribeToStandalone,
+        getStandaloneSnapshot,
+        getStandaloneServerSnapshot
+    );
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        setIsStandalone(
-            window.matchMedia("(display-mode: standalone)").matches
-        );
-
         if (!("serviceWorker" in navigator)) return;
         navigator.serviceWorker.ready
             .then((registration) => registration.pushManager.getSubscription())
