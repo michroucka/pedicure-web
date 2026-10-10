@@ -9,7 +9,7 @@ import { ExceptionDayButton } from "@/components/admin/exception-day-button.tsx"
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import { TimePicker } from "@/components/ui/time-picker.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { AlertCircle, Plus, Trash2, Check, CalendarX } from "lucide-react";
 import {
@@ -417,33 +417,40 @@ export function ExceptionForm({
                                                 minStepsBetweenThumbs={1}
                                             />
                                             <div className="mt-3 flex justify-between gap-2">
-                                                <Input
-                                                    type="time"
-                                                    step="900"
-                                                    lang="cs"
-                                                    className="h-auto w-auto border-none px-1.5 py-0.5 text-sm tabular-nums text-muted-foreground shadow-none"
+                                                <TimePicker
+                                                    step={SLIDER_STEP}
+                                                    icon={null}
+                                                    variant="ghost"
+                                                    max={formatTime(
+                                                        block.end -
+                                                            SLIDER_STEP
+                                                    )}
                                                     value={formatTime(
                                                         block.start
                                                     )}
-                                                    onChange={(e) =>
+                                                    onChange={(value) =>
                                                         typeStart(
                                                             block,
-                                                            e.target.value
+                                                            value
                                                         )
                                                     }
                                                 />
-                                                <Input
-                                                    type="time"
-                                                    step="900"
-                                                    lang="cs"
-                                                    className="h-auto w-auto border-none px-1.5 py-0.5 text-right text-sm tabular-nums text-muted-foreground shadow-none"
+                                                <TimePicker
+                                                    step={SLIDER_STEP}
+                                                    icon={null}
+                                                    variant="ghost"
+                                                    className="text-right"
+                                                    min={formatTime(
+                                                        block.start +
+                                                            SLIDER_STEP
+                                                    )}
                                                     value={formatTime(
                                                         block.end
                                                     )}
-                                                    onChange={(e) =>
+                                                    onChange={(value) =>
                                                         typeEnd(
                                                             block,
-                                                            e.target.value
+                                                            value
                                                         )
                                                     }
                                                 />
