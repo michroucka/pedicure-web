@@ -31,7 +31,7 @@ export async function sendBookingConfirmationEmail(
     }
 
     const dateLabel = format(bookings[0].date, "d. MMMM yyyy", { locale: cs });
-    const timeLabel = `${formatTime(bookings[0].startTime)}–${formatTime(bookings.at(-1)!.endTime)}`;
+    const timeLabel = `${formatTime(bookings[0].startTime)} – ${formatTime(bookings.at(-1)!.endTime)}`;
     const manageUrl = `${BASE_URL}/rezervace/sprava/${bookings[0].cancelToken}`;
 
     try {
@@ -39,7 +39,7 @@ export async function sendBookingConfirmationEmail(
         await resend.emails.send({
             from: FROM_EMAIL,
             to: email,
-            subject: "Potvrzení rezervace – Pedikúra Kralovice",
+            subject: "Potvrzení rezervace",
             react: BookingConfirmationEmail({
                 clientName: bookings[0].client.name,
                 people: bookings.map((b) => ({
