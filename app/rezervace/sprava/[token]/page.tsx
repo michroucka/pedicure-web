@@ -70,10 +70,9 @@ export default async function SpravaPage({
                     <CheckCircle2 />
                     <AlertTitle>Rezervace přesunuta</AlertTitle>
                     {booking.client.email && (
-                        <AlertDescription>
-                            Nový termín a odkaz pro správu rezervace jsme vám
-                            poslali e-mailem – odkaz z předchozího e-mailu už
-                            neplatí.
+                        <AlertDescription className="text-muted-foreground!">
+                            Potvrzení a odkaz pro správu rezervace jsme Vám
+                            poslali e-mailem.
                         </AlertDescription>
                     )}
                 </Alert>
@@ -106,7 +105,9 @@ export default async function SpravaPage({
             {canModify ? (
                 <ManageBooking
                     token={token}
-                    serviceLabel={bookings.map((b) => b.service.name).join(" • ")}
+                    serviceLabel={bookings
+                        .map((b) => b.service.name)
+                        .join(" • ")}
                     startTime={booking.startTime}
                     durationMinutes={durationMinutes}
                 />

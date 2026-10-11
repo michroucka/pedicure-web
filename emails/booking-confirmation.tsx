@@ -32,7 +32,7 @@ const COPY: Record<
     moved: {
         preview: "– termín byl změněn",
         heading: "Rezervace přesunuta",
-        body: "Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla přesunuta na nový termín. Odkaz z předchozího e-mailu už neplatí – pro správu rezervace použijte tlačítko níže.",
+        body: "Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla přesunuta na nový termín. Pro správu rezervace použijte tlačítko níže.",
     },
 };
 
