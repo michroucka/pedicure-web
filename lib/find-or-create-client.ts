@@ -15,7 +15,13 @@ export async function findOrCreateClient(
             data: { name, phone, email, note },
         });
     } else {
-        const changes: { name?: string; phone?: string; email?: string; note?: string } = {};
+        const changes: {
+            name?: string;
+            phone?: string;
+            email?: string;
+            note?: string;
+            active?: boolean;
+        } = {};
         // The most recently provided email/note wins — e.g. a phone/in-person
         // booking taken by the pedikérka had none, or the client's details
         // simply changed since the last booking.
@@ -23,6 +29,9 @@ export async function findOrCreateClient(
         if (phone && !client.phone) changes.phone = phone;
         if (email && email !== client.email) changes.email = email;
         if (note && note !== client.note) changes.note = note;
+        // A "deleted" (hidden) client who books again is back — matched on
+        // purpose instead of creating a duplicate with the same phone/name.
+        if (!client.active) changes.active = true;
         if (Object.keys(changes).length > 0) {
             client = await prisma.client.update({
                 where: { id: client.id },

@@ -57,6 +57,10 @@ export default async function AdminHomePage({
             phone: true,
             email: true,
             extraTimeMinutes: true,
+            // hidden ("deleted") clients are left out of the autocomplete
+            // but still matched for the extra time prefill — the server
+            // matches them too (see AddBookingDialog)
+            active: true,
         },
         orderBy: { name: "asc" },
     });

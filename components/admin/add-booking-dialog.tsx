@@ -81,6 +81,7 @@ type ClientOption = {
     phone: string | null;
     email: string | null;
     extraTimeMinutes: number;
+    active: boolean;
 };
 
 const emptyPerson = (): PersonInput => ({
@@ -308,8 +309,10 @@ export function AddBookingDialog({
     const normalizedMainName = normalizeForSearch(people[0].name.trim());
     const suggestions = normalizedMainName
         ? clients
-              .filter((c) =>
-                  normalizeForSearch(c.name).includes(normalizedMainName)
+              .filter(
+                  (c) =>
+                      c.active &&
+                      normalizeForSearch(c.name).includes(normalizedMainName)
               )
               .slice(0, 6)
         : [];

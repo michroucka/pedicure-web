@@ -122,6 +122,13 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - Extra čas (u klienta i u bookingu) je vždy násobek 5 min –
   `normalizeExtraMinutes` v `lib/extra-time.ts`, server zaokrouhluje
   každou hodnotu z formuláře, pole v UI se zarovná při opuštění
+- `active` (default true) – „Smazat“ klienta v adminu (`deleteClientAction`):
+  klient bez jediné rezervace se smaže úplně, klient s rezervacemi
+  (i zrušenými – historie) dostane jen `active: false` a zmizí ze
+  seznamu Klienti a z našeptávače jmen. Ruční obnovení není – skrytý
+  klient se znovu aktivuje sám, když si přes `findOrCreateClient`
+  vytvoří novou rezervaci (párování skryté klienty záměrně zahrnuje,
+  jinak by vznikaly duplicity)
 - Párování klienta (`lib/find-client.ts`, sdílí ho `findOrCreateClient`
   i náhled extra času v booking formuláři): podle telefonu, a jen když
   telefon chybí, podle přesné shody jména

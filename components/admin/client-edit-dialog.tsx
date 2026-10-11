@@ -8,14 +8,27 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog.tsx";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
-import { Check, Mail, Phone, StickyNote, UserRound } from "lucide-react";
+import { Check, Mail, Phone, StickyNote, Trash2, UserRound } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/utils.ts";
-import { updateClientAction } from "@/app/(admin)/(dashboard)/klienti/actions.ts";
-import type { Client } from "@/lib/generated/prisma/client.ts";
+import {
+    deleteClientAction,
+    updateClientAction,
+} from "@/app/(admin)/(dashboard)/klienti/actions.ts";
+import type { ClientListItem } from "@/components/admin/client-list.tsx";
 import {
     ExtraTimeField,
     NO_EXTRA_TIME,
@@ -28,9 +41,10 @@ export function ClientEditDialog({
     client,
     onOpenChange,
 }: {
-    client: Client | null;
+    client: ClientListItem | null;
     onOpenChange: (open: boolean) => void;
 }) {
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
@@ -49,6 +63,7 @@ export function ClientEditDialog({
         setEmail(client.email ?? "");
         setExtraTime(extraTimeFromMinutes(client.extraTimeMinutes));
         setNote(client.note ?? "");
+        setConfirmDelete(false);
     }
     if (!client && lastLoadedId !== null) {
         setLastLoadedId(null);
@@ -64,6 +79,17 @@ export function ClientEditDialog({
                 extraTimeMinutes: extraTimeToMinutes(extraTime),
                 note: note.trim(),
             });
+            onOpenChange(false);
+        });
+    }
+
+    function doDelete(e: React.MouseEvent) {
+        // keep the AlertDialog open (spinner) until the action finishes
+        e.preventDefault();
+        if (!client) return;
+        startTransition(async () => {
+            await deleteClientAction(client.id);
+            setConfirmDelete(false);
             onOpenChange(false);
         });
     }
@@ -134,7 +160,16 @@ export function ClientEditDialog({
                     </div>
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="flex-row justify-between gap-2">
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={isPending}
+                        onClick={() => setConfirmDelete(true)}
+                    >
+                        <Trash2 className="size-4" />
+                        Smazat
+                    </Button>
                     <Button
                         type="button"
                         disabled={isPending}
@@ -149,6 +184,46 @@ export function ClientEditDialog({
                     </Button>
                 </DialogFooter>
             </DialogContent>
+
+            <AlertDialog
+                open={confirmDelete}
+                onOpenChange={setConfirmDelete}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Smazat klienta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {client.name} zmizí ze seznamu klientů a z
+                            nabídky jmen při přidávání rezervace.
+                            {client.upcomingBookings > 0 &&
+                                ` Má ${upcomingLabel(client.upcomingBookings)} – ${client.upcomingBookings === 1 ? "ta zůstane" : "ty zůstanou"} v kalendáři.`}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Zpět</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            disabled={isPending}
+                            onClick={doDelete}
+                        >
+                            {isPending ? (
+                                <Spinner className="size-4" />
+                            ) : (
+                                <Trash2 className="size-4" />
+                            )}
+                            {isPending ? "Mažu…" : "Smazat klienta"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     );
+}
+
+// "1 naplánovanou rezervaci", "2 naplánované rezervace", "5 naplánovaných
+// rezervací" — Czech needs three forms.
+function upcomingLabel(count: number): string {
+    if (count === 1) return "1 naplánovanou rezervaci";
+    if (count >= 2 && count <= 4) return `${count} naplánované rezervace`;
+    return `${count} naplánovaných rezervací`;
 }
