@@ -38,6 +38,10 @@ model Client {
   email             String?
   extraTimeMinutes  Int       @default(0)
   note              String?
+  // false = "smazaný" v adminu, ale s rezervacemi, které se kvůli historii
+  // mazat nesmí – skrytý ze seznamu Klienti a z našeptávače. Při nové
+  // rezervaci se klient spáruje i tak a znovu se aktivuje.
+  active            Boolean   @default(true)
   createdAt         DateTime  @default(now())
   bookings          Booking[]
 }

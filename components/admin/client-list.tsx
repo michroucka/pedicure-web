@@ -7,9 +7,11 @@ import { Clock, Phone, Search } from "lucide-react";
 import { normalizeForSearch } from "@/lib/utils.ts";
 import type { Client } from "@/lib/generated/prisma/client.ts";
 
-export function ClientList({ clients }: { clients: Client[] }) {
+export type ClientListItem = Client & { upcomingBookings: number };
+
+export function ClientList({ clients }: { clients: ClientListItem[] }) {
     const [query, setQuery] = useState("");
-    const [selected, setSelected] = useState<Client | null>(null);
+    const [selected, setSelected] = useState<ClientListItem | null>(null);
 
     const normalized = normalizeForSearch(query.trim());
     const filtered = normalized
