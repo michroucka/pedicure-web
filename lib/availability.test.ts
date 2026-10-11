@@ -111,14 +111,24 @@ describe("resolveDayTimeSlots", () => {
         ]);
     });
 
-    it("adds an EXTRA_OPEN window", () => {
+    it("adds an EXTRA_OPEN window, merging it with an adjacent recurring window", () => {
         const result = resolveDayTimeSlots(recurring, [
             { type: "EXTRA_OPEN", start: 1020, end: 1080 }, // extra hour 17:00-18:00
         ]);
 
+        // 9-17 + 17-18 touch, so mergeSubsequentSlots joins them — keeping
+        // them split would make a booking spanning 17:00 look unbookable.
+        expect(result).toEqual([{ start: 540, end: 1080 }]);
+    });
+
+    it("adds a separate EXTRA_OPEN window that doesn't touch recurring hours", () => {
+        const result = resolveDayTimeSlots(recurring, [
+            { type: "EXTRA_OPEN", start: 1080, end: 1140 }, // 18:00-19:00, gap after 17:00
+        ]);
+
         expect(result).toEqual([
             { start: 540, end: 1020 },
-            { start: 1020, end: 1080 },
+            { start: 1080, end: 1140 },
         ]);
     });
 });
