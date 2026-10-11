@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
-import { getExtraMinutesAction, submitGroupBooking } from "./actions.ts";
+import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
+import {
+    getAvailableDaysAction,
+    getExtraMinutesAction,
+    submitGroupBooking,
+} from "./actions.ts";
 
 // redirect() normally throws Next.js's own NEXT_REDIRECT error to stop the
 // action — mimic that with a recognisable error so tests can assert where
@@ -28,6 +33,9 @@ vi.mock("@/lib/send-push.ts", () => ({ sendPushNotification: vi.fn() }));
 // about slot computation (covered in get-available-slots.test.ts).
 vi.mock("@/lib/get-available-slots.ts", () => ({
     getAvailableSlots: vi.fn(),
+}));
+vi.mock("@/lib/get-available-days-in-range.ts", () => ({
+    getAvailableDaysInRange: vi.fn().mockResolvedValue([]),
 }));
 
 const TEST_DATE = new Date("2099-10-01T00:00:00.000Z");
@@ -187,6 +195,24 @@ describe("rezervace actions", () => {
 
         it("returns 0 for empty input", async () => {
             expect(await getExtraMinutesAction({ name: "  ", phone: "  " })).toBe(0);
+        });
+    });
+
+    describe("getAvailableDaysAction", () => {
+        it("passes the client's extra time on to the day picker", async () => {
+            const range = { from: TEST_DATE, to: TEST_DATE };
+
+            await getAvailableDaysAction(range, [serviceIds[0]], 15);
+
+            expect(getAvailableDaysInRange).toHaveBeenCalledWith(range, [serviceIds[0]], 15);
+        });
+
+        it("normalizes a tampered extra time from the URL", async () => {
+            const range = { from: TEST_DATE, to: TEST_DATE };
+
+            await getAvailableDaysAction(range, [serviceIds[0]], -30);
+
+            expect(getAvailableDaysInRange).toHaveBeenCalledWith(range, [serviceIds[0]], 0);
         });
     });
 });

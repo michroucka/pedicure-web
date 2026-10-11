@@ -47,14 +47,19 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
 
     const currentServices: number[] =
         searchParams.get("services")?.split(",").filter(Boolean).map(Number) ?? [];
+    // Set after an extra_time_conflict redirect — same value the time step
+    // uses, so the calendar only offers days this client actually fits.
+    const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
 
-    // Fetch the whole horizon once whenever the chosen services change.
+    // Fetch the whole horizon once whenever the chosen services (or the
+    // client's known extra time) change.
     useEffect(() => {
         hasAutoJumped.current = false;
         startTransition(async () => {
             const days = await getAvailableDaysAction(
                 { from: tomorrow, to: horizonEnd },
-                currentServices
+                currentServices,
+                extraMinutes
             );
             setAvailableDays(days);
             setHorizon({ from: tomorrow.getTime(), to: horizonEnd.getTime() });
@@ -74,7 +79,7 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
             }
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams.get("services")]);
+    }, [searchParams.get("services"), searchParams.get("extraMinutes")]);
 
     // Fallback for browsing past the pre-fetched horizon (rare) — fetch
     // just that month and merge it in, keeping the horizon data we already
@@ -88,7 +93,8 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
         startTransition(async () => {
             const days = await getAvailableDaysAction(
                 { from: rangeFrom, to: gridEnd },
-                currentServices
+                currentServices,
+                extraMinutes
             );
             setAvailableDays((prev) => {
                 const seen = new Set(prev.map((d) => d.getTime()));

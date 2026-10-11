@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma.ts";
 import { formatTime } from "@/lib/utils.ts";
 import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
 import { findClient } from "@/lib/find-client.ts";
+import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { redirect } from "next/navigation";
 import { Prisma } from "@/lib/generated/prisma/client";
@@ -192,11 +193,19 @@ export async function submitGroupBooking(
     }
 }
 
+// extraMinutes comes from the URL after an extra_time_conflict redirect
+// (see buildSlotConflictRedirect) — the day picker has to use it too, not
+// just the slot list, or it offers days where this client fits nowhere.
 export async function getAvailableDaysAction(
     range: { from: Date; to: Date },
-    serviceIds: number[]
+    serviceIds: number[],
+    extraMinutes: number = 0
 ): Promise<Date[]> {
-    return getAvailableDaysInRange(range, serviceIds);
+    return getAvailableDaysInRange(
+        range,
+        serviceIds,
+        normalizeExtraMinutes(extraMinutes)
+    );
 }
 
 // Extra time of the (main) contact only — group guests aren't Clients and
@@ -218,5 +227,5 @@ export async function getAvailableSlotsAction(
     serviceIds: number[],
     extraMinutes: number = 0
 ): Promise<number[]> {
-    return getAvailableSlots(date, serviceIds, extraMinutes);
+    return getAvailableSlots(date, serviceIds, normalizeExtraMinutes(extraMinutes));
 }
