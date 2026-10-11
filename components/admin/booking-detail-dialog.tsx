@@ -153,6 +153,12 @@ export function BookingDetailDialog({
               .filter((b) => b.groupId === booking.groupId)
               .sort((a, b) => a.startTime - b.startTime)
         : [booking];
+    // Editing always acts on the whole group, so its schedule is anchored to
+    // the group's first booking — not to whichever member was clicked
+    // (clicking the 2nd person must still preselect/compare the group's
+    // start, or saving would shift the whole group to that person's time).
+    // Same for contact details: they belong to the main contact.
+    const groupStart = groupBookings[0];
 
     function openQr() {
         setMode("qr");
@@ -186,9 +192,9 @@ export function BookingDetailDialog({
 
     function openEdit() {
         setMode("edit");
-        setEditPhone(booking!.client.phone ?? "");
-        if (booking!.client.note) setIsNoteOpen(true);
-        setEditNote(booking!.client.note ?? "");
+        setEditPhone(groupStart.client.phone ?? "");
+        if (groupStart.client.note) setIsNoteOpen(true);
+        setEditNote(groupStart.client.note ?? "");
         const people = groupBookings.map((b) => ({
             bookingId: b.id,
             name: getBookingPersonName(b),
@@ -196,13 +202,13 @@ export function BookingDetailDialog({
             extraTime: extraTimeFromMinutes(b.extraTimeMinutes),
         }));
         setEditPeople(people);
-        setEditDate(booking!.date);
-        setSelectedSlot(booking!.startTime);
+        setEditDate(groupStart.date);
+        setSelectedSlot(groupStart.startTime);
         setCustomTime(false);
         setCustomTimeValue("");
         // Preloaded so alternative slots show right away, without the admin
         // having to touch the calendar first.
-        refreshEditSlots(booking!.date, people);
+        refreshEditSlots(groupStart.date, people);
     }
 
     function updateEditPersonService(i: number, serviceId: number) {
@@ -256,8 +262,8 @@ export function BookingDetailDialog({
 
         const scheduleChanged =
             format(editDate, "yyyy-MM-dd") !==
-                format(booking.date, "yyyy-MM-dd") ||
-            selectedSlot !== booking.startTime ||
+                format(groupStart.date, "yyyy-MM-dd") ||
+            selectedSlot !== groupStart.startTime ||
             editPeople.some(
                 (p, i) =>
                     p.serviceId !== groupBookings[i].serviceId ||
@@ -602,16 +608,16 @@ export function BookingDetailDialog({
                                     (() => {
                                         const sameDate =
                                             editDate?.getTime() ===
-                                            booking.date.getTime();
+                                            groupStart.date.getTime();
                                         const displaySlots =
                                             sameDate &&
                                             editSlots &&
                                             !editSlots.includes(
-                                                booking.startTime
+                                                groupStart.startTime
                                             )
                                                 ? [
                                                       ...editSlots,
-                                                      booking.startTime,
+                                                      groupStart.startTime,
                                                   ].sort((a, b) => a - b)
                                                 : editSlots;
                                         return (
