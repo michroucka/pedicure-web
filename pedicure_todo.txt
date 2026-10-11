@@ -21,6 +21,11 @@
     (pro admina vyreseno pres #18 - allowUnfillableGaps; pro verejny booking jsme se domluvili ze to nestoji za komplexitu)
 [x] pro pedikerku povolit nechavat libovolny gap kdekoliv, je to v podstate admin - nemel by byt takto omezen - jen je dobre ho na to nejak upozornit ze vyberem tohoto slotu necha nezaplnitelny gap?
     (bez upozorneni - pedikerka vidi cely den v timeline, neni to naslepo jako u klienta)
+[ ] validace dat na serveru - server actions jsou verejne POST endpointy, Zod schema se ted vola jen ve formulari v prohlizeci (zodResolver), server data nekontroluje (TS typy za behu nic negarantuji)
+    - submitGroupBooking / submitBooking: na zacatku groupSchema/soloSchema.safeParse(data), pri chybe akci ukoncit; do schematu .trim() pred .min(1) (min(1) pusti "   ")
+    - priklady co ted projde: names: [] -> names[0].trim() spadne (500), nevalidni email/telefon se ulozi klientovi do DB, jmeno z mezer
+    - projit CELOU aplikaci: vsechny server actions (rezervace, sprava/[token], admin kalendar/dostupnost/klienti/nastaveni) i API routes - kazdy vstup zvenku validovat na serveru, ne jen v UI
+    - u admin akci zaroven overit autorizaci (session) primo v akci, nespolehat jen na proxy.ts
 
 mimo puvodni seznam, hotovo:
 [x] cervena cara aktualniho casu v day i week timeline (realtime, refresh po 10s)
