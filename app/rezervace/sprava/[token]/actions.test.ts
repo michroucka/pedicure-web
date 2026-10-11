@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import {
     cancelBookingByTokenAction,
     getRescheduleDaysAction,
@@ -13,7 +14,13 @@ import {
 // which a plain vitest run doesn't have — mock them out like any other
 // Next.js server action test.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/server", () => ({ after: vi.fn() }));
+// after() runs its callback right away here so the post-move side effects
+// can be asserted; the email/push senders themselves are mocked.
+vi.mock("next/server", () => ({ after: vi.fn((callback: () => unknown) => callback()) }));
+vi.mock("@/lib/send-push.ts", () => ({ sendPushNotification: vi.fn() }));
+vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
+    sendBookingMovedEmail: vi.fn(),
+}));
 
 // "Now" = 2026-06-15T08:00Z = Monday 10:00 in Europe/Prague.
 // ORIGINAL_DATE (Saturday, +5 days) and TARGET_DATE (Sunday, +6 days) both
@@ -36,6 +43,7 @@ describe("rezervace/sprava/[token] actions", () => {
     beforeEach(async () => {
         vi.useFakeTimers();
         vi.setSystemTime(NOW);
+        vi.mocked(sendBookingMovedEmail).mockClear();
 
         const clients = await Promise.all(
             ["A", "B"].map((suffix) =>
@@ -142,6 +150,24 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(result.ok).toBe(false);
         });
 
+        it("sends no email when the move is rejected", async () => {
+            const booking = await createBooking({
+                clientId: clientIds[0],
+                serviceId,
+                date: ORIGINAL_DATE,
+                startTime: 540,
+                source: "ONLINE",
+            });
+
+            await moveBookingByTokenAction(
+                booking.cancelToken,
+                "2026-06-21",
+                OUT_OF_WINDOW_START_TIME
+            );
+
+            expect(sendBookingMovedEmail).not.toHaveBeenCalled();
+        });
+
         it("refuses to move a booking less than 24h away", async () => {
             const booking = await createBooking({
                 clientId: clientIds[0],
@@ -236,6 +262,9 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(moved.status).toBe("CONFIRMED");
             expect(moved.date.getTime()).toBe(TARGET_DATE.getTime());
             expect(moved.startTime).toBe(570);
+            // the old link from the confirmation email is dead now — the
+            // client gets the new one by email
+            expect(sendBookingMovedEmail).toHaveBeenCalledWith([moved.id]);
         });
 
         it("moves the whole group via any member's token, preserving groupId", async () => {
@@ -270,6 +299,11 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(newRows.every((b) => b.date.getTime() === TARGET_DATE.getTime())).toBe(
                 true
             );
+            // one email for the whole group, with all its new bookings
+            expect(sendBookingMovedEmail).toHaveBeenCalledOnce();
+            expect(
+                [...vi.mocked(sendBookingMovedEmail).mock.calls[0][0]].sort()
+            ).toEqual(newRows.map((b) => b.id).sort());
         });
     });
 

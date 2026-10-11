@@ -15,6 +15,27 @@ import {
 
 type Person = { name: string; serviceName: string };
 
+// "moved" goes out after a reschedule (client via magic link or the
+// pedikérka in admin): a move cancels + recreates the booking, so the old
+// email's link stops working — this one carries the new link.
+export type BookingEmailVariant = "created" | "moved";
+
+const COPY: Record<
+    BookingEmailVariant,
+    { preview: string; heading: string; body: string }
+> = {
+    created: {
+        preview: "je potvrzena",
+        heading: "Rezervace potvrzena!",
+        body: "Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla úspěšně vytvořena.",
+    },
+    moved: {
+        preview: "– termín byl změněn",
+        heading: "Rezervace přesunuta",
+        body: "Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla přesunuta na nový termín. Odkaz z předchozího e-mailu už neplatí – pro správu rezervace použijte tlačítko níže.",
+    },
+};
+
 const BASE_URL = "https://www.pedikurakralovice.cz";
 
 // Email clients fetch images over the internet when the message is opened,
@@ -29,13 +50,16 @@ export function BookingConfirmationEmail({
     dateLabel,
     timeLabel,
     manageUrl,
+    variant = "created",
 }: {
     clientName: string;
     people: Person[];
     dateLabel: string;
     timeLabel: string;
     manageUrl: string;
+    variant?: BookingEmailVariant;
 }) {
+    const copy = COPY[variant];
     return (
         <Html>
             <Head>
@@ -55,7 +79,7 @@ export function BookingConfirmationEmail({
                     content="light only"
                 />
             </Head>
-            <Preview>{`Rezervace na ${dateLabel} v ${timeLabel} je potvrzena`}</Preview>
+            <Preview>{`Rezervace na ${dateLabel} v ${timeLabel} ${copy.preview}`}</Preview>
             <Body style={body}>
                 <Container style={container}>
                     <Img
@@ -65,12 +89,9 @@ export function BookingConfirmationEmail({
                         alt="Pedikúra Kralovice"
                         style={logo}
                     />
-                    <Heading style={heading}>Rezervace potvrzena!</Heading>
+                    <Heading style={heading}>{copy.heading}</Heading>
                     <Text style={text}>Dobrý den, {clientName},</Text>
-                    <Text style={text}>
-                        Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla
-                        úspěšně vytvořena.
-                    </Text>
+                    <Text style={text}>{copy.body}</Text>
 
                     <Section style={card}>
                         {people.map((person, i) => (
@@ -203,6 +224,7 @@ BookingConfirmationEmail.PreviewProps = {
         { name: "Petra Nováková", serviceName: "Pedikúra s lakem" },
     ],
     dateLabel: "29. srpna 2026",
-    timeLabel: "09:00–10:15",
+    timeLabel: "09:00 – 10:15",
     manageUrl: "https://www.pedikurakralovice.cz/rezervace/sprava/preview-token",
+    variant: "created",
 } satisfies Parameters<typeof BookingConfirmationEmail>[0];

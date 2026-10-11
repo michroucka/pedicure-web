@@ -785,10 +785,11 @@ export function BookingDetailDialog({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Uložit změny?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Měníš termín, službu nebo délku rezervace. Klient se o
-                            téhle změně automaticky nedozví – nepošle se mu
-                            žádný email, SMS ani push. Pokud potřebuje vědět,
-                            dej mu vědět sama.
+                            {/* Only online bookings get the "moved" email —
+                            mirrors updateBookingAction. */}
+                            {groupStart.source === "ONLINE"
+                                ? "Měníš termín, službu nebo délku rezervace. Klientovi přijde e-mail s novým termínem a novým odkazem pro správu rezervace (SMS ani push se neposílá)."
+                                : "Měníš termín, službu nebo délku rezervace. Klient se o téhle změně automaticky nedozví – nepošle se mu žádný email, SMS ani push. Pokud potřebuje vědět, dej mu vědět sama."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

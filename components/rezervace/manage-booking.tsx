@@ -95,7 +95,7 @@ export function ManageBooking({
                 setError(result.error);
                 return;
             }
-            router.push(`/rezervace/sprava/${result.newToken}`);
+            router.push(`/rezervace/sprava/${result.newToken}?moved=1`);
         });
     }
 

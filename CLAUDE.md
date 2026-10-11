@@ -208,8 +208,12 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
     `lib/move-booking.ts` — `moveBooking` pro sólo, `moveGroupBooking`
     pro celou skupinu najednou se zachováním `groupId`. Nový Booking má
     nový `cancelToken` — po přesunu přes magic link je proto potřeba
-    klienta přesměrovat na `/rezervace/sprava/{novýToken}`, jinak by mu
-    starý odkaz přestal fungovat
+    klienta přesměrovat na `/rezervace/sprava/{novýToken}?moved=1`
+    (stránka pak ukáže hlášku „Rezervace přesunuta“), jinak by mu starý
+    odkaz přestal fungovat. Protože odkaz z potvrzovacího e-mailu po
+    přesunu neplatí, po každém přesunu online rezervace (přes magic link
+    i z adminu) jde klientovi e-mail „Rezervace přesunuta“ s novým odkazem
+    (`sendBookingMovedEmail`, varianta `moved` téže šablony)
 - **Skupinové rezervace** (matka+dcera apod.) — 2+ osob (max 4),
   navazující sloty, různé služby možné, `groupId` na Booking, každá osoba
   samostatný Booking. Kontaktní údaje (telefon, email) jsou jen jedny

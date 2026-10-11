@@ -2,14 +2,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import {
     createManualBookingAction,
     getMoveSlotsAction,
     updateBookingAction,
 } from "./actions.ts";
 
-// revalidatePath needs a Next.js request context.
+// revalidatePath and after() need a Next.js request context; after() runs
+// its callback right away so the moved email can be asserted.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/server", () => ({ after: vi.fn((callback: () => unknown) => callback()) }));
+vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
+    sendBookingMovedEmail: vi.fn(),
+}));
 
 // outsideHours: true throughout — same reason as move-booking.test.ts: it
 // only checks overlap with other bookings, not the RecurringAvailability
@@ -27,6 +33,7 @@ describe("kalendar actions", () => {
 
     beforeEach(async () => {
         phone = uniquePhone();
+        vi.mocked(sendBookingMovedEmail).mockClear();
         const services = await Promise.all([
             prisma.service.create({
                 data: { name: "Test Service 30", durationMinutes: 30, price: 100 },
@@ -336,6 +343,70 @@ describe("kalendar actions", () => {
             const [moved] = await bookingsForPhone();
             expect(moved.extraTimeMinutes).toBe(20);
             expect(moved.endTime).toBe(590);
+        });
+
+        it("emails an online booking's client the new link after a move", async () => {
+            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const booking = await createBooking({
+                clientId: client.id,
+                serviceId: serviceIds[0],
+                date: DATE,
+                startTime: 540,
+                source: "ONLINE",
+            });
+
+            await updateBookingAction({
+                groupId: null,
+                people: [{ bookingId: booking.id, name: "Jana", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 600,
+                outsideHours: true,
+            });
+
+            const [moved] = await bookingsForPhone();
+            expect(sendBookingMovedEmail).toHaveBeenCalledWith([moved.id]);
+        });
+
+        it("sends no email for a phone booking or a plain name fix", async () => {
+            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const phoneBooking = await createBooking({
+                clientId: client.id,
+                serviceId: serviceIds[0],
+                date: DATE,
+                startTime: 540,
+                source: "PHONE",
+            });
+            const onlineBooking = await createBooking({
+                clientId: client.id,
+                serviceId: serviceIds[0],
+                date: DATE,
+                startTime: 660,
+                source: "ONLINE",
+            });
+
+            // phone booking moved
+            await updateBookingAction({
+                groupId: null,
+                people: [{ bookingId: phoneBooking.id, name: "Jana", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 600,
+                outsideHours: true,
+            });
+            // online booking, only renamed — not moved, link stays valid
+            await updateBookingAction({
+                groupId: null,
+                people: [{ bookingId: onlineBooking.id, name: "Jana Nová", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 660,
+            });
+
+            expect(sendBookingMovedEmail).not.toHaveBeenCalled();
         });
     });
 

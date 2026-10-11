@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma.ts";
 import { Prisma } from "@/lib/generated/prisma/client.ts";
 import { cancelBooking } from "@/lib/cancel-booking.ts";
@@ -16,6 +17,7 @@ import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { toDateOnly, getCzechToday } from "@/lib/utils.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 
 export async function getMoveSlotsAction(
     id: string,
@@ -146,9 +148,10 @@ export async function updateBookingAction(input: {
         return { ok: true };
     }
 
+    let movedIds: string[];
     try {
         if (input.groupId) {
-            await moveGroupBooking(input.groupId, date, input.startTime, {
+            const moved = await moveGroupBooking(input.groupId, date, input.startTime, {
                 outsideHours: input.outsideHours,
                 serviceOverrides: Object.fromEntries(
                     existing.map((b, i) => [b.id, input.people[i].serviceId])
@@ -158,19 +161,29 @@ export async function updateBookingAction(input: {
                 ),
                 allowUnfillableGaps: true,
             });
+            movedIds = moved.map((b) => b.id);
         } else {
-            await moveBooking(input.people[0].bookingId, date, input.startTime, {
+            const moved = await moveBooking(input.people[0].bookingId, date, input.startTime, {
                 outsideHours: input.outsideHours,
                 serviceId: input.people[0].serviceId,
                 extraTimeMinutes: extraTimes[0],
                 allowUnfillableGaps: true,
             });
+            movedIds = [moved.id];
         }
     } catch (error) {
         if (error instanceof SlotUnavailableError) {
             return { ok: false, error: error.message };
         }
         throw error;
+    }
+
+    // A move cancels + recreates, so the client's magic link from the
+    // confirmation email stops working — online bookings (the only ones
+    // with that email and link) get a new one. Phone/in-person bookings
+    // were arranged directly and never got a link.
+    if (existing[0].source === "ONLINE") {
+        after(() => sendBookingMovedEmail(movedIds));
     }
 
     revalidatePath("/kalendar");

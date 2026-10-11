@@ -58,4 +58,19 @@ describe("sendBookingConfirmationEmail", () => {
             })
         );
     });
+
+    it("sends the 'moved' variant with its own subject and the new link", async () => {
+        await sendBookingConfirmationEmail(
+            [booking({ guestName: null, startTime: 600, serviceName: "Klasik" })],
+            "moved"
+        );
+
+        expect(send.mock.calls[0][0].subject).toBe("Rezervace přesunuta");
+        expect(BookingConfirmationEmail).toHaveBeenCalledWith(
+            expect.objectContaining({
+                variant: "moved",
+                manageUrl: "https://www.pedikurakralovice.cz/rezervace/sprava/token-600",
+            })
+        );
+    });
 });

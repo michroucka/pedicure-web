@@ -15,6 +15,7 @@ import { revalidatePath } from "next/cache";
 import type { BookingWithRelations } from "@/lib/get-booking-group-by-token.ts";
 import { after } from "next/server";
 import { sendPushNotification } from "@/lib/send-push.ts";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 
@@ -148,6 +149,9 @@ export async function moveBookingByTokenAction(
                 date,
                 startTime
             );
+            // The new bookings have new cancelTokens — the email is how the
+            // client gets a working link again outside this browser tab.
+            after(() => sendBookingMovedEmail(moved.map((b) => b.id)));
             after(() =>
                 sendPushNotification({
                     title: "🔁 Skupinová rezervace přesunuta",
@@ -160,6 +164,7 @@ export async function moveBookingByTokenAction(
         }
 
         const moved = await moveBooking(bookings[0].id, date, startTime);
+        after(() => sendBookingMovedEmail([moved.id]));
         after(() =>
             sendPushNotification({
                 title: "🔁 Rezervace přesunuta",
