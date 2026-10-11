@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
+import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 
 export async function updateClientAction(
     id: string,
@@ -19,7 +20,7 @@ export async function updateClientAction(
             name: data.name,
             phone: data.phone || null,
             email: data.email || null,
-            extraTimeMinutes: data.extraTimeMinutes,
+            extraTimeMinutes: normalizeExtraMinutes(data.extraTimeMinutes),
             note: data.note || null,
         },
     });

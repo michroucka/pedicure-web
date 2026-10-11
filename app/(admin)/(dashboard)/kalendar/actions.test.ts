@@ -182,6 +182,29 @@ describe("kalendar actions", () => {
             await prisma.client.delete({ where: { id: other.id } });
         });
 
+        it("rounds extra time from the form to a multiple of 5", async () => {
+            await createManualBookingAction({
+                phone,
+                people: [
+                    { name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: 7 },
+                    { name: "Eva Host", serviceId: serviceIds[0], extraTimeMinutes: 13 },
+                ],
+                dateStr: DATE_STR,
+                startTime: 540,
+                source: "PHONE",
+                outsideHours: true,
+            });
+
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.extraTimeMinutes)).toEqual([5, 15]);
+            expect(bookings.map((b) => [b.startTime, b.endTime])).toEqual([
+                [540, 575],
+                [575, 620],
+            ]);
+            const client = await prisma.client.findFirstOrThrow({ where: { phone } });
+            expect(client.extraTimeMinutes).toBe(5);
+        });
+
         it("sanitizes a nonsensical extra time from the form", async () => {
             await createManualBookingAction({
                 phone,

@@ -15,6 +15,7 @@ import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { toDateOnly, getCzechToday } from "@/lib/utils.ts";
+import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 
 export async function getMoveSlotsAction(
     id: string,
@@ -35,7 +36,8 @@ export async function getMoveSlotsAction(
         const serviceIds =
             overrideServiceIds ?? bookings.map((b) => b.serviceId);
         const extraMinutes = (
-            overrideExtraMinutes ?? bookings.map((b) => b.extraTimeMinutes)
+            overrideExtraMinutes?.map(normalizeExtraMinutes) ??
+            bookings.map((b) => b.extraTimeMinutes)
         ).reduce((sum, m) => sum + m, 0);
         return getAvailableSlots(date, serviceIds, extraMinutes, {
             allowToday: true,
@@ -50,7 +52,9 @@ export async function getMoveSlotsAction(
     return getAvailableSlots(
         date,
         [overrideServiceIds?.[0] ?? booking.serviceId],
-        overrideExtraMinutes?.[0] ?? booking.extraTimeMinutes,
+        overrideExtraMinutes
+            ? normalizeExtraMinutes(overrideExtraMinutes[0])
+            : booking.extraTimeMinutes,
         {
             allowToday: true,
             excludeBookingIds: [booking.id],
@@ -98,7 +102,7 @@ export async function updateBookingAction(input: {
     }
 
     const extraTimes = input.people.map((p) =>
-        sanitizeExtraMinutes(p.extraTimeMinutes)
+        normalizeExtraMinutes(p.extraTimeMinutes)
     );
 
     // Name/phone/note fixes are written in place regardless of whether the
@@ -181,7 +185,7 @@ export async function getManualBookingSlotsAction(
     extraMinutes: number = 0
 ): Promise<number[]> {
     const date = toDateOnly(new Date(dateStr));
-    return getAvailableSlots(date, serviceIds, sanitizeExtraMinutes(extraMinutes), {
+    return getAvailableSlots(date, serviceIds, normalizeExtraMinutes(extraMinutes), {
         allowToday: true,
         allowUnfillableGaps: true,
     });
@@ -221,7 +225,7 @@ export async function createManualBookingAction(input: {
     const people = input.people.map((p, i) => ({
         clientId: client.id,
         guestName: i === 0 ? null : p.name.trim() || null,
-        extraTimeMinutes: sanitizeExtraMinutes(p.extraTimeMinutes),
+        extraTimeMinutes: normalizeExtraMinutes(p.extraTimeMinutes),
         serviceId: p.serviceId,
     }));
     const serviceIds = people.map((p) => p.serviceId);
@@ -298,10 +302,4 @@ export async function createManualBookingAction(input: {
 
     revalidatePath("/kalendar");
     return { ok: true };
-}
-
-// Server actions are public endpoints — never trust a number from the form
-// to be a sane minute count.
-function sanitizeExtraMinutes(value: number): number {
-    return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
 }

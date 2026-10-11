@@ -119,6 +119,9 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   "tomuto klientovi to trvá déle"; výchozí hodnota, ze které se
   předvyplní extra čas nové rezervace – samotný výpočet délky už bere
   snapshot z `Booking.extraTimeMinutes`), note, createdAt
+- Extra čas (u klienta i u bookingu) je vždy násobek 5 min –
+  `normalizeExtraMinutes` v `lib/extra-time.ts`, server zaokrouhluje
+  každou hodnotu z formuláře, pole v UI se zarovná při opuštění
 - Párování klienta (`lib/find-client.ts`, sdílí ho `findOrCreateClient`
   i náhled extra času v booking formuláři): podle telefonu, a jen když
   telefon chybí, podle přesné shody jména

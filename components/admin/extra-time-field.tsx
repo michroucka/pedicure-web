@@ -2,6 +2,7 @@
 
 import { Checkbox } from "@/components/ui/checkbox.tsx";
 import { Input } from "@/components/ui/input.tsx";
+import { EXTRA_TIME_STEP, normalizeExtraMinutes } from "@/lib/extra-time.ts";
 
 export const DEFAULT_EXTRA_MINUTES = 15;
 
@@ -26,14 +27,16 @@ export function extraTimeToMinutes(extraTime: ExtraTime): number {
 export function ExtraTimeField({
     value,
     onChange,
-    label = "Trvá to déle",
+    label = "Čas navíc",
 }: {
     value: ExtraTime;
     onChange: (value: ExtraTime) => void;
     label?: string;
 }) {
     return (
-        <div className="flex flex-col gap-2">
+        // min-h matches the input's height, so ticking the checkbox doesn't
+        // make the row (and everything below it) jump
+        <div className="flex min-h-8 items-center gap-3">
             <label className="flex items-center gap-2">
                 <Checkbox
                     checked={value.enabled}
@@ -48,8 +51,8 @@ export function ExtraTimeField({
                 <div className="flex items-center gap-2">
                     <Input
                         type="number"
-                        min={5}
-                        step={5}
+                        min={EXTRA_TIME_STEP}
+                        step={EXTRA_TIME_STEP}
                         className="w-20"
                         value={value.minutes}
                         onChange={(e) =>
@@ -58,9 +61,24 @@ export function ExtraTimeField({
                                 minutes: Number(e.target.value) || 0,
                             })
                         }
+                        // step only drives the arrows — snap whatever was
+                        // typed to a multiple of 5 once she leaves the
+                        // field, so what she sees is what gets saved (the
+                        // server normalizes the same way). Ticked means
+                        // some extra time, so never below one step; 0 is
+                        // what unticking is for.
+                        onBlur={() =>
+                            onChange({
+                                ...value,
+                                minutes: Math.max(
+                                    EXTRA_TIME_STEP,
+                                    normalizeExtraMinutes(value.minutes)
+                                ),
+                            })
+                        }
                     />
                     <span className="text-sm text-muted-foreground">
-                        minut navíc
+                        min
                     </span>
                 </div>
             )}
