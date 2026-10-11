@@ -11,7 +11,8 @@ Rezervace jsou zatím vypnuté (`lib/booking-enabled.ts`). Bod 1–4 je potřeba
 
 - [ ] **1. Stránka Zásady ochrany osobních údajů** (např. `/ochrana-osobnich-udaju` v `(marketing)`)
   - Text podle vzoru výše. Doplnit údaje správce z patičky `/kontakt`, dobu uchování (návrh: 3 roky od poslední návštěvy) a správce webu jako zpracovatele.
-  - Seznam zpracovatelů musí sedět s tím, co aplikace skutečně používá: Vercel (hosting + `@vercel/analytics` + `@vercel/speed-insights`), Neon, Resend, SMSManager, Web Push.
+  - Seznam zpracovatelů musí sedět s tím, co aplikace skutečně používá: Vercel (hosting + `@vercel/analytics` + `@vercel/speed-insights`), Neon, Resend, SMSManager, Web Push, GitHub (šifrované zálohy DB).
+  - Uvést zálohování: data se denně zálohují šifrovaně, zálohy se uchovávají 30 dní (smazaný údaj ze záloh zmizí nejpozději po 30 dnech).
   - Přidat do sitemapy.
 - [ ] **2. Odkazy na zásady**
   - patička všech marketingových stránek,
@@ -40,9 +41,9 @@ Rezervace jsou zatím vypnuté (`lib/booking-enabled.ts`). Bod 1–4 je potřeba
 
 - [ ] **9. Neon**:
   
-  - ověřit, že produkční projekt je v EU regionu (doplnit do zásad i do `web-dokumenty/zakazky/pedikura/zakazka.yaml`),
-  - zkontrolovat limity free tarifu a délku obnovy dat (PITR),
-  - zvážit vlastní pravidelnou zálohu (`pg_dump` přes GitHub Action do privátního úložiště, šifrovaně).
+  - ~~ověřit, že produkční projekt je v EU regionu~~ – ověřeno 2026-10-11: `aws-eu-central-1` (Frankfurt). Doplnit do zásad i do `web-dokumenty/zakazky/pedikura/zakazka.yaml`,
+  - ~~zkontrolovat limity free tarifu a délku obnovy dat (PITR)~~ – free tarif: PITR jen 6 h, 1 ruční snapshot, plánované snapshoty ne,
+  - ~~zvážit vlastní pravidelnou zálohu~~ – hotovo 2026-10-11: soukromé repo `michroucka/pedicure-db-backup`, noční `pg_dump` šifrovaný AES-256, artefakty GitHub Actions s uchováním 30 dní. Postup obnovy v jeho README.
 
 - [ ] **10. Resend**: ověřená odesílací doména. Zkontrolovat, že free tarif pokrývá objem e-mailů.
 
