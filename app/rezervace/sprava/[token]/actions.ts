@@ -24,6 +24,10 @@ const WINDOW_PASSED_ERROR =
 
 function serviceContext(bookings: BookingWithRelations[]) {
     return {
+        // The bookings being rescheduled — left out of the occupied set so
+        // their own current slot shows as available (same as the admin
+        // edit dialog's getMoveSlotsAction).
+        bookingIds: bookings.map((b) => b.id),
         serviceIds: bookings.map((b) => b.serviceId),
         extraMinutes: bookings.reduce(
             (sum, b) => sum + b.extraTimeMinutes,
@@ -84,8 +88,10 @@ export async function getRescheduleDaysAction(
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") return [];
 
-    const { serviceIds, extraMinutes } = serviceContext(bookings);
-    return getAvailableDaysInRange(range, serviceIds, extraMinutes);
+    const { bookingIds, serviceIds, extraMinutes } = serviceContext(bookings);
+    return getAvailableDaysInRange(range, serviceIds, extraMinutes, {
+        excludeBookingIds: bookingIds,
+    });
 }
 
 export async function getRescheduleSlotsAction(
@@ -96,9 +102,11 @@ export async function getRescheduleSlotsAction(
     if (!bookings || bookings[0].status !== "CONFIRMED") return [];
 
     const date = toDateOnly(new Date(dateStr));
-    const { serviceIds, extraMinutes } = serviceContext(bookings);
+    const { bookingIds, serviceIds, extraMinutes } = serviceContext(bookings);
 
-    return getAvailableSlots(date, serviceIds, extraMinutes);
+    return getAvailableSlots(date, serviceIds, extraMinutes, {
+        excludeBookingIds: bookingIds,
+    });
 }
 
 // Move = cancel + recreate (see lib/move-booking.ts), which means the new
@@ -125,8 +133,10 @@ export async function moveBookingByTokenAction(
     // client-facing flow isn't, so that has to be checked here first,
     // against the same public rule getRescheduleSlotsAction already used to
     // offer slots in the first place.
-    const { serviceIds, extraMinutes } = serviceContext(bookings);
-    const validSlots = await getAvailableSlots(date, serviceIds, extraMinutes);
+    const { bookingIds, serviceIds, extraMinutes } = serviceContext(bookings);
+    const validSlots = await getAvailableSlots(date, serviceIds, extraMinutes, {
+        excludeBookingIds: bookingIds,
+    });
     if (!validSlots.includes(startTime)) {
         return { ok: false, error: "Zvolený termín už není volný." };
     }

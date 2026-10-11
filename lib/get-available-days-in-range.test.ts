@@ -113,4 +113,43 @@ describe("getAvailableDaysInRange", () => {
         const afterCancel = await getAvailableDaysInRange(RANGE, [serviceId]);
         expect(afterCancel.map((d) => d.getTime())).toEqual([SUNDAY.getTime()]);
     });
+
+    it("ignores excluded bookings, so a day filled only by them stays available", async () => {
+        await prisma.recurringAvailability.create({
+            data: { dayOfWeek: 0, startTime: 540, endTime: 570 },
+        });
+        const client = await prisma.client.create({
+            data: { name: "Test Klient", phone: "999999999" },
+        });
+        clientId = client.id;
+        const booking = await prisma.booking.create({
+            data: {
+                clientId: client.id,
+                serviceId,
+                date: SUNDAY,
+                startTime: 540,
+                endTime: 570,
+                status: "CONFIRMED",
+                source: "ONLINE",
+                cancelToken: crypto.randomUUID(),
+            },
+        });
+
+        const days = await getAvailableDaysInRange(RANGE, [serviceId], 0, {
+            excludeBookingIds: [booking.id],
+        });
+
+        expect(days.map((d) => d.getTime())).toEqual([SUNDAY.getTime()]);
+    });
+
+    it("counts the same service once per person in a group", async () => {
+        // 30 min window — fits one 30 min service, not two people with it
+        await prisma.recurringAvailability.create({
+            data: { dayOfWeek: 0, startTime: 540, endTime: 570 },
+        });
+
+        const days = await getAvailableDaysInRange(RANGE, [serviceId, serviceId]);
+
+        expect(days).toEqual([]);
+    });
 });

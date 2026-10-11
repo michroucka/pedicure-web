@@ -186,6 +186,26 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(after.status).toBe("CONFIRMED"); // untouched on failure
         });
 
+        it("moves a group within the same day onto times overlapping its own slot", async () => {
+            const group = await createGroupBooking(
+                [
+                    { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
+                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                ],
+                ORIGINAL_DATE,
+                555, // 9:15-10:15 sticks out of the 9:00-10:00 window
+                "ONLINE"
+            );
+
+            const result = await moveBookingByTokenAction(
+                group[0].cancelToken,
+                "2026-06-20",
+                540
+            );
+
+            expect(result.ok).toBe(true);
+        });
+
         it("moves a solo booking to a valid new slot and returns a fresh token", async () => {
             const booking = await createBooking({
                 clientId: clientIds[0],
@@ -314,6 +334,50 @@ describe("rezervace/sprava/[token] actions", () => {
             );
 
             expect(slots).toEqual([540]);
+        });
+
+        it("offers times overlapping the group's own current slot on the same day", async () => {
+            // the group fills the whole 9:00-10:00 Saturday window itself —
+            // its own bookings must not count as taken (regression: the
+            // picker offered nothing before the group's current end)
+            const group = await createGroupBooking(
+                [
+                    { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
+                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                ],
+                ORIGINAL_DATE,
+                540,
+                "ONLINE"
+            );
+
+            const slots = await getRescheduleSlotsAction(
+                group[0].cancelToken,
+                "2026-06-20"
+            );
+            const days = await getRescheduleDaysAction(group[0].cancelToken, {
+                from: ORIGINAL_DATE,
+                to: ORIGINAL_DATE,
+            });
+
+            expect(slots).toEqual([540]);
+            expect(days.map((d) => d.getTime())).toEqual([ORIGINAL_DATE.getTime()]);
+        });
+
+        it("offers a same-day time overlapping a solo booking's own slot", async () => {
+            const booking = await createBooking({
+                clientId: clientIds[0],
+                serviceId,
+                date: ORIGINAL_DATE,
+                startTime: 555, // 9:15-9:45 — counted as taken, nothing else fits
+                source: "ONLINE",
+            });
+
+            const slots = await getRescheduleSlotsAction(
+                booking.cancelToken,
+                "2026-06-20"
+            );
+
+            expect(slots).toEqual(expect.arrayContaining([540, 570]));
         });
     });
 });

@@ -11,7 +11,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export async function getAvailableDaysInRange(
     range: { from: Date; to: Date },
     serviceIds: number[],
-    extraMinutes: number = 0
+    extraMinutes: number = 0,
+    options: {
+        // Same as getAvailableSlots — a booking being rescheduled must not
+        // block its own current slot, or a day it alone fills looks closed.
+        excludeBookingIds?: string[];
+    } = {}
 ): Promise<Date[]> {
     const from = toDateOnly(range.from);
     const to = toDateOnly(range.to);
@@ -30,7 +35,11 @@ export async function getAvailableDaysInRange(
                 where: { date: { gte: from, lte: to } },
             }),
             prisma.booking.findMany({
-                where: { date: { gte: from, lte: to }, status: "CONFIRMED" },
+                where: {
+                    date: { gte: from, lte: to },
+                    status: "CONFIRMED",
+                    id: { notIn: options.excludeBookingIds ?? [] },
+                },
             }),
         ]);
 
@@ -57,8 +66,12 @@ export async function getAvailableDaysInRange(
         bookingsByDay.set(key, existing);
     }
 
+    // Summed per requested id, not per fetched service — `in` returns each
+    // service once, so two people with the same service would otherwise
+    // only count it once (same as getAvailableSlots).
+    const durationById = new Map(services.map((s) => [s.id, s.durationMinutes]));
     const serviceDuration =
-        services.reduce((sum, s) => sum + s.durationMinutes, 0) +
+        serviceIds.reduce((sum, id) => sum + (durationById.get(id) ?? 0), 0) +
         extraMinutes;
 
     const availableDays: Date[] = [];
