@@ -20,24 +20,23 @@ export async function getMoveSlotsAction(
     id: string,
     groupId: string | null,
     dateStr: string,
-    // Lets the edit dialog preview slots for services the person hasn't
-    // saved yet — same order as bookings sorted by startTime.
-    overrideServiceIds?: number[]
+    // Lets the edit dialog preview slots for services / extra time the
+    // person hasn't saved yet — same order as bookings sorted by startTime.
+    overrideServiceIds?: number[],
+    overrideExtraMinutes?: number[]
 ): Promise<number[]> {
     const date = toDateOnly(new Date(dateStr));
 
     if (groupId) {
         const bookings = await prisma.booking.findMany({
             where: { groupId, status: "CONFIRMED" },
-            include: { client: true },
             orderBy: { startTime: "asc" },
         });
         const serviceIds =
             overrideServiceIds ?? bookings.map((b) => b.serviceId);
-        const extraMinutes = bookings.reduce(
-            (sum, b) => sum + b.client.extraTimeMinutes,
-            0
-        );
+        const extraMinutes = (
+            overrideExtraMinutes ?? bookings.map((b) => b.extraTimeMinutes)
+        ).reduce((sum, m) => sum + m, 0);
         return getAvailableSlots(date, serviceIds, extraMinutes, {
             allowToday: true,
             excludeBookingIds: bookings.map((b) => b.id),
@@ -47,12 +46,11 @@ export async function getMoveSlotsAction(
 
     const booking = await prisma.booking.findUniqueOrThrow({
         where: { id },
-        include: { client: true },
     });
     return getAvailableSlots(
         date,
         [overrideServiceIds?.[0] ?? booking.serviceId],
-        booking.client.extraTimeMinutes,
+        overrideExtraMinutes?.[0] ?? booking.extraTimeMinutes,
         {
             allowToday: true,
             excludeBookingIds: [booking.id],
@@ -70,7 +68,12 @@ export async function updateBookingAction(input: {
     groupId: string | null;
     // In the same order as bookings sorted by startTime — matches how
     // BookingDetailDialog builds groupBookings.
-    people: { bookingId: string; name: string; serviceId: number }[];
+    people: {
+        bookingId: string;
+        name: string;
+        serviceId: number;
+        extraTimeMinutes: number;
+    }[];
     phone: string;
     note: string;
     dateStr: string;
@@ -87,7 +90,6 @@ export async function updateBookingAction(input: {
         where: input.groupId
             ? { groupId: input.groupId, status: "CONFIRMED" }
             : { id: input.people[0].bookingId },
-        include: { client: true },
         orderBy: { startTime: "asc" },
     });
 
@@ -95,30 +97,45 @@ export async function updateBookingAction(input: {
         return { ok: false, error: "Rezervace nenalezena." };
     }
 
-    // Name/phone/note are plain Client updates regardless of whether the
-    // slot itself changes — a typo fix shouldn't touch the Booking at all
-    // (and so shouldn't invalidate its cancelToken). Phone is shared across
-    // the whole group (see findOrCreateClient), so it's written to every
-    // member's Client; note is collected only for the main contact.
+    const extraTimes = input.people.map((p) =>
+        sanitizeExtraMinutes(p.extraTimeMinutes)
+    );
+
+    // Name/phone/note fixes are written in place regardless of whether the
+    // slot itself changes — a typo fix shouldn't move the Booking (and so
+    // shouldn't invalidate its cancelToken). Only the main contact is a
+    // Client of this group; everyone else's name lives on their own
+    // booking as guestName — writing it to b.clientId would rename the main
+    // contact once per member. Must run before the move below, which copies
+    // guestName over to the new bookings.
     const trimmedPhone = input.phone.trim() || null;
     const trimmedNote = input.note.trim() || null;
-    await Promise.all(
+    await prisma.$transaction(
         existing.map((b, i) =>
-            prisma.client.update({
-                where: { id: b.clientId },
-                data: {
-                    name: input.people[i].name,
-                    phone: trimmedPhone,
-                    ...(i === 0 ? { note: trimmedNote } : {}),
-                },
-            })
+            i === 0
+                ? prisma.client.update({
+                      where: { id: b.clientId },
+                      data: {
+                          name: input.people[0].name.trim(),
+                          phone: trimmedPhone,
+                          note: trimmedNote,
+                      },
+                  })
+                : prisma.booking.update({
+                      where: { id: b.id },
+                      data: { guestName: input.people[i].name.trim() || null },
+                  })
         )
     );
 
     const scheduleChanged =
         existing[0].date.getTime() !== date.getTime() ||
         existing[0].startTime !== input.startTime ||
-        existing.some((b, i) => b.serviceId !== input.people[i].serviceId);
+        existing.some(
+            (b, i) =>
+                b.serviceId !== input.people[i].serviceId ||
+                b.extraTimeMinutes !== extraTimes[i]
+        );
 
     if (!scheduleChanged) {
         revalidatePath("/kalendar");
@@ -132,12 +149,16 @@ export async function updateBookingAction(input: {
                 serviceOverrides: Object.fromEntries(
                     existing.map((b, i) => [b.id, input.people[i].serviceId])
                 ),
+                extraTimeOverrides: Object.fromEntries(
+                    existing.map((b, i) => [b.id, extraTimes[i]])
+                ),
                 allowUnfillableGaps: true,
             });
         } else {
             await moveBooking(input.people[0].bookingId, date, input.startTime, {
                 outsideHours: input.outsideHours,
                 serviceId: input.people[0].serviceId,
+                extraTimeMinutes: extraTimes[0],
                 allowUnfillableGaps: true,
             });
         }
@@ -154,10 +175,13 @@ export async function updateBookingAction(input: {
 
 export async function getManualBookingSlotsAction(
     serviceIds: number[],
-    dateStr: string
+    dateStr: string,
+    // Sum over the whole group — must match what createManualBookingAction
+    // will validate with, or the dialog offers slots that then get rejected.
+    extraMinutes: number = 0
 ): Promise<number[]> {
     const date = toDateOnly(new Date(dateStr));
-    return getAvailableSlots(date, serviceIds, 0, {
+    return getAvailableSlots(date, serviceIds, sanitizeExtraMinutes(extraMinutes), {
         allowToday: true,
         allowUnfillableGaps: true,
     });
@@ -167,7 +191,7 @@ export async function createManualBookingAction(input: {
     phone?: string;
     email?: string;
     note?: string;
-    people: { name: string; serviceId: number }[];
+    people: { name: string; serviceId: number; extraTimeMinutes: number }[];
     dateStr: string;
     startTime: number;
     source: "PHONE" | "IN_PERSON";
@@ -179,27 +203,29 @@ export async function createManualBookingAction(input: {
         return { ok: false, error: "Nelze vytvořit rezervaci v minulosti." };
     }
 
-    // Email and note are only ever collected for the main contact, same as
-    // phone — the rest of the group shares their contact but gets its own
-    // name. Email itself isn't a form field here; it's only ever carried
-    // through silently when the admin picked an existing client from the
-    // name autocomplete.
-    const clients = await Promise.all(
-        input.people.map((p, i) =>
-            findOrCreateClient(
-                input.phone,
-                p.name,
-                i === 0 ? input.email : undefined,
-                i === 0 ? input.note : undefined
-            )
-        )
+    // Only the main contact is a Client — the rest of the group shares
+    // their contact and is stored as guestName on its own booking, same as
+    // the online group booking. Email and note belong to the main contact
+    // too; email isn't a form field here, it's only ever carried through
+    // silently when the admin picked an existing client from the name
+    // autocomplete.
+    const client = await findOrCreateClient(
+        input.phone,
+        input.people[0].name.trim(),
+        input.email,
+        input.note
     );
 
-    const serviceIds = input.people.map((p) => p.serviceId);
-    const extraMinutes = clients.reduce(
-        (sum, c) => sum + c.extraTimeMinutes,
-        0
-    );
+    // Extra time comes from the form per person (prefilled from the main
+    // contact's Client), not from Clients — guests don't have one.
+    const people = input.people.map((p, i) => ({
+        clientId: client.id,
+        guestName: i === 0 ? null : p.name.trim() || null,
+        extraTimeMinutes: sanitizeExtraMinutes(p.extraTimeMinutes),
+        serviceId: p.serviceId,
+    }));
+    const serviceIds = people.map((p) => p.serviceId);
+    const extraMinutes = people.reduce((sum, p) => sum + p.extraTimeMinutes, 0);
 
     if (input.outsideHours) {
         // Custom time entered by hand — skips the availability-window
@@ -208,9 +234,16 @@ export async function createManualBookingAction(input: {
         const services = await prisma.service.findMany({
             where: { id: { in: serviceIds } },
         });
+        // Summed per person, not per fetched service — `in` returns each
+        // service once, so two people with the same service would
+        // otherwise only count it once.
         const totalDuration =
-            services.reduce((sum, s) => sum + s.durationMinutes, 0) +
-            extraMinutes;
+            serviceIds.reduce(
+                (sum, id) =>
+                    sum +
+                    (services.find((s) => s.id === id)?.durationMinutes ?? 0),
+                0
+            ) + extraMinutes;
 
         const overlaps = await hasOverlappingBooking(
             date,
@@ -233,26 +266,15 @@ export async function createManualBookingAction(input: {
     }
 
     try {
-        if (input.people.length === 1) {
+        if (people.length === 1) {
             await createBooking({
-                clientId: clients[0].id,
-                serviceId: input.people[0].serviceId,
+                ...people[0],
                 date,
                 startTime: input.startTime,
                 source: input.source,
-                extraTimeMinutes: clients[0].extraTimeMinutes,
             });
         } else {
-            await createGroupBooking(
-                input.people.map((p, i) => ({
-                    clientId: clients[i].id,
-                    extraTimeMinutes: clients[i].extraTimeMinutes,
-                    serviceId: p.serviceId,
-                })),
-                date,
-                input.startTime,
-                input.source
-            );
+            await createGroupBooking(people, date, input.startTime, input.source);
         }
     } catch (error) {
         if (
@@ -264,6 +286,22 @@ export async function createManualBookingAction(input: {
         throw error;
     }
 
+    // The main contact's extra time field doubles as their Client setting,
+    // so it doesn't have to be set separately on the Klienti page. Only
+    // after the booking succeeded — a rejected slot changes nothing.
+    if (client.extraTimeMinutes !== people[0].extraTimeMinutes) {
+        await prisma.client.update({
+            where: { id: client.id },
+            data: { extraTimeMinutes: people[0].extraTimeMinutes },
+        });
+    }
+
     revalidatePath("/kalendar");
     return { ok: true };
+}
+
+// Server actions are public endpoints — never trust a number from the form
+// to be a sane minute count.
+function sanitizeExtraMinutes(value: number): number {
+    return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
 }

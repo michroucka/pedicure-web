@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { diffDayBlocks, type TimeSlot } from "@/lib/availability.ts";
 import { parseTime, toDateOnly, addUtcDays } from "@/lib/utils.ts";
 import {
@@ -64,7 +65,7 @@ export async function checkDayOverrideConflicts(
     });
 
     return bookings.map((b) => ({
-        clientName: b.client.name,
+        clientName: getBookingPersonName(b),
         startTime: b.startTime,
         endTime: b.endTime,
     }));
@@ -172,7 +173,7 @@ export async function checkRangeConflicts(
     });
 
     return bookings.map((b) => ({
-        clientName: b.client.name,
+        clientName: getBookingPersonName(b),
         startTime: b.startTime,
         endTime: b.endTime,
     }));

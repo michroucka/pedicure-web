@@ -77,11 +77,13 @@ model Booking {
   id                  String          @id @default(cuid())
   clientId            String
   client              Client          @relation(fields: [clientId], references: [id])
+  guestName           String?
   serviceId           Int
   service             Service         @relation(fields: [serviceId], references: [id])
   date                DateTime
   startTime           Int
   endTime             Int
+  extraTimeMinutes    Int             @default(0)
   status              BookingStatus   @default(CONFIRMED)
   groupId             String?
   source              BookingSource

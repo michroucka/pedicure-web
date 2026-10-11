@@ -4,6 +4,7 @@ import { canClientModifyBooking } from "@/lib/booking-modification-window.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { CalendarDays, Clock, Plus, UserRound, XCircle } from "lucide-react";
@@ -55,7 +56,7 @@ export default async function SpravaPage({
                             className="flex items-center gap-2"
                         >
                             <UserRound className="size-4 shrink-0 text-muted-foreground" />
-                            {b.client.name}
+                            {getBookingPersonName(b)}
                             <span className="text-muted-foreground">
                                 • {b.service.name}
                             </span>

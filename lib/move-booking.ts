@@ -20,13 +20,14 @@ export async function moveBooking(
     options: {
         outsideHours?: boolean;
         serviceId?: number;
+        // Replaces the booking's extra time snapshot (admin edit dialog).
+        extraTimeMinutes?: number;
         allowUnfillableGaps?: boolean;
     } = {}
 ): Promise<Booking> {
     return prisma.$transaction(async (tx) => {
         const booking = await tx.booking.findUniqueOrThrow({
             where: { id: bookingId },
-            include: { client: true },
         });
 
         if (booking.groupId) {
@@ -41,6 +42,8 @@ export async function moveBooking(
         });
 
         const serviceId = options.serviceId ?? booking.serviceId;
+        const extraTimeMinutes =
+            options.extraTimeMinutes ?? booking.extraTimeMinutes;
 
         // Checked after cancelling (inside the same transaction) so the
         // booking being moved never collides with its own old slot.
@@ -52,7 +55,7 @@ export async function moveBooking(
                 where: { id: serviceId },
             });
             const duration =
-                service.durationMinutes + booking.client.extraTimeMinutes;
+                service.durationMinutes + extraTimeMinutes;
             const overlaps = await hasOverlappingBooking(
                 newDate,
                 newStartTime,
@@ -66,7 +69,7 @@ export async function moveBooking(
             const validSlots = await getAvailableSlots(
                 newDate,
                 [serviceId],
-                booking.client.extraTimeMinutes,
+                extraTimeMinutes,
                 {
                     allowToday: true,
                     db: tx,
@@ -81,11 +84,12 @@ export async function moveBooking(
         return createBooking(
             {
                 clientId: booking.clientId,
+                guestName: booking.guestName,
                 serviceId,
                 date: newDate,
                 startTime: newStartTime,
                 source: booking.source,
-                extraTimeMinutes: booking.client.extraTimeMinutes,
+                extraTimeMinutes,
             },
             tx
         );
@@ -94,9 +98,10 @@ export async function moveBooking(
 
 // Moves every booking in the group together, preserving each person's own
 // extraTimeMinutes and re-laying them out sequentially from the new start —
-// same allocation as createGroupBooking. `serviceOverrides` (bookingId ->
-// new serviceId) lets the edit dialog change a person's service in the same
-// step, since that also needs the slot re-validated.
+// same allocation as createGroupBooking. `serviceOverrides` /
+// `extraTimeOverrides` (bookingId -> new value) let the edit dialog change a
+// person's service or extra time in the same step, since both change the
+// group's length and so need the slot re-validated.
 export async function moveGroupBooking(
     groupId: string,
     newDate: Date,
@@ -104,13 +109,13 @@ export async function moveGroupBooking(
     options: {
         outsideHours?: boolean;
         serviceOverrides?: Record<string, number>;
+        extraTimeOverrides?: Record<string, number>;
         allowUnfillableGaps?: boolean;
     } = {}
 ): Promise<Booking[]> {
     return prisma.$transaction(async (tx) => {
         const bookings = await tx.booking.findMany({
             where: { groupId, status: "CONFIRMED" },
-            include: { client: true },
             orderBy: { startTime: "asc" },
         });
 
@@ -126,10 +131,10 @@ export async function moveGroupBooking(
         const serviceIds = bookings.map(
             (b) => options.serviceOverrides?.[b.id] ?? b.serviceId
         );
-        const totalExtraMinutes = bookings.reduce(
-            (sum, b) => sum + b.client.extraTimeMinutes,
-            0
+        const extraTimes = bookings.map(
+            (b) => options.extraTimeOverrides?.[b.id] ?? b.extraTimeMinutes
         );
+        const totalExtraMinutes = extraTimes.reduce((sum, m) => sum + m, 0);
 
         if (options.outsideHours) {
             if (newDate.getTime() < getCzechToday().getTime()) {
@@ -176,12 +181,13 @@ export async function moveGroupBooking(
             const newBooking = await createBooking(
                 {
                     clientId: booking.clientId,
+                    guestName: booking.guestName,
                     serviceId: serviceIds[i],
                     date: newDate,
                     startTime,
                     source: booking.source,
                     groupId,
-                    extraTimeMinutes: booking.client.extraTimeMinutes,
+                    extraTimeMinutes: extraTimes[i],
                 },
                 tx
             );

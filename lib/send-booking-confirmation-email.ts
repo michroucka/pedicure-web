@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { BookingConfirmationEmail } from "@/emails/booking-confirmation.tsx";
 import { formatTime } from "@/lib/utils.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import type { Booking, Client, Service } from "@/lib/generated/prisma/client.ts";
 
 const FROM_EMAIL = "Pedikúra Kralovice <rezervace@pedikurakralovice.cz>";
@@ -42,7 +43,7 @@ export async function sendBookingConfirmationEmail(
             react: BookingConfirmationEmail({
                 clientName: bookings[0].client.name,
                 people: bookings.map((b) => ({
-                    name: b.client.name,
+                    name: getBookingPersonName(b),
                     serviceName: b.service.name,
                 })),
                 dateLabel,

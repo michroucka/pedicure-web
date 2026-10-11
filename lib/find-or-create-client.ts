@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma.ts";
-import { normalizePhoneForMatch } from "@/lib/utils.ts";
+import { findClient } from "@/lib/find-client.ts";
 import type { Client } from "@/lib/generated/prisma/client.ts";
 
 export async function findOrCreateClient(
@@ -8,14 +8,7 @@ export async function findOrCreateClient(
     email?: string,
     note?: string
 ): Promise<Client> {
-    let client: Client | undefined;
-    if (phone) {
-        const normalizedPhone = normalizePhoneForMatch(phone);
-        const candidates = await prisma.client.findMany({ where: { phone: { not: null } } });
-        client = candidates.find((c) => normalizePhoneForMatch(c.phone!) === normalizedPhone) || undefined;
-    } else {
-        client = await prisma.client.findFirst({ where: { name } }) || undefined;
-    }
+    let client = await findClient(phone, name);
 
     if (!client) {
         client = await prisma.client.create({

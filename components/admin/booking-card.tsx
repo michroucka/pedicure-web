@@ -1,6 +1,7 @@
 "use client";
 
 import { cn, formatTime } from "@/lib/utils.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import type {
     Booking,
     Client,
@@ -57,11 +58,11 @@ export function BookingCard({
         >
             <div className="min-w-0">
                 <div className="truncate max-2xl:text-xs font-medium">
-                    {booking.client.name}
+                    {getBookingPersonName(booking)}
                 </div>
                 <div className="truncate text-xxs 2xl:text-xs text-muted-foreground">
                     {booking.service.name}
-                    {booking.client.extraTimeMinutes > 0 && "+"}
+                    {booking.extraTimeMinutes > 0 && "+"}
                 </div>
             </div>
             <div className="shrink-0 text-right text-xs">

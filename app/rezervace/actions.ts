@@ -1,8 +1,9 @@
 "use server";
 
 import { prisma } from "@/lib/prisma.ts";
-import { formatTime, normalizePhoneForMatch } from "@/lib/utils.ts";
+import { formatTime } from "@/lib/utils.ts";
 import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
+import { findClient } from "@/lib/find-client.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { redirect } from "next/navigation";
 import { Prisma } from "@/lib/generated/prisma/client";
@@ -120,13 +121,22 @@ export async function submitGroupBooking(
     const email = data.email;
     const names = context.serviceIds.map((_, i) => data.names[i]);
 
-    const clients = await Promise.all(
-        names.map((name) => findOrCreateClient(phone, name, email))
-    )
+    const client = await findOrCreateClient(phone, names[0].trim(), email);
 
-    const extraMinutes = clients.reduce((sum, c) => sum + c.extraTimeMinutes, 0);
+    const people = names.map((name, i) => ({
+        clientId: client.id,
+        guestName: i === 0 ? undefined : name.trim() || undefined,
+        extraTimeMinutes: i === 0 ? client.extraTimeMinutes : 0,
+        serviceId: context.serviceIds[i],
+    }));
 
-    const valid = await getAvailableSlots(context.date, context.serviceIds, extraMinutes);
+    const extraMinutes = people.reduce((acc, person) => acc + person.extraTimeMinutes, 0);
+
+    const valid = await getAvailableSlots(
+        context.date,
+        context.serviceIds,
+        extraMinutes
+    );
     if (!valid.includes(context.startTime)) {
         redirect(
             await buildSlotConflictRedirect(
@@ -138,11 +148,7 @@ export async function submitGroupBooking(
         );
     }
 
-    const people = context.serviceIds.map((serviceId, i) => ({
-        clientId: clients[i].id,
-        extraTimeMinutes: clients[i].extraTimeMinutes,
-        serviceId,
-    }));
+
 
     try {
         const bookings = await createGroupBooking(
@@ -193,29 +199,18 @@ export async function getAvailableDaysAction(
     return getAvailableDaysInRange(range, serviceIds);
 }
 
-export async function getExtraMinutesAction(
-    entries: { name: string; phone: string }[]
-): Promise<number> {
-    const validEntries = entries
-        .map((e) => ({ name: e.name.trim(), phone: e.phone.trim() }))
-        .filter((e) => e.name && e.phone);
-    if (validEntries.length === 0) return 0;
+// Extra time of the (main) contact only — group guests aren't Clients and
+// always get 0, same as submitGroupBooking.
+export async function getExtraMinutesAction(contact: {
+    name: string;
+    phone: string;
+}): Promise<number> {
+    const name = contact.name.trim();
+    const phone = contact.phone.trim();
+    if (!name && !phone) return 0;
 
-    const names = [...new Set(validEntries.map((e) => e.name))];
-    const candidates = await prisma.client.findMany({
-        where: { name: { in: names } },
-    });
-
-    return validEntries.reduce((sum, e) => {
-        const normalizedPhone = normalizePhoneForMatch(e.phone);
-        const match = candidates.find(
-            (c) =>
-                c.name === e.name &&
-                c.phone &&
-                normalizePhoneForMatch(c.phone) === normalizedPhone
-        );
-        return sum + (match?.extraTimeMinutes ?? 0);
-    }, 0);
+    const client = await findClient(phone || undefined, name);
+    return client?.extraTimeMinutes ?? 0;
 }
 
 export async function getAvailableSlotsAction(

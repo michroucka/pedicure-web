@@ -26,7 +26,7 @@ function serviceContext(bookings: BookingWithRelations[]) {
     return {
         serviceIds: bookings.map((b) => b.serviceId),
         extraMinutes: bookings.reduce(
-            (sum, b) => sum + b.client.extraTimeMinutes,
+            (sum, b) => sum + b.extraTimeMinutes,
             0
         ),
     };

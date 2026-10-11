@@ -289,5 +289,31 @@ describe("rezervace/sprava/[token] actions", () => {
             });
             expect(days.map((d) => d.getTime())).toEqual([TARGET_DATE.getTime()]);
         });
+
+        it("sizes a group with guests by the bookings' extra time, not the main client's", async () => {
+            // the client's own setting would make each of the 2 bookings
+            // 60 min (120 total) — never fits the 60 min window; the
+            // snapshots say 0, so the group really needs just 60 min
+            await prisma.client.update({
+                where: { id: clientIds[0] },
+                data: { extraTimeMinutes: 30 },
+            });
+            const group = await createGroupBooking(
+                [
+                    { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
+                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                ],
+                ORIGINAL_DATE,
+                540,
+                "ONLINE"
+            );
+
+            const slots = await getRescheduleSlotsAction(
+                group[1].cancelToken,
+                "2026-06-21"
+            );
+
+            expect(slots).toEqual([540]);
+        });
     });
 });
