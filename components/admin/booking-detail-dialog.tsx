@@ -63,6 +63,13 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible.tsx";
+import {
+    ExtraTimeField,
+    extraTimeFromMinutes,
+    extraTimeToMinutes,
+    type ExtraTime,
+} from "@/components/admin/extra-time-field.tsx";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 
 const SOURCE_LABELS: Record<string, string> = {
     ONLINE: "Online",
@@ -76,6 +83,7 @@ type EditPerson = {
     bookingId: string;
     name: string;
     serviceId: number | undefined;
+    extraTime: ExtraTime;
 };
 
 export function BookingDetailDialog({
@@ -145,6 +153,12 @@ export function BookingDetailDialog({
               .filter((b) => b.groupId === booking.groupId)
               .sort((a, b) => a.startTime - b.startTime)
         : [booking];
+    // Editing always acts on the whole group, so its schedule is anchored to
+    // the group's first booking — not to whichever member was clicked
+    // (clicking the 2nd person must still preselect/compare the group's
+    // start, or saving would shift the whole group to that person's time).
+    // Same for contact details: they belong to the main contact.
+    const groupStart = groupBookings[0];
 
     function openQr() {
         setMode("qr");
@@ -161,7 +175,7 @@ export function BookingDetailDialog({
         setQrAmount(String(amount));
     }
 
-    function refreshEditSlots(d: Date | undefined, serviceIds: number[]) {
+    function refreshEditSlots(d: Date | undefined, people: EditPerson[]) {
         setEditSlots(undefined);
         if (!d || !booking) return;
         startSlotsTransition(async () => {
@@ -169,7 +183,8 @@ export function BookingDetailDialog({
                 booking.id,
                 booking.groupId,
                 format(d, "yyyy-MM-dd"),
-                serviceIds
+                people.map((p) => p.serviceId!),
+                people.map((p) => extraTimeToMinutes(p.extraTime))
             );
             setEditSlots(result);
         });
@@ -177,25 +192,23 @@ export function BookingDetailDialog({
 
     function openEdit() {
         setMode("edit");
-        setEditPhone(booking!.client.phone ?? "");
-        if (booking!.client.note) setIsNoteOpen(true);
-        setEditNote(booking!.client.note ?? "");
+        setEditPhone(groupStart.client.phone ?? "");
+        if (groupStart.client.note) setIsNoteOpen(true);
+        setEditNote(groupStart.client.note ?? "");
         const people = groupBookings.map((b) => ({
             bookingId: b.id,
-            name: b.client.name,
+            name: getBookingPersonName(b),
             serviceId: b.serviceId as number | undefined,
+            extraTime: extraTimeFromMinutes(b.extraTimeMinutes),
         }));
         setEditPeople(people);
-        setEditDate(booking!.date);
-        setSelectedSlot(booking!.startTime);
+        setEditDate(groupStart.date);
+        setSelectedSlot(groupStart.startTime);
         setCustomTime(false);
         setCustomTimeValue("");
         // Preloaded so alternative slots show right away, without the admin
         // having to touch the calendar first.
-        refreshEditSlots(
-            booking!.date,
-            people.map((p) => p.serviceId!)
-        );
+        refreshEditSlots(groupStart.date, people);
     }
 
     function updateEditPersonService(i: number, serviceId: number) {
@@ -206,7 +219,18 @@ export function BookingDetailDialog({
         setSelectedSlot(undefined);
         setCustomTime(false);
         setCustomTimeValue("");
-        refreshEditSlots(editDate, next.map((p) => p.serviceId!));
+        refreshEditSlots(editDate, next);
+    }
+
+    function updateEditPersonExtraTime(i: number, extraTime: ExtraTime) {
+        const next = editPeople.map((p, idx) =>
+            idx === i ? { ...p, extraTime } : p
+        );
+        setEditPeople(next);
+        setSelectedSlot(undefined);
+        setCustomTime(false);
+        setCustomTimeValue("");
+        refreshEditSlots(editDate, next);
     }
 
     function updateEditPersonName(i: number, name: string) {
@@ -220,7 +244,7 @@ export function BookingDetailDialog({
         setSelectedSlot(undefined);
         setCustomTime(false);
         setCustomTimeValue("");
-        refreshEditSlots(d, editPeople.map((p) => p.serviceId!));
+        refreshEditSlots(d, editPeople);
     }
 
     function submitEdit() {
@@ -238,10 +262,13 @@ export function BookingDetailDialog({
 
         const scheduleChanged =
             format(editDate, "yyyy-MM-dd") !==
-                format(booking.date, "yyyy-MM-dd") ||
-            selectedSlot !== booking.startTime ||
+                format(groupStart.date, "yyyy-MM-dd") ||
+            selectedSlot !== groupStart.startTime ||
             editPeople.some(
-                (p, i) => p.serviceId !== groupBookings[i].serviceId
+                (p, i) =>
+                    p.serviceId !== groupBookings[i].serviceId ||
+                    extraTimeToMinutes(p.extraTime) !==
+                        groupBookings[i].extraTimeMinutes
             );
 
         if (scheduleChanged) {
@@ -260,6 +287,7 @@ export function BookingDetailDialog({
                     bookingId: p.bookingId,
                     name: p.name.trim(),
                     serviceId: p.serviceId!,
+                    extraTimeMinutes: extraTimeToMinutes(p.extraTime),
                 })),
                 phone: editPhone.trim(),
                 note: editNote.trim(),
@@ -305,7 +333,7 @@ export function BookingDetailDialog({
                         <div className="flex flex-col gap-2 text-sm">
                             <div className="flex items-center gap-2">
                                 <UserRound className="size-4 text-muted-foreground" />
-                                {booking.client.name}
+                                {getBookingPersonName(booking)}
                                 {booking.groupId && (
                                     <span className="text-muted-foreground">
                                         • Skupina
@@ -370,7 +398,7 @@ export function BookingDetailDialog({
                                                 selectQrTarget(gb.id)
                                             }
                                         >
-                                            {gb.client.name}
+                                            {getBookingPersonName(gb)}
                                         </Button>
                                     ))}
                                 </div>
@@ -441,6 +469,13 @@ export function BookingDetailDialog({
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
+
+                                <ExtraTimeField
+                                    value={editPeople[0]?.extraTime ?? extraTimeFromMinutes(0)}
+                                    onChange={(v) =>
+                                        updateEditPersonExtraTime(0, v)
+                                    }
+                                />
 
                                 <Collapsible
                                     open={isNoteOpen}
@@ -519,6 +554,12 @@ export function BookingDetailDialog({
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
+                                    <ExtraTimeField
+                                        value={person.extraTime}
+                                        onChange={(v) =>
+                                            updateEditPersonExtraTime(i + 1, v)
+                                        }
+                                    />
                                 </div>
                             ))}
 
@@ -567,16 +608,16 @@ export function BookingDetailDialog({
                                     (() => {
                                         const sameDate =
                                             editDate?.getTime() ===
-                                            booking.date.getTime();
+                                            groupStart.date.getTime();
                                         const displaySlots =
                                             sameDate &&
                                             editSlots &&
                                             !editSlots.includes(
-                                                booking.startTime
+                                                groupStart.startTime
                                             )
                                                 ? [
                                                       ...editSlots,
-                                                      booking.startTime,
+                                                      groupStart.startTime,
                                                   ].sort((a, b) => a - b)
                                                 : editSlots;
                                         return (
@@ -712,7 +753,7 @@ export function BookingDetailDialog({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Zrušit rezervaci?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {booking.client.name} •{" "}
+                            {getBookingPersonName(booking)} •{" "}
                             {formatTime(booking.startTime)} –{" "}
                             {formatTime(booking.endTime)}. Tuto akci nelze vzít
                             zpět.
@@ -744,10 +785,11 @@ export function BookingDetailDialog({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Uložit změny?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Měníš termín nebo službu rezervace. Klient se o
-                            téhle změně automaticky nedozví – nepošle se mu
-                            žádný email, SMS ani push. Pokud potřebuje vědět,
-                            dej mu vědět sama.
+                            {/* Only online bookings get the "moved" email —
+                            mirrors updateBookingAction. */}
+                            {groupStart.source === "ONLINE"
+                                ? "Měníš termín, službu nebo délku rezervace. Klientovi přijde e-mail s novým termínem a novým odkazem pro správu rezervace (SMS ani push se neposílá)."
+                                : "Měníš termín, službu nebo délku rezervace. Klient se o téhle změně automaticky nedozví – nepošle se mu žádný email, SMS ani push. Pokud potřebuje vědět, dej mu vědět sama."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

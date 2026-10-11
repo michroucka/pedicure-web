@@ -62,20 +62,19 @@ export function GroupBookingForm({
     const phone = useWatch({ control, name: "phone" });
     const [extraMinutes, setExtraMinutes] = useState(initialExtraMinutes);
 
-    // Extra time is tied to an existing (name, phone) client match per
-    // person, only knowable once names + phone are filled in — look it up
-    // as the user types instead of surprising them after submit.
+    // Only the main contact is a Client with its own extra time (guests get
+    // 0, same as on submit), only knowable once their name + phone are
+    // filled in — look it up as the user types instead of surprising them
+    // after submit.
+    const mainName = names?.[0];
     useEffect(() => {
         let cancelled = false;
         const timeout = setTimeout(() => {
-            const entries = (names ?? [])
-                .filter((n): n is string => !!n?.trim())
-                .map((n) => ({ name: n, phone: phone ?? "" }));
-            if (entries.length === 0 || !phone?.trim()) {
+            if (!mainName?.trim() || !phone?.trim()) {
                 if (!cancelled) setExtraMinutes(0);
                 return;
             }
-            getExtraMinutesAction(entries).then((minutes) => {
+            getExtraMinutesAction({ name: mainName, phone }).then((minutes) => {
                 if (!cancelled) setExtraMinutes(minutes);
             });
         }, 400);
@@ -83,7 +82,7 @@ export function GroupBookingForm({
             cancelled = true;
             clearTimeout(timeout);
         };
-    }, [names, phone]);
+    }, [mainName, phone]);
 
     return (
         <form onSubmit={handleSubmit(boundSubmitAction)}>

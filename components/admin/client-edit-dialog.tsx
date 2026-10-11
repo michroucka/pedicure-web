@@ -11,14 +11,18 @@ import {
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
-import { Checkbox } from "@/components/ui/checkbox.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { Check, Mail, Phone, StickyNote, UserRound } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/utils.ts";
 import { updateClientAction } from "@/app/(admin)/(dashboard)/klienti/actions.ts";
 import type { Client } from "@/lib/generated/prisma/client.ts";
-
-const DEFAULT_EXTRA_MINUTES = 15;
+import {
+    ExtraTimeField,
+    NO_EXTRA_TIME,
+    extraTimeFromMinutes,
+    extraTimeToMinutes,
+    type ExtraTime,
+} from "@/components/admin/extra-time-field.tsx";
 
 export function ClientEditDialog({
     client,
@@ -30,10 +34,7 @@ export function ClientEditDialog({
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
-    const [extraTime, setExtraTime] = useState(false);
-    const [extraTimeMinutes, setExtraTimeMinutes] = useState(
-        DEFAULT_EXTRA_MINUTES
-    );
+    const [extraTime, setExtraTime] = useState<ExtraTime>(NO_EXTRA_TIME);
     const [note, setNote] = useState("");
     const [lastLoadedId, setLastLoadedId] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -46,8 +47,7 @@ export function ClientEditDialog({
         setName(client.name);
         setPhone(client.phone ?? "");
         setEmail(client.email ?? "");
-        setExtraTime(client.extraTimeMinutes > 0);
-        setExtraTimeMinutes(client.extraTimeMinutes || DEFAULT_EXTRA_MINUTES);
+        setExtraTime(extraTimeFromMinutes(client.extraTimeMinutes));
         setNote(client.note ?? "");
     }
     if (!client && lastLoadedId !== null) {
@@ -61,7 +61,7 @@ export function ClientEditDialog({
                 name: name.trim(),
                 phone: phone.trim(),
                 email: email.trim(),
-                extraTimeMinutes: extraTime ? extraTimeMinutes : 0,
+                extraTimeMinutes: extraTimeToMinutes(extraTime),
                 note: note.trim(),
             });
             onOpenChange(false);
@@ -117,35 +117,10 @@ export function ClientEditDialog({
                         />
                     </div>
 
-                    <label className="flex items-center gap-2">
-                        <Checkbox
-                            checked={extraTime}
-                            onCheckedChange={(v) => setExtraTime(!!v)}
-                        />
-                        <span className="text-sm">
-                            Tomuto klientovi to trvá déle
-                        </span>
-                    </label>
-
-                    {extraTime && (
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="number"
-                                min={5}
-                                step={5}
-                                className="w-20"
-                                value={extraTimeMinutes}
-                                onChange={(e) =>
-                                    setExtraTimeMinutes(
-                                        Number(e.target.value) || 0
-                                    )
-                                }
-                            />
-                            <span className="text-sm text-muted-foreground">
-                                minut navíc ke každé službě
-                            </span>
-                        </div>
-                    )}
+                    <ExtraTimeField
+                        value={extraTime}
+                        onChange={setExtraTime}
+                    />
 
                     <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-1 text-sm font-medium">

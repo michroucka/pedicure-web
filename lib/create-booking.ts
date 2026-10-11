@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma.ts";
 export async function createBooking(
     {
         clientId,
+        guestName,
         serviceId,
         date,
         startTime,
@@ -13,6 +14,7 @@ export async function createBooking(
         extraTimeMinutes = 0
     }: {
         clientId: string;
+        guestName?: string | null;
         serviceId: number;
         date: Date;
         startTime: number;
@@ -31,10 +33,12 @@ export async function createBooking(
     return await db.booking.create({
         data: {
             clientId,
+            guestName,
             serviceId,
             date,
             startTime,
             endTime,
+            extraTimeMinutes,
             groupId,
             source,
             cancelToken,

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import {
     cancelBookingByTokenAction,
     getRescheduleDaysAction,
@@ -13,7 +14,13 @@ import {
 // which a plain vitest run doesn't have — mock them out like any other
 // Next.js server action test.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/server", () => ({ after: vi.fn() }));
+// after() runs its callback right away here so the post-move side effects
+// can be asserted; the email/push senders themselves are mocked.
+vi.mock("next/server", () => ({ after: vi.fn((callback: () => unknown) => callback()) }));
+vi.mock("@/lib/send-push.ts", () => ({ sendPushNotification: vi.fn() }));
+vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
+    sendBookingMovedEmail: vi.fn(),
+}));
 
 // "Now" = 2026-06-15T08:00Z = Monday 10:00 in Europe/Prague.
 // ORIGINAL_DATE (Saturday, +5 days) and TARGET_DATE (Sunday, +6 days) both
@@ -36,6 +43,7 @@ describe("rezervace/sprava/[token] actions", () => {
     beforeEach(async () => {
         vi.useFakeTimers();
         vi.setSystemTime(NOW);
+        vi.mocked(sendBookingMovedEmail).mockClear();
 
         const clients = await Promise.all(
             ["A", "B"].map((suffix) =>
@@ -142,6 +150,24 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(result.ok).toBe(false);
         });
 
+        it("sends no email when the move is rejected", async () => {
+            const booking = await createBooking({
+                clientId: clientIds[0],
+                serviceId,
+                date: ORIGINAL_DATE,
+                startTime: 540,
+                source: "ONLINE",
+            });
+
+            await moveBookingByTokenAction(
+                booking.cancelToken,
+                "2026-06-21",
+                OUT_OF_WINDOW_START_TIME
+            );
+
+            expect(sendBookingMovedEmail).not.toHaveBeenCalled();
+        });
+
         it("refuses to move a booking less than 24h away", async () => {
             const booking = await createBooking({
                 clientId: clientIds[0],
@@ -186,6 +212,26 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(after.status).toBe("CONFIRMED"); // untouched on failure
         });
 
+        it("moves a group within the same day onto times overlapping its own slot", async () => {
+            const group = await createGroupBooking(
+                [
+                    { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
+                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                ],
+                ORIGINAL_DATE,
+                555, // 9:15-10:15 sticks out of the 9:00-10:00 window
+                "ONLINE"
+            );
+
+            const result = await moveBookingByTokenAction(
+                group[0].cancelToken,
+                "2026-06-20",
+                540
+            );
+
+            expect(result.ok).toBe(true);
+        });
+
         it("moves a solo booking to a valid new slot and returns a fresh token", async () => {
             const booking = await createBooking({
                 clientId: clientIds[0],
@@ -216,6 +262,9 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(moved.status).toBe("CONFIRMED");
             expect(moved.date.getTime()).toBe(TARGET_DATE.getTime());
             expect(moved.startTime).toBe(570);
+            // the old link from the confirmation email is dead now — the
+            // client gets the new one by email
+            expect(sendBookingMovedEmail).toHaveBeenCalledWith([moved.id]);
         });
 
         it("moves the whole group via any member's token, preserving groupId", async () => {
@@ -250,6 +299,11 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(newRows.every((b) => b.date.getTime() === TARGET_DATE.getTime())).toBe(
                 true
             );
+            // one email for the whole group, with all its new bookings
+            expect(sendBookingMovedEmail).toHaveBeenCalledOnce();
+            expect(
+                [...vi.mocked(sendBookingMovedEmail).mock.calls[0][0]].sort()
+            ).toEqual(newRows.map((b) => b.id).sort());
         });
     });
 
@@ -288,6 +342,76 @@ describe("rezervace/sprava/[token] actions", () => {
                 to: TARGET_DATE,
             });
             expect(days.map((d) => d.getTime())).toEqual([TARGET_DATE.getTime()]);
+        });
+
+        it("sizes a group with guests by the bookings' extra time, not the main client's", async () => {
+            // the client's own setting would make each of the 2 bookings
+            // 60 min (120 total) — never fits the 60 min window; the
+            // snapshots say 0, so the group really needs just 60 min
+            await prisma.client.update({
+                where: { id: clientIds[0] },
+                data: { extraTimeMinutes: 30 },
+            });
+            const group = await createGroupBooking(
+                [
+                    { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
+                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                ],
+                ORIGINAL_DATE,
+                540,
+                "ONLINE"
+            );
+
+            const slots = await getRescheduleSlotsAction(
+                group[1].cancelToken,
+                "2026-06-21"
+            );
+
+            expect(slots).toEqual([540]);
+        });
+
+        it("offers times overlapping the group's own current slot on the same day", async () => {
+            // the group fills the whole 9:00-10:00 Saturday window itself —
+            // its own bookings must not count as taken (regression: the
+            // picker offered nothing before the group's current end)
+            const group = await createGroupBooking(
+                [
+                    { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
+                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                ],
+                ORIGINAL_DATE,
+                540,
+                "ONLINE"
+            );
+
+            const slots = await getRescheduleSlotsAction(
+                group[0].cancelToken,
+                "2026-06-20"
+            );
+            const days = await getRescheduleDaysAction(group[0].cancelToken, {
+                from: ORIGINAL_DATE,
+                to: ORIGINAL_DATE,
+            });
+
+            expect(slots).toEqual([540]);
+            expect(days.map((d) => d.getTime())).toEqual([ORIGINAL_DATE.getTime()]);
+        });
+
+        it("offers a same-day time overlapping a solo booking's own slot", async () => {
+            const booking = await createBooking({
+                clientId: clientIds[0],
+                serviceId,
+                date: ORIGINAL_DATE,
+                startTime: 555, // 9:15-9:45 — counted as taken, nothing else fits
+                source: "ONLINE",
+            });
+
+            const slots = await getRescheduleSlotsAction(
+                booking.cancelToken,
+                "2026-06-20"
+            );
+
+            expect(slots).toEqual(expect.arrayContaining([540, 570]));
         });
     });
 });

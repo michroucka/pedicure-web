@@ -1,12 +1,22 @@
 import { Resend } from "resend";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import { BookingConfirmationEmail } from "@/emails/booking-confirmation.tsx";
+import {
+    BookingConfirmationEmail,
+    type BookingEmailVariant,
+} from "@/emails/booking-confirmation.tsx";
 import { formatTime } from "@/lib/utils.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
+import { prisma } from "@/lib/prisma.ts";
 import type { Booking, Client, Service } from "@/lib/generated/prisma/client.ts";
 
 const FROM_EMAIL = "Pedikúra Kralovice <rezervace@pedikurakralovice.cz>";
 const BASE_URL = "https://www.pedikurakralovice.cz";
+
+const SUBJECTS: Record<BookingEmailVariant, string> = {
+    created: "Potvrzení rezervace",
+    moved: "Rezervace přesunuta",
+};
 
 type BookingForEmail = Booking & { client: Client; service: Service };
 
@@ -15,8 +25,11 @@ type BookingForEmail = Booking & { client: Client; service: Service };
 // listed together rather than sending one email per person. The magic link
 // always uses the first booking's cancelToken; on the manage page, a
 // grouped booking is looked up and acted on as a whole via its groupId.
+// `variant: "moved"` is sent after a reschedule with the new bookings — the
+// only way the client gets a working link again (see the template).
 export async function sendBookingConfirmationEmail(
-    bookings: BookingForEmail[]
+    bookings: BookingForEmail[],
+    variant: BookingEmailVariant = "created"
 ): Promise<void> {
     const email = bookings[0].client.email;
     if (!email) return;
@@ -30,7 +43,7 @@ export async function sendBookingConfirmationEmail(
     }
 
     const dateLabel = format(bookings[0].date, "d. MMMM yyyy", { locale: cs });
-    const timeLabel = `${formatTime(bookings[0].startTime)}–${formatTime(bookings.at(-1)!.endTime)}`;
+    const timeLabel = `${formatTime(bookings[0].startTime)} – ${formatTime(bookings.at(-1)!.endTime)}`;
     const manageUrl = `${BASE_URL}/rezervace/sprava/${bookings[0].cancelToken}`;
 
     try {
@@ -38,16 +51,17 @@ export async function sendBookingConfirmationEmail(
         await resend.emails.send({
             from: FROM_EMAIL,
             to: email,
-            subject: "Potvrzení rezervace – Pedikúra Kralovice",
+            subject: SUBJECTS[variant],
             react: BookingConfirmationEmail({
                 clientName: bookings[0].client.name,
                 people: bookings.map((b) => ({
-                    name: b.client.name,
+                    name: getBookingPersonName(b),
                     serviceName: b.service.name,
                 })),
                 dateLabel,
                 timeLabel,
                 manageUrl,
+                variant,
             }),
         });
     } catch (error) {
@@ -57,4 +71,16 @@ export async function sendBookingConfirmationEmail(
         // redirect.
         console.error("Nepodařilo se odeslat potvrzovací e-mail:", error);
     }
+}
+
+// After a move (magic link or admin) — takes the ids of the newly created
+// bookings, since the move functions return them without relations.
+export async function sendBookingMovedEmail(bookingIds: string[]): Promise<void> {
+    const bookings = await prisma.booking.findMany({
+        where: { id: { in: bookingIds } },
+        include: { client: true, service: true },
+        orderBy: { startTime: "asc" },
+    });
+    if (bookings.length === 0) return;
+    await sendBookingConfirmationEmail(bookings, "moved");
 }

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { CalendarDays, CheckCircle2, Clock, Mail, Smartphone, UserRound } from "lucide-react";
@@ -20,6 +21,9 @@ export default async function ConfirmedPage({
     const bookings = await prisma.booking.findMany({
         where: { id, groupId },
         include: { client: true, service: true },
+        // Group members in seat order — also what bookings.at(-1) below
+        // relies on for the group's end time.
+        orderBy: { startTime: "asc" },
     });
 
     if (bookings.length === 0) notFound();
@@ -42,7 +46,7 @@ export default async function ConfirmedPage({
                             className="flex items-center gap-2"
                         >
                             <UserRound className="size-4 shrink-0 text-muted-foreground" />
-                            {booking.client.name}
+                            {getBookingPersonName(booking)}
                             <span className="text-muted-foreground">
                                 • {booking.service.name}
                             </span>

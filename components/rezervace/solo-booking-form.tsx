@@ -56,10 +56,10 @@ export function SoloBookingForm({
     const phone = useWatch({ control, name: "phone" });
     const [extraMinutes, setExtraMinutes] = useState(initialExtraMinutes);
 
-    // Extra time is tied to an existing (name, phone) client match, which
-    // is only known once both fields are filled in — so we look it up as
-    // the user types, instead of surprising them with a longer slot only
-    // after they submit.
+    // Extra time is tied to an existing client match (same rule as on
+    // submit — by phone), which is only known once both fields are filled
+    // in — so we look it up as the user types, instead of surprising them
+    // with a longer slot only after they submit.
     useEffect(() => {
         let cancelled = false;
         const timeout = setTimeout(() => {
@@ -67,7 +67,7 @@ export function SoloBookingForm({
                 if (!cancelled) setExtraMinutes(0);
                 return;
             }
-            getExtraMinutesAction([{ name, phone }]).then((minutes) => {
+            getExtraMinutesAction({ name, phone }).then((minutes) => {
                 if (!cancelled) setExtraMinutes(minutes);
             });
         }, 400);

@@ -51,7 +51,13 @@ export default async function AdminHomePage({
 
     const services = await prisma.service.findMany({ orderBy: { id: "asc" } });
     const clients = await prisma.client.findMany({
-        select: { id: true, name: true, phone: true, email: true },
+        select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            extraTimeMinutes: true,
+        },
         orderBy: { name: "asc" },
     });
 

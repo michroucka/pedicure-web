@@ -1,10 +1,12 @@
 import { createEvents, type DateArray, type EventAttributes } from "ics";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 
 type BookingWithRelations = {
     date: Date;
     startTime: number;
     endTime: number;
     client: { name: string };
+    guestName: string | null;
     service: { name: string };
 };
 
@@ -26,7 +28,7 @@ export function generateIcsFeed(bookings: BookingWithRelations[]): string {
         ];
 
         return {
-            title: `${booking.client.name} – ${booking.service.name}`,
+            title: `${getBookingPersonName(booking)} – ${booking.service.name}`,
             start: start,
             end: end,
             startInputType: "local",

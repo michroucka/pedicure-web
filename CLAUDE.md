@@ -116,8 +116,15 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 
 **Client**
 - id, name, phone, email, extraTimeMinutes (default 0 — checkbox v adminu
-  "tomuto klientovi to trvá déle", přičítá se ke každé service při výpočtu
-  volných slotů pro tohoto klienta), note, createdAt
+  "tomuto klientovi to trvá déle"; výchozí hodnota, ze které se
+  předvyplní extra čas nové rezervace – samotný výpočet délky už bere
+  snapshot z `Booking.extraTimeMinutes`), note, createdAt
+- Extra čas (u klienta i u bookingu) je vždy násobek 5 min –
+  `normalizeExtraMinutes` v `lib/extra-time.ts`, server zaokrouhluje
+  každou hodnotu z formuláře, pole v UI se zarovná při opuštění
+- Párování klienta (`lib/find-client.ts`, sdílí ho `findOrCreateClient`
+  i náhled extra času v booking formuláři): podle telefonu, a jen když
+  telefon chybí, podle přesné shody jména
 - `email` je v DB nepovinné (telefonické/osobní rezervace zadané
   pedikérkou nemusí email řešit) — ale online booking formulář ho
   vyžaduje jako povinný, protože na něm stojí potvrzovací email i magic
@@ -135,7 +142,8 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - id, date, type (`blocked` / `extra_open`), startTime, endTime (nullable)
 
 **Booking**
-- id, clientId, serviceId, date, startTime, endTime
+- id, clientId, guestName (nullable), serviceId, date, startTime, endTime,
+  extraTimeMinutes (default 0)
 - status (`confirmed` / `cancelled`)
 - groupId (nullable, UUID) — provázané rezervace při objednání více osob
   najednou (2+), musí jít navazující sloty za sebou
@@ -144,7 +152,16 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - cancelToken (magic link)
 - reminderSent (bool)
 - createdAt
-- Efektivní délka slotu = `service.durationMinutes + client.extraTimeMinutes`
+- Efektivní délka slotu = `service.durationMinutes + booking.extraTimeMinutes`
+- `extraTimeMinutes` je snapshot z okamžiku vytvoření – přesun ho přenáší
+  dál a nezávisí na pozdější změně `Client.extraTimeMinutes` ani
+  `Service.durationMinutes`. Online ho dostane jen hlavní kontakt (z jeho
+  klienta), hosté 0; v adminu se zadává u každé osoby zvlášť (u hlavního
+  kontaktu se při vytvoření zapíše i zpět do `Client.extraTimeMinutes`)
+- `guestName` – jméno člena skupiny, který není hlavní kontakt (viz
+  Skupinové rezervace); `null` = jméno se bere z klienta. Zobrazované
+  jméno osoby vždy přes `getBookingPersonName` (`guestName ?? client.name`),
+  ne přímo `client.name`
 
 **AdminUser**
 - id, username, email, passwordHash
@@ -191,12 +208,27 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
     `lib/move-booking.ts` — `moveBooking` pro sólo, `moveGroupBooking`
     pro celou skupinu najednou se zachováním `groupId`. Nový Booking má
     nový `cancelToken` — po přesunu přes magic link je proto potřeba
-    klienta přesměrovat na `/rezervace/sprava/{novýToken}`, jinak by mu
-    starý odkaz přestal fungovat
-- **Skupinové rezervace** (matka+dcera apod.) — 2+ osob, navazující sloty,
-  různé služby možné, `groupId` na Booking, každá osoba samostatný záznam.
-  Kontaktní údaje (telefon, email) jsou jen jedny sdílené za celou
-  skupinu (jeden "hlavní kontakt"), ne per-osobu — jen jméno se liší
+    klienta přesměrovat na `/rezervace/sprava/{novýToken}?moved=1`
+    (stránka pak ukáže hlášku „Rezervace přesunuta“), jinak by mu starý
+    odkaz přestal fungovat. Protože odkaz z potvrzovacího e-mailu po
+    přesunu neplatí, po každém přesunu online rezervace (přes magic link
+    i z adminu) jde klientovi e-mail „Rezervace přesunuta“ s novým odkazem
+    (`sendBookingMovedEmail`, varianta `moved` téže šablony)
+- **Skupinové rezervace** (matka+dcera apod.) — 2+ osob (max 4),
+  navazující sloty, různé služby možné, `groupId` na Booking, každá osoba
+  samostatný Booking. Kontaktní údaje (telefon, email) jsou jen jedny
+  sdílené za celou skupinu (jeden "hlavní kontakt"), ne per-osobu
+  - **Jen hlavní kontakt je `Client`.** Všechny Bookingy skupiny mají jeho
+    `clientId`, ostatní osoby mají jméno jen v `Booking.guestName` (žádný
+    vlastní Client, žádná historie – nevadí, pedikérka skupiny stejně
+    zapisuje příjmením, např. "Beránkovi"). Dřív se pro každou osobu
+    volal `findOrCreateClient` se sdíleným telefonem → všichni se
+    spárovali na jednoho klienta a ten se přejmenoval na poslední jméno.
+    Úprava jména hosta v adminu proto mění `guestName` na bookingu,
+    nikdy `client.name`
+  - Starší skupiny (před 2026-10) můžou mít u hostů vlastního klienta
+    s `guestName: null` – zobrazení i úprava fungují i pro ně, není
+    potřeba je migrovat
 - **No-show tracking** — netřeba, needed
 
 ## Admin UX — DŮLEŽITÉ

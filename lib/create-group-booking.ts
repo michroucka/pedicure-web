@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma.ts";
 export async function createGroupBooking(
     people: {
         clientId: string;
+        guestName?: string | null;
         extraTimeMinutes: number;
         serviceId: number;
     }[],
@@ -22,6 +23,7 @@ export async function createGroupBooking(
             const booking: Booking = await createBooking(
                 {
                     clientId: person.clientId,
+                    guestName: person.guestName,
                     serviceId: person.serviceId,
                     date,
                     startTime,

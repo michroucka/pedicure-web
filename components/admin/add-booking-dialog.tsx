@@ -48,6 +48,7 @@ import {
     formatPhoneNumber,
     formatTime,
     normalizeForSearch,
+    normalizePhoneForMatch,
     toUtcMidnight,
 } from "@/lib/utils.ts";
 import {
@@ -60,10 +61,18 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible.tsx";
+import {
+    ExtraTimeField,
+    NO_EXTRA_TIME,
+    extraTimeFromMinutes,
+    extraTimeToMinutes,
+    type ExtraTime,
+} from "@/components/admin/extra-time-field.tsx";
 
 type PersonInput = {
     name: string;
     serviceId: number | undefined;
+    extraTime: ExtraTime;
 };
 
 type ClientOption = {
@@ -71,12 +80,17 @@ type ClientOption = {
     name: string;
     phone: string | null;
     email: string | null;
+    extraTimeMinutes: number;
 };
 
 const emptyPerson = (): PersonInput => ({
     name: "",
     serviceId: undefined,
+    extraTime: NO_EXTRA_TIME,
 });
+
+const totalExtraMinutes = (ppl: PersonInput[]) =>
+    ppl.reduce((sum, p) => sum + extraTimeToMinutes(p.extraTime), 0);
 
 const SOURCE_OPTIONS: { value: "PHONE" | "IN_PERSON"; label: string }[] = [
     { value: "PHONE", label: "Telefonicky" },
@@ -100,6 +114,9 @@ export function AddBookingDialog({
     const [pickedEmail, setPickedEmail] = useState<string>();
     const [suggestOpen, setSuggestOpen] = useState(false);
     const [people, setPeople] = useState<PersonInput[]>([emptyPerson()]);
+    // Once the admin sets the main contact's extra time by hand, stop
+    // overwriting it from whichever client the name/phone currently match.
+    const [mainExtraTouched, setMainExtraTouched] = useState(false);
     const [date, setDate] = useState<Date | undefined>(defaultDate);
     const [source, setSource] = useState<"PHONE" | "IN_PERSON">("PHONE");
     const [slots, setSlots] = useState<number[]>();
@@ -120,7 +137,8 @@ export function AddBookingDialog({
         startSlotsTransition(async () => {
             const result = await getManualBookingSlotsAction(
                 serviceIds as number[],
-                format(d, "yyyy-MM-dd")
+                format(d, "yyyy-MM-dd"),
+                totalExtraMinutes(ppl)
             );
             setSlots(result);
         });
@@ -140,8 +158,50 @@ export function AddBookingDialog({
         );
     }
 
+    function updatePersonExtraTime(i: number, extraTime: ExtraTime) {
+        if (i === 0) setMainExtraTouched(true);
+        const next = people.map((p, idx) =>
+            idx === i ? { ...p, extraTime } : p
+        );
+        setPeople(next);
+        refreshSlots(date, next);
+    }
+
+    // Same rule as findClient on the server (by phone, or by exact name
+    // when there's no phone), so the prefilled extra time belongs to the
+    // client the booking will actually be saved under.
+    function matchClient(name: string, phoneValue: string) {
+        const normalizedPhone = normalizePhoneForMatch(phoneValue);
+        if (normalizedPhone) {
+            return clients.find(
+                (c) =>
+                    c.phone &&
+                    normalizePhoneForMatch(c.phone) === normalizedPhone
+            );
+        }
+        return clients.find((c) => c.name === name.trim());
+    }
+
+    // Applies a main contact name/phone change, prefilling their extra time
+    // from the matched client — slots only refresh when the total actually
+    // changed, so typing a name doesn't keep clearing the picked slot.
+    function updateMainContact(name: string, phoneValue: string) {
+        let next = people.map((p, idx) => (idx === 0 ? { ...p, name } : p));
+        if (!mainExtraTouched) {
+            const match = matchClient(name, phoneValue);
+            const extraTime = extraTimeFromMinutes(
+                match?.extraTimeMinutes ?? 0
+            );
+            next = next.map((p, idx) => (idx === 0 ? { ...p, extraTime } : p));
+        }
+        setPeople(next);
+        if (totalExtraMinutes(next) !== totalExtraMinutes(people)) {
+            refreshSlots(date, next);
+        }
+    }
+
     function updateMainContactName(name: string) {
-        updatePersonField(0, { name });
+        updateMainContact(name, phone);
         // Typing after a pick means it might not be the same person anymore
         // — the phone the admin sees stays as-is (she can just edit it),
         // but the silently-carried email shouldn't follow a name that no
@@ -150,16 +210,26 @@ export function AddBookingDialog({
         setSuggestOpen(true);
     }
 
+    function updatePhone(value: string) {
+        const formatted = formatPhoneNumber(value);
+        setPhone(formatted);
+        updateMainContact(people[0].name, formatted);
+    }
+
     function pickClient(client: ClientOption) {
-        updatePersonField(0, { name: client.name });
-        setPhone(formatPhoneNumber(client.phone ?? ""));
+        const formatted = formatPhoneNumber(client.phone ?? "");
+        setPhone(formatted);
+        updateMainContact(client.name, formatted);
         setPickedEmail(client.email ?? undefined);
         setSuggestOpen(false);
     }
 
     function addPerson() {
         if (people.length >= 4) return;
-        const next = [...people, { name: people[0].name, serviceId: undefined, }];
+        const next = [
+            ...people,
+            { name: people[0].name, serviceId: undefined, extraTime: NO_EXTRA_TIME },
+        ];
         setPeople(next);
         refreshSlots(date, next);
     }
@@ -181,6 +251,7 @@ export function AddBookingDialog({
         setPickedEmail(undefined);
         setSuggestOpen(false);
         setPeople([emptyPerson()]);
+        setMainExtraTouched(false);
         setDate(defaultDate);
         setSource("PHONE");
         setSlots(undefined);
@@ -218,6 +289,7 @@ export function AddBookingDialog({
                 people: people.map((p) => ({
                     name: p.name.trim(),
                     serviceId: p.serviceId!,
+                    extraTimeMinutes: extraTimeToMinutes(p.extraTime),
                 })),
                 dateStr: format(date, "yyyy-MM-dd"),
                 startTime: selectedSlot,
@@ -347,9 +419,7 @@ export function AddBookingDialog({
                             <Input
                                 placeholder="+420 123 456 789"
                                 value={phone}
-                                onChange={(e) =>
-                                    setPhone(formatPhoneNumber(e.target.value))
-                                }
+                                onChange={(e) => updatePhone(e.target.value)}
                             />
                             <span className="flex items-center gap-1 text-sm font-medium">
                                 <Sparkles className="size-4" />
@@ -382,6 +452,11 @@ export function AddBookingDialog({
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
+
+                            <ExtraTimeField
+                                value={people[0].extraTime}
+                                onChange={(v) => updatePersonExtraTime(0, v)}
+                            />
 
                             <Collapsible className="rounded-md data-[state=open]:bg-muted">
                                 <CollapsibleTrigger asChild>
@@ -462,6 +537,12 @@ export function AddBookingDialog({
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
+                                <ExtraTimeField
+                                    value={person.extraTime}
+                                    onChange={(v) =>
+                                        updatePersonExtraTime(i + 1, v)
+                                    }
+                                />
                             </div>
                         ))}
 

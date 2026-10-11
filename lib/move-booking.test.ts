@@ -126,4 +126,90 @@ describe("moveBooking / moveGroupBooking", () => {
         expect(moved[1].startTime).toBe(630); // laid out right after the first
         expect(moved[1].endTime).toBe(675); // 45 min
     });
+
+    it("keeps the booking's own extra time snapshot, not the client's current one", async () => {
+        const original = await createBooking({
+            clientId: clientIds[0],
+            serviceId: serviceIds[0],
+            date: testDate,
+            startTime: 540,
+            source: "ONLINE",
+            extraTimeMinutes: 15,
+        });
+        // the client's setting changes after the booking was made
+        await prisma.client.update({
+            where: { id: clientIds[0] },
+            data: { extraTimeMinutes: 30 },
+        });
+
+        const moved = await moveBooking(original.id, otherDate, 600, {
+            outsideHours: true,
+        });
+
+        expect(moved.extraTimeMinutes).toBe(15);
+        expect(moved.endTime).toBe(645); // 30 + 15, not 30 + 30
+    });
+
+    it("moves a group with guests, keeping every guestName and per-person extra time", async () => {
+        // the main contact's client has extra time, guests must not inherit it
+        await prisma.client.update({
+            where: { id: clientIds[0] },
+            data: { extraTimeMinutes: 30 },
+        });
+        const group = await createGroupBooking(
+            [
+                { clientId: clientIds[0], extraTimeMinutes: 30, serviceId: serviceIds[0] },
+                { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId: serviceIds[1] },
+                { clientId: clientIds[0], guestName: "Petr Host", extraTimeMinutes: 0, serviceId: serviceIds[0] },
+            ],
+            testDate,
+            540,
+            "ONLINE"
+        );
+
+        const moved = await moveGroupBooking(group[0].groupId!, otherDate, 600, {
+            outsideHours: true,
+        });
+
+        expect(moved.map((b) => b.clientId)).toEqual([clientIds[0], clientIds[0], clientIds[0]]);
+        expect(moved.map((b) => b.guestName)).toEqual([null, "Eva Host", "Petr Host"]);
+        expect(moved.map((b) => b.extraTimeMinutes)).toEqual([30, 0, 0]);
+        expect(moved.map((b) => [b.startTime, b.endTime])).toEqual([
+            [600, 660], // 30 + 30
+            [660, 705], // 45
+            [705, 735], // 30
+        ]);
+    });
+
+    it("checks overlap of a moved group using the bookings' extra time, not the client's", async () => {
+        // client extra time 30 would make each of the 2 bookings 60 min;
+        // the snapshots say 0, so the group really only needs 60 min total
+        await prisma.client.update({
+            where: { id: clientIds[0] },
+            data: { extraTimeMinutes: 30 },
+        });
+        const group = await createGroupBooking(
+            [
+                { clientId: clientIds[0], extraTimeMinutes: 0, serviceId: serviceIds[0] },
+                { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId: serviceIds[0] },
+            ],
+            testDate,
+            540,
+            "ONLINE"
+        );
+        // occupied from 11:00 — a 600 start fits only if the group is 60 min
+        await createBooking({
+            clientId: clientIds[1],
+            serviceId: serviceIds[0],
+            date: otherDate,
+            startTime: 660,
+            source: "PHONE",
+        });
+
+        const moved = await moveGroupBooking(group[0].groupId!, otherDate, 600, {
+            outsideHours: true,
+        });
+
+        expect(moved[moved.length - 1].endTime).toBe(660);
+    });
 });

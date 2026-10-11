@@ -4,18 +4,33 @@ import { canClientModifyBooking } from "@/lib/booking-modification-window.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { CalendarDays, Clock, Plus, UserRound, XCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import {
+    CalendarDays,
+    CheckCircle2,
+    Clock,
+    Plus,
+    UserRound,
+    XCircle,
+} from "lucide-react";
 import { ManageBooking } from "@/components/rezervace/manage-booking.tsx";
 import Link from "next/link";
 
 export default async function SpravaPage({
     params,
+    searchParams,
 }: {
     params: Promise<{ token: string }>;
+    // ?moved=1 — set by ManageBooking right after a successful move, which
+    // lands here on the new token; otherwise the page looks the same as
+    // before and the client can't tell the move happened.
+    searchParams: Promise<{ moved?: string }>;
 }) {
     const { token } = await params;
+    const { moved } = await searchParams;
     const bookings = await getBookingGroupByToken(token);
     if (!bookings) notFound();
 
@@ -47,6 +62,21 @@ export default async function SpravaPage({
     return (
         <div className="mx-auto max-w-md">
             <h2 className="mb-4 text-center">Vaše rezervace</h2>
+            {moved && (
+                <Alert
+                    variant="success"
+                    className="mb-4"
+                >
+                    <CheckCircle2 />
+                    <AlertTitle>Rezervace přesunuta</AlertTitle>
+                    {booking.client.email && (
+                        <AlertDescription className="text-muted-foreground!">
+                            Potvrzení a odkaz pro správu rezervace jsme Vám
+                            poslali e-mailem.
+                        </AlertDescription>
+                    )}
+                </Alert>
+            )}
             <Card>
                 <CardContent className="flex flex-col gap-2 text-sm">
                     {bookings.map((b) => (
@@ -55,7 +85,7 @@ export default async function SpravaPage({
                             className="flex items-center gap-2"
                         >
                             <UserRound className="size-4 shrink-0 text-muted-foreground" />
-                            {b.client.name}
+                            {getBookingPersonName(b)}
                             <span className="text-muted-foreground">
                                 • {b.service.name}
                             </span>
@@ -75,7 +105,9 @@ export default async function SpravaPage({
             {canModify ? (
                 <ManageBooking
                     token={token}
-                    serviceLabel={bookings.map((b) => b.service.name).join(" • ")}
+                    serviceLabel={bookings
+                        .map((b) => b.service.name)
+                        .join(" • ")}
                     startTime={booking.startTime}
                     durationMinutes={durationMinutes}
                 />
