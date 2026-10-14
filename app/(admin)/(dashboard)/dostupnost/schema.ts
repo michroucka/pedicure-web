@@ -13,10 +13,26 @@ export const blockSchema = z
         path: ["endTime"],
     });
 
-export const daySchema = z.object({
-    dayOfWeek: z.int().min(0).max(6),
-    blocks: z.array(blockSchema).max(10),
-});
+// Same rule for the weekly schedule and a single-day override: blocks
+// that only touch (9–12 and 12–14) are fine and get merged on save,
+// blocks that overlap are an error the admin has to fix.
+function blocksDontOverlap(blocks: { startTime: string; endTime: string }[]) {
+    const sorted = [...blocks].sort((a, b) =>
+        a.startTime.localeCompare(b.startTime)
+    );
+    return sorted.every(
+        (b, i) => i === 0 || b.startTime >= sorted[i - 1].endTime
+    );
+}
+
+const OVERLAP_ERROR = { message: "Bloky se překrývají.", path: ["blocks"] };
+
+export const daySchema = z
+    .object({
+        dayOfWeek: z.int().min(0).max(6),
+        blocks: z.array(blockSchema).max(10),
+    })
+    .refine((d) => blocksDontOverlap(d.blocks), OVERLAP_ERROR);
 
 export const availabilitySchema = z.object({
     days: z.array(daySchema).length(7),
@@ -34,17 +50,7 @@ export const dayOverrideSchema = z
         date: dateStrSchema,
         blocks: z.array(blockSchema).max(10),
     })
-    .refine(
-        (d) => {
-            const sorted = [...d.blocks].sort((a, b) =>
-                a.startTime.localeCompare(b.startTime)
-            );
-            return sorted.every(
-                (b, i) => i === 0 || b.startTime >= sorted[i - 1].endTime
-            );
-        },
-        { message: "Bloky se překrývají.", path: ["blocks"] }
-    );
+    .refine((d) => blocksDontOverlap(d.blocks), OVERLAP_ERROR);
 
 export type DayOverrideFormData = z.infer<typeof dayOverrideSchema>;
 

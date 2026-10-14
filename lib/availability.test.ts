@@ -244,10 +244,10 @@ describe("diffDayBlocks", () => {
 });
 
 describe("toRecurringRows", () => {
-    it("merges overlapping blocks within a day", () => {
+    it("merges blocks that touch into one row", () => {
         expect(
             toRecurringRows([
-                { dayOfWeek: 1, blocks: [{ start: 660, end: 840 }, { start: 540, end: 720 }] },
+                { dayOfWeek: 1, blocks: [{ start: 720, end: 840 }, { start: 540, end: 720 }] },
             ])
         ).toEqual([{ dayOfWeek: 1, startTime: 540, endTime: 840 }]);
     });

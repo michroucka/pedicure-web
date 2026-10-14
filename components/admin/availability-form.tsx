@@ -3,6 +3,7 @@
 import {
     useForm,
     useFieldArray,
+    useFormState,
     useWatch,
     type UseFormSetValue,
     type Control,
@@ -17,8 +18,9 @@ import { Button } from "@/components/ui/button.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
 import { TimePicker } from "@/components/ui/time-picker.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
+import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
 import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils.ts";
-import { Plus, Trash2, Save } from "lucide-react";
+import { AlertCircle, Plus, Trash2, Save } from "lucide-react";
 
 const DAY_LABELS: Record<number, string> = {
     0: "Neděle",
@@ -138,6 +140,12 @@ function DayField({
         name: `days.${dayIndex}.blocks`,
     });
     const blocks = useWatch({ control, name: `days.${dayIndex}.blocks` });
+    // daySchema's overlap check is an error on the blocks array itself, not
+    // on one block — zodResolver files it under `root` for a field array.
+    const { errors } = useFormState({ control, name: `days.${dayIndex}.blocks` });
+    const blocksError =
+        errors.days?.[dayIndex]?.blocks?.root?.message ??
+        errors.days?.[dayIndex]?.blocks?.message;
 
     function addBlock() {
         const last = blocks[blocks.length - 1];
@@ -177,6 +185,13 @@ function DayField({
                     />
                 ))}
             </div>
+
+            {blocksError && (
+                <Alert variant="destructive" className="mt-2">
+                    <AlertCircle />
+                    <AlertTitle>{blocksError}</AlertTitle>
+                </Alert>
+            )}
         </div>
     );
 }

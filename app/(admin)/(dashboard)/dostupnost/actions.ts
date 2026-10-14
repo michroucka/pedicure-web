@@ -29,7 +29,7 @@ export async function saveRecurringAvailability(data: AvailabilityFormData) {
     if (!result.success) return;
     const parsed = result.data;
 
-    // Overlapping blocks get merged, not rejected — see toRecurringRows.
+    // Touching blocks get merged into one row — see toRecurringRows.
     const rows = toRecurringRows(
         parsed.days.map((day) => ({
             dayOfWeek: day.dayOfWeek,
