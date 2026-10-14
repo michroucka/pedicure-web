@@ -217,6 +217,20 @@ describe("kalendar actions", () => {
             expect(client.extraTimeMinutes).toBe(5);
         });
 
+        it("rejects a custom time that would run past midnight and creates nothing", async () => {
+            const result = await createManualBookingAction({
+                phone,
+                people: [{ name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                dateStr: DATE_STR,
+                startTime: 23 * 60 + 50,
+                source: "PHONE",
+                outsideHours: true,
+            });
+
+            expect(result).toEqual({ ok: false, error: "Rezervace by přesáhla půlnoc." });
+            expect(await bookingsForPhone()).toHaveLength(0);
+        });
+
         it("sanitizes a nonsensical extra time from the form", async () => {
             await createManualBookingAction({
                 phone,

@@ -6,6 +6,7 @@ import {
     rangesOverlap,
     resolveDayTimeSlots,
     subtractOne,
+    toRecurringRows,
     toExceptionRange,
     type TimeSlot,
 } from "./availability";
@@ -241,3 +242,35 @@ describe("diffDayBlocks", () => {
         });
     });
 });
+
+describe("toRecurringRows", () => {
+    it("merges overlapping blocks within a day", () => {
+        expect(
+            toRecurringRows([
+                { dayOfWeek: 1, blocks: [{ start: 660, end: 840 }, { start: 540, end: 720 }] },
+            ])
+        ).toEqual([{ dayOfWeek: 1, startTime: 540, endTime: 840 }]);
+    });
+
+    it("keeps blocks with a gap (lunch break) separate", () => {
+        expect(
+            toRecurringRows([
+                { dayOfWeek: 1, blocks: [{ start: 540, end: 720 }, { start: 840, end: 1020 }] },
+            ])
+        ).toEqual([
+            { dayOfWeek: 1, startTime: 540, endTime: 720 },
+            { dayOfWeek: 1, startTime: 840, endTime: 1020 },
+        ]);
+    });
+
+    it("merges a day sent twice and leaves other days alone", () => {
+        expect(
+            toRecurringRows([
+                { dayOfWeek: 2, blocks: [{ start: 540, end: 600 }] },
+                { dayOfWeek: 3, blocks: [] },
+                { dayOfWeek: 2, blocks: [{ start: 570, end: 660 }] },
+            ])
+        ).toEqual([{ dayOfWeek: 2, startTime: 540, endTime: 660 }]);
+    });
+});
+

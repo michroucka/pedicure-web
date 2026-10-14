@@ -5,6 +5,7 @@ import { createGroupBooking } from "./create-group-booking.ts";
 import {
     moveBooking,
     moveGroupBooking,
+    PAST_MIDNIGHT_ERROR,
     SlotUnavailableError,
 } from "./move-booking.ts";
 
@@ -91,6 +92,54 @@ describe("moveBooking / moveGroupBooking", () => {
         await expect(
             moveBooking(original.id, otherDate, 600, { outsideHours: true })
         ).rejects.toBeInstanceOf(SlotUnavailableError);
+    });
+
+    it("rejects a custom time that would run past midnight, solo or group", async () => {
+        const solo = await createBooking({
+            clientId: clientIds[0],
+            serviceId: serviceIds[0], // 30 min
+            date: testDate,
+            startTime: 540,
+            source: "ONLINE",
+        });
+        const group = await createGroupBooking(
+            [
+                { clientId: clientIds[1], extraTimeMinutes: 0, serviceId: serviceIds[0] },
+                { clientId: clientIds[1], extraTimeMinutes: 0, serviceId: serviceIds[0] },
+            ],
+            testDate,
+            600,
+            "ONLINE"
+        );
+
+        await expect(
+            moveBooking(solo.id, otherDate, 23 * 60 + 50, { outsideHours: true })
+        ).rejects.toThrow(PAST_MIDNIGHT_ERROR);
+        // 2 x 30 min from 23:10 ends at 00:10
+        await expect(
+            moveGroupBooking(group[0].groupId!, otherDate, 23 * 60 + 10, { outsideHours: true })
+        ).rejects.toThrow(PAST_MIDNIGHT_ERROR);
+
+        // the transaction rolled back — nothing got cancelled
+        const stillConfirmed = await prisma.booking.count({
+            where: { id: { in: [solo.id, ...group.map((b) => b.id)] }, status: "CONFIRMED" },
+        });
+        expect(stillConfirmed).toBe(3);
+    });
+
+    it("allows a custom time that ends exactly at midnight", async () => {
+        const original = await createBooking({
+            clientId: clientIds[0],
+            serviceId: serviceIds[0], // 30 min
+            date: testDate,
+            startTime: 540,
+            source: "ONLINE",
+        });
+
+        const moved = await moveBooking(original.id, otherDate, 23 * 60 + 30, {
+            outsideHours: true,
+        });
+        expect(moved.endTime).toBe(24 * 60);
     });
 
     it("moves every member of a group together, preserving groupId and each person's own service", async () => {

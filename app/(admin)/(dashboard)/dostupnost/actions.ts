@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
 import { requireAdmin } from "@/lib/require-admin.ts";
 import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
-import { diffDayBlocks, type TimeSlot } from "@/lib/availability.ts";
+import {
+    diffDayBlocks,
+    toRecurringRows,
+    type TimeSlot,
+} from "@/lib/availability.ts";
 import { parseTime, toDateOnly, addUtcDays } from "@/lib/utils.ts";
 import { dateStrSchema } from "@/lib/validation.ts";
 import {
@@ -25,11 +29,14 @@ export async function saveRecurringAvailability(data: AvailabilityFormData) {
     if (!result.success) return;
     const parsed = result.data;
 
-    const rows = parsed.days.flatMap((day) =>
-        day.blocks.map((block) => ({
+    // Overlapping blocks get merged, not rejected — see toRecurringRows.
+    const rows = toRecurringRows(
+        parsed.days.map((day) => ({
             dayOfWeek: day.dayOfWeek,
-            startTime: parseTime(block.startTime),
-            endTime: parseTime(block.endTime),
+            blocks: day.blocks.map((block) => ({
+                start: parseTime(block.startTime),
+                end: parseTime(block.endTime),
+            })),
         }))
     );
 

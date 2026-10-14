@@ -9,6 +9,7 @@ import { cancelBooking } from "@/lib/cancel-booking.ts";
 import {
     moveBooking,
     moveGroupBooking,
+    PAST_MIDNIGHT_ERROR,
     SlotUnavailableError,
 } from "@/lib/move-booking.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
@@ -16,7 +17,7 @@ import { hasOverlappingBooking } from "@/lib/check-booking-overlap.ts";
 import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
-import { toDateOnly, getCzechToday } from "@/lib/utils.ts";
+import { endsAfterMidnight, toDateOnly, getCzechToday } from "@/lib/utils.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import { idSchema } from "@/lib/validation.ts";
@@ -327,6 +328,12 @@ export async function createManualBookingAction(input: {
                     (services.find((s) => s.id === id)?.durationMinutes ?? 0),
                 0
             ) + extraMinutes;
+
+        // A custom time skips the availability windows, which are what
+        // normally keeps a booking inside the day.
+        if (endsAfterMidnight(input.startTime, totalDuration)) {
+            return { ok: false, error: PAST_MIDNIGHT_ERROR };
+        }
 
         const overlaps = await hasOverlappingBooking(
             date,

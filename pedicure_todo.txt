@@ -6,8 +6,3 @@
     (domluveno ze zustane denne - nizky kredit = realne riziko ze klientum prestanou chodit pripominkove SMS, radsi otravovat nez na to zapomenout; dnesni otravnost je jen diky tomu ze booking jeste nejede naostro)
 [-] povolit nechavat na konci dne nezaplnitelny gap - dostupnost je do 19:00 ale volno je uz jen od 18:15, chci pedikuru klasik - povol dat to od 18:15 s tim ze bude do 18:45 ale do 18:45-19:00 uz se nic nevejde - to nevadi
     (pro admina vyreseno pres #18 - allowUnfillableGaps; pro verejny booking jsme se domluvili ze to nestoji za komplexitu)
-
-
-[ ] rucni rezervace s vlastnim casem (outsideHours) nehlida pulnoc - start 23:50 + 60 min projde, endTime pres 1440
-    - createManualBookingAction / updateBookingAction: overit start + delka (vc. extra casu) <= 24*60
-[ ] server nekontroluje prekryv bloku v pravidelne dostupnosti (availabilitySchema) - u vyjimky na jeden den (dayOverrideSchema) to kontroluje, sjednotit

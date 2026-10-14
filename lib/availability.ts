@@ -233,3 +233,24 @@ export function computeAvailableSlots(
     }
     return result;
 }
+
+// Rows to store for the weekly schedule. The admin's block sliders can be
+// dragged over each other — overlapping (or touching) blocks are merged
+// instead of failing the save, since resolveDayTimeSlots would merge them
+// anyway when computing slots. Grouped by dayOfWeek, not by input entry,
+// so a day sent twice merges too.
+export function toRecurringRows(
+    days: { dayOfWeek: number; blocks: TimeSlot[] }[]
+): { dayOfWeek: number; startTime: number; endTime: number }[] {
+    const slotsByDay = new Map<number, TimeSlot[]>();
+    for (const day of days) {
+        slotsByDay.set(day.dayOfWeek, [...(slotsByDay.get(day.dayOfWeek) ?? []), ...day.blocks]);
+    }
+    return [...slotsByDay].flatMap(([dayOfWeek, slots]) =>
+        mergeSubsequentSlots(slots).map((slot) => ({
+            dayOfWeek,
+            startTime: slot.start,
+            endTime: slot.end,
+        }))
+    );
+}

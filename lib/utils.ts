@@ -81,6 +81,12 @@ export function getCzechNowMinutes(): number {
     return hour * 60 + minute;
 }
 
+// Booking times are minutes since midnight within a single date — a
+// booking may end exactly at 24:00 but not past it.
+export function endsAfterMidnight(startTime: number, durationMinutes: number): boolean {
+    return startTime + durationMinutes > 24 * 60;
+}
+
 export function formatTime(time: number) {
     const hours = Math.floor(time / 60);
     const minutes = time % 60;
