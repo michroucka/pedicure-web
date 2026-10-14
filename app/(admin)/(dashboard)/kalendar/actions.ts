@@ -281,29 +281,16 @@ export async function createManualBookingAction(input: {
         return { ok: false, error: "Nelze vytvořit rezervaci v minulosti." };
     }
 
-    // Checked before findOrCreateClient — a rejected booking must not
-    // create or update a client.
+    // Every check below runs before findOrCreateClient — a rejected booking
+    // must not create or update a client. None of them need the client:
+    // extra time comes from the form, not from the Client.
     if (await hasUnknownService(input.people.map((p) => p.serviceId), true)) {
         return { ok: false, error: "Služba už není v nabídce." };
     }
 
-    // Only the main contact is a Client — the rest of the group shares
-    // their contact and is stored as guestName on its own booking, same as
-    // the online group booking. Email and note belong to the main contact
-    // too; email isn't a form field here, it's only ever carried through
-    // silently when the admin picked an existing client from the name
-    // autocomplete.
-    const client = await findOrCreateClient(
-        input.phone || undefined,
-        input.people[0].name,
-        input.email || undefined,
-        input.note || undefined
-    );
-
     // Extra time comes from the form per person (prefilled from the main
     // contact's Client), not from Clients — guests don't have one.
     const people = input.people.map((p, i) => ({
-        clientId: client.id,
         guestName: i === 0 ? null : p.name,
         extraTimeMinutes: normalizeExtraMinutes(p.extraTimeMinutes),
         serviceId: p.serviceId,
@@ -355,16 +342,30 @@ export async function createManualBookingAction(input: {
         }
     }
 
+    // Only the main contact is a Client — the rest of the group shares
+    // their contact and is stored as guestName on its own booking, same as
+    // the online group booking. Email and note belong to the main contact
+    // too; email isn't a form field here, it's only ever carried through
+    // silently when the admin picked an existing client from the name
+    // autocomplete.
+    const client = await findOrCreateClient(
+        input.phone || undefined,
+        input.people[0].name,
+        input.email || undefined,
+        input.note || undefined
+    );
+    const bookingPeople = people.map((p) => ({ ...p, clientId: client.id }));
+
     try {
-        if (people.length === 1) {
+        if (bookingPeople.length === 1) {
             await createBooking({
-                ...people[0],
+                ...bookingPeople[0],
                 date,
                 startTime: input.startTime,
                 source: input.source,
             });
         } else {
-            await createGroupBooking(people, date, input.startTime, input.source);
+            await createGroupBooking(bookingPeople, date, input.startTime, input.source);
         }
     } catch (error) {
         if (

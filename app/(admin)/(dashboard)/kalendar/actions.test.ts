@@ -229,6 +229,8 @@ describe("kalendar actions", () => {
 
             expect(result).toEqual({ ok: false, error: "Rezervace by přesáhla půlnoc." });
             expect(await bookingsForPhone()).toHaveLength(0);
+            // rejected before findOrCreateClient — no orphan client either
+            expect(await prisma.client.count({ where: { phone } })).toBe(0);
         });
 
         it("sanitizes a nonsensical extra time from the form", async () => {
