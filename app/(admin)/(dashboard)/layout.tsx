@@ -28,7 +28,7 @@ export default async function AdminDashboardLayout({
 
     return (
         <div className="flex h-svh flex-col">
-            <main className="flex-1 overflow-y-auto scrollbar-gutter-both max-md:pt-4">
+            <main className="flex-1 overflow-y-auto scrollbar-gutter-both pt-4">
                 {children}
             </main>
             <AdminBottomNav />
