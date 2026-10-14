@@ -1,0 +1,1 @@
+export const PHONE_RE = /^(\+420 )?\d{3} \d{3} \d{3}$/;

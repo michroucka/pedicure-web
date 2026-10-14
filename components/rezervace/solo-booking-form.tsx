@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { soloSchema } from "@/app/rezervace/schema.ts";
+import { soloDataSchema } from "@/app/rezervace/schema.ts";
 import { getExtraMinutesAction } from "@/app/rezervace/actions.ts";
 import {
     Field,
@@ -27,7 +27,7 @@ import {
 import Link from "next/link";
 import { formatTime } from "@/lib/utils.ts";
 
-type SoloFormData = z.infer<typeof soloSchema>;
+type SoloFormData = z.infer<typeof soloDataSchema>;
 
 export function SoloBookingForm({
     boundSubmitAction,
@@ -48,7 +48,7 @@ export function SoloBookingForm({
         control,
         formState: { errors },
     } = useForm<SoloFormData>({
-        resolver: zodResolver(soloSchema),
+        resolver: zodResolver(soloDataSchema),
         mode: "onChange",
     });
 

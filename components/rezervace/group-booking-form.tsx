@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { groupSchema } from "@/app/rezervace/schema.ts";
+import { groupDataSchema } from "@/app/rezervace/schema.ts";
 import { getExtraMinutesAction } from "@/app/rezervace/actions.ts";
 import {
     Field,
@@ -31,7 +31,7 @@ import {
 import Link from "next/link";
 import { formatTime } from "@/lib/utils.ts";
 
-type GroupFormData = z.infer<typeof groupSchema>;
+type GroupFormData = z.infer<typeof groupDataSchema>;
 
 export function GroupBookingForm({
     boundSubmitAction,
@@ -54,7 +54,7 @@ export function GroupBookingForm({
         control,
         formState: { errors },
     } = useForm<GroupFormData>({
-        resolver: zodResolver(groupSchema),
+        resolver: zodResolver(groupDataSchema),
         mode: "onChange",
     });
 

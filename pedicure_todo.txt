@@ -13,3 +13,14 @@
     - priklady co ted projde: names: [] -> names[0].trim() spadne (500), nevalidni email/telefon se ulozi klientovi do DB, jmeno z mezer
     - projit CELOU aplikaci: vsechny server actions (rezervace, sprava/[token], admin kalendar/dostupnost/klienti/nastaveni) i API routes - kazdy vstup zvenku validovat na serveru, ne jen v UI
     - u admin akci zaroven overit autorizaci (session) primo v akci, nespolehat jen na proxy.ts
+    - nalezeno navic pri pruchodu:
+        - api/cron/morning-reminders: kdyz CRON_SECRET neni nastaveny, porovnava se proti "Bearer undefined" -> projde komukoliv; nejdriv overit ze env existuje (jako ICS route)
+        - dostupnost/actions.ts: saveRecurringAvailability pouziva .parse() (vyhodi -> 500), ostatni .safeParse() - sjednotit; checkDayOverrideConflicts/checkRangeConflicts nevaliduji vubec
+        - rezervace/schema.ts: phone min(9) pusti "aaaaaaaaa" (zvazit regex); names bez omezeni delky (business pravidlo 2-4 osoby)
+        - submitGroupBooking: jmena se mapuji podle context.serviceIds, ne data.names - schema musi hlidat stejnou delku (refine nebo pole objektu {name, serviceId})
+        - klienti updateClientAction/deleteClientAction: neexistujici id -> Prisma P2025 -> 500; validovat tvar id + pratelska chyba
+        - nastaveni savePushSubscriptionAction: session ok, ale vstup (endpoint/keys) nevalidovany
+        - Date pres hranici server action (verejne akce): z.date() vs z.coerce.date(), osetrit Invalid Date
+        - read-only akce (get*SlotsAction, getExtraMinutesAction, getAvailableDaysAction) taky validovat - getAvailableDaysAction bez limitu rozsahu = drahy dotaz
+    - rozhodnout: requireAdmin() helper v lib/ (redirect vs vyhozeni chyby vs { ok:false }), sdilene primitivy (dateStr, TIME_RE, serviceId, extraMinutes) do lib/validation.ts
+    - poradi: cron fix -> requireAdmin -> verejne akce (rezervace, sprava) -> admin vstupy
