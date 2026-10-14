@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma.ts";
-import { getCzechToday, formatTime } from "@/lib/utils.ts";
+import { getCzechToday, formatTime, stripDiacritics } from "@/lib/utils.ts";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
 import { sendSms, getSmsCreditCzk } from "@/lib/sms.ts";
 import { sendLowCreditAlertEmail } from "@/lib/send-low-credit-alert-email.ts";
 import type { Booking, Client } from "@/lib/generated/prisma/client.ts";
@@ -8,7 +9,11 @@ import { sendPushNotification } from "@/lib/send-push.ts";
 
 type BookingForReminder = Booking & { client: Client };
 
-const SIGNATURE = "Nohy v cajku - Pedikura Kralovice";
+// SMS text stays diacritics-free (GSM-7 fits 160 chars per part, Unicode
+// only 70), so the brand from BUSINESS_INFO gets stripped too.
+const SIGNATURE = stripDiacritics(
+    `${BUSINESS_INFO.name} - ${BUSINESS_INFO.tagline}`,
+);
 
 // Constant in code, not a DB field — same convention as
 // canClientModifyBooking's 24h window (see lib/booking-modification-window.ts).

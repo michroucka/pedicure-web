@@ -1,6 +1,7 @@
 import { Resend } from "resend";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
 
-const FROM_EMAIL = "Pedikúra Kralovice <rezervace@pedikurakralovice.cz>";
+const FROM_EMAIL = `${BUSINESS_INFO.tagline} <rezervace@pedikurakralovice.cz>`;
 
 // Internal ops alert, not client-facing — plain text is enough, no
 // react-email template needed.

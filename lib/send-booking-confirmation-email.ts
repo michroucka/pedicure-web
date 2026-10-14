@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import {
@@ -10,7 +11,7 @@ import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { prisma } from "@/lib/prisma.ts";
 import type { Booking, Client, Service } from "@/lib/generated/prisma/client.ts";
 
-const FROM_EMAIL = "Pedikúra Kralovice <rezervace@pedikurakralovice.cz>";
+const FROM_EMAIL = `${BUSINESS_INFO.tagline} <rezervace@pedikurakralovice.cz>`;
 const BASE_URL = "https://www.pedikurakralovice.cz";
 
 const SUBJECTS: Record<BookingEmailVariant, string> = {

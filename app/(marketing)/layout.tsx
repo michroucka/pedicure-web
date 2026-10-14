@@ -4,6 +4,7 @@ import { MarketingNav } from "@/components/marketing/marketing-nav.tsx";
 import { MarketingFooter } from "@/components/marketing/marketing-footer.tsx";
 import { PortalContainerProvider } from "@/components/portal-container.tsx";
 import { SafeAreaBottomSentinel } from "@/components/safe-area-bottom-sentinel.tsx";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
 
 export const viewport: Viewport = {
     themeColor: "#38252A",
@@ -15,15 +16,16 @@ export const viewport: Viewport = {
 const LOCAL_BUSINESS_JSON_LD = {
     "@context": "https://schema.org",
     "@type": "HealthAndBeautyBusiness",
-    name: "Nohy v cajku",
+    name: BUSINESS_INFO.name,
     image: "https://www.pedikurakralovice.cz/portret.jpg",
     url: "https://www.pedikurakralovice.cz",
-    telephone: "+420739665010",
-    email: "rouckova@pedikurakralovice.cz",
+    telephone: BUSINESS_INFO.phone,
+    email: BUSINESS_INFO.email,
     address: {
         "@type": "PostalAddress",
-        streetAddress: "Boženy Němcové 204",
-        addressLocality: "Kralovice",
+        streetAddress: BUSINESS_INFO.address.street,
+        postalCode: BUSINESS_INFO.address.postalCode,
+        addressLocality: BUSINESS_INFO.address.city,
         addressCountry: "CZ",
     },
     // Same coordinates as the mapy.com widget on /kontakt (x = lon, y = lat

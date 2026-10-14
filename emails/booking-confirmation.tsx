@@ -12,6 +12,9 @@ import {
     Section,
     Text,
 } from "@react-email/components";
+import { BUSINESS_INFO } from "../lib/business-info.ts";
+
+const BRAND = `${BUSINESS_INFO.name} – ${BUSINESS_INFO.tagline}`;
 
 type Person = { name: string; serviceName: string };
 
@@ -27,12 +30,12 @@ const COPY: Record<
     created: {
         preview: "je potvrzena",
         heading: "Rezervace potvrzena!",
-        body: "Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla úspěšně vytvořena.",
+        body: `Vaše rezervace v ${BRAND} byla úspěšně vytvořena.`,
     },
     moved: {
         preview: "– termín byl změněn",
         heading: "Rezervace přesunuta",
-        body: "Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla přesunuta na nový termín. Pro správu rezervace použijte tlačítko níže.",
+        body: `Vaše rezervace v ${BRAND} byla přesunuta na nový termín. Pro správu rezervace použijte tlačítko níže.`,
     },
 };
 
@@ -86,7 +89,7 @@ export function BookingConfirmationEmail({
                         src={LOGO_URL}
                         width="128"
                         height="128"
-                        alt="Pedikúra Kralovice"
+                        alt={BUSINESS_INFO.tagline}
                         style={logo}
                     />
                     <Heading style={heading}>{copy.heading}</Heading>
@@ -124,7 +127,7 @@ export function BookingConfirmationEmail({
                         href={BASE_URL}
                         style={footer}
                     >
-                        Nohy v cajku – Pedikúra Kralovice
+                        {BRAND}
                     </Link>
                 </Container>
             </Body>

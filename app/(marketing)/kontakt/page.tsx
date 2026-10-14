@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Mail, MapPin, Phone, Star } from "lucide-react";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 import Image from "next/image";
+import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info.ts"
 
 export const metadata: Metadata = {
     title: "Kontakt",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 export default function KontaktPage() {
     return (
         <section>
-            <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 md:py-24">
+            <div className="mx-auto max-w-2xl px-4 pt-8 pb-12 sm:px-6">
                 <h1 className="italic">Kontakt</h1>
                 <p className="mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
                     Dopřejte svým nohám péči zkušených rukou. Ať už potřebujete
@@ -30,7 +31,9 @@ export default function KontaktPage() {
                         Telefon:
                     </dt>
                     <dd className="text-muted-foreground italic">
-                        <a href="tel:+420739665010">+420 739 665 010</a>
+                        <a href={`tel:${BUSINESS_INFO.phone}`}>
+                            {BUSINESS_INFO.phoneDisplay}
+                        </a>
                     </dd>
 
                     <dt className="flex items-center gap-1 text-muted-foreground">
@@ -38,8 +41,8 @@ export default function KontaktPage() {
                         E-Mail:
                     </dt>
                     <dd className="text-muted-foreground italic">
-                        <a href="mailto:rouckova@pedikurakralovice.cz">
-                            rouckova@pedikurakralovice.cz
+                        <a href={`mailto:${BUSINESS_INFO.email}`}>
+                            {BUSINESS_INFO.email}
                         </a>
                     </dd>
 
@@ -48,9 +51,21 @@ export default function KontaktPage() {
                         Adresa:
                     </dt>
                     <dd className="text-muted-foreground italic">
-                        Boženy Němcové 204, Kralovice
+                        {BUSINESS_INFO.address.street},{" "}
+                        {BUSINESS_INFO.address.city}
                     </dd>
                 </dl>
+
+                {BOOKING_ENABLED && (
+                    <div className="mt-8 flex justify-start">
+                        <Button
+                            asChild
+                            size="lg"
+                        >
+                            <Link href="/rezervace">Objednat se</Link>
+                        </Button>
+                    </div>
+                )}
 
                 <div className="mt-6 overflow-hidden rounded-2xl border border-border">
                     <iframe
@@ -100,29 +115,18 @@ export default function KontaktPage() {
                     </div>
                 </div>
 
-                {BOOKING_ENABLED && (
-                    <div className="mt-8 flex justify-end">
-                        <Button
-                            asChild
-                            size="lg"
-                        >
-                            <Link href="/rezervace">Objednat se online</Link>
-                        </Button>
-                    </div>
-                )}
-
                 <div className="mt-10 border-t border-border/60 pt-6 text-center">
                     <p className="text-xs font-medium text-foreground/70">
                         Provozovatel
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        RSDr. Miroslav Roučka
+                        {OPERATOR_INFO.name}
                         <br />
-                        Boženy Němcové 204, 331 41 Kralovice
+                        {OPERATOR_INFO.address}
                         <br />
-                        IČO 13866435
+                        IČO {OPERATOR_INFO.ico}
                         <br />
-                        Fyzická osoba zapsaná v živnostenském rejstříku
+                        {OPERATOR_INFO.registryNote}
                     </p>
                 </div>
             </div>
