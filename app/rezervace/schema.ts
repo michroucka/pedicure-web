@@ -1,7 +1,11 @@
 import { z } from "zod";
-import { PHONE_RE } from "@/lib/validation.ts";
+import { PHONE_RE, startTimeSchema } from "@/lib/validation.ts";
+import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
 
 const nameSchema = z.string().trim().min(1, "Jméno je povinné").max(100);
+
+// 1 for a solo booking, up to 4 for a group.
+export const serviceIdsSchema = z.array(z.int().positive()).min(1).max(4);
 
 export const soloDataSchema = z.object({
     name: nameSchema,
@@ -12,7 +16,7 @@ export const soloDataSchema = z.object({
 export const soloContextSchema = z.object({
     date: z.date(),
     serviceId: z.int().positive(),
-    startTime: z.int().min(0).max(1439),
+    startTime: startTimeSchema,
 });
 
 export const groupDataSchema = soloDataSchema
@@ -24,5 +28,29 @@ export const groupDataSchema = soloDataSchema
 export const groupContextSchema = soloContextSchema
     .omit({ serviceId: true })
     .extend({
-        serviceIds: z.array(z.int().positive()).min(2).max(4),
+        serviceIds: serviceIdsSchema.min(2),
     });
+
+// The pickers ask for at most HORIZON_DAYS at once (a month grid outside
+// it is 42 days); a little slack on top so day rounding never rejects a
+// legit request. Without a cap one request could make the server compute
+// availability for years of days.
+const MAX_DAY_RANGE_DAYS = HORIZON_DAYS + 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const dateRangeSchema = z
+    .object({
+        from: z.date(),
+        to: z.date(),
+    })
+    .refine((r) => r.from <= r.to, { message: "Konec rozsahu musí být po jeho začátku." })
+    .refine((r) => r.to.getTime() - r.from.getTime() <= MAX_DAY_RANGE_DAYS * DAY_MS, {
+        message: "Příliš dlouhý rozsah.",
+    });
+
+// Looked up while the form is still being typed — empty or half-written
+// values are fine here (no nameSchema / PHONE_RE), just bounded.
+export const contactLookupSchema = z.object({
+    name: z.string().trim().max(100),
+    phone: z.string().trim().max(30),
+});

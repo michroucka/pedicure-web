@@ -14,9 +14,13 @@ import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
 import { sendBookingConfirmationEmail } from "@/lib/send-booking-confirmation-email.ts";
 import { after } from "next/server";
 import { sendPushNotification } from "@/lib/send-push.ts";
+import { z } from "zod";
 import {
+    contactLookupSchema,
+    dateRangeSchema,
     groupContextSchema,
     groupDataSchema,
+    serviceIdsSchema,
     soloContextSchema,
     soloDataSchema,
 } from "@/app/rezervace/schema.ts";
@@ -242,9 +246,13 @@ export async function getAvailableDaysAction(
     serviceIds: number[],
     extraMinutes: number = 0
 ): Promise<Date[]> {
+    const parsedRange = dateRangeSchema.safeParse(range);
+    const parsedServiceIds = serviceIdsSchema.safeParse(serviceIds);
+    if (!parsedRange.success || !parsedServiceIds.success) return [];
+
     return getAvailableDaysInRange(
-        range,
-        serviceIds,
+        parsedRange.data,
+        parsedServiceIds.data,
         normalizeExtraMinutes(extraMinutes)
     );
 }
@@ -255,8 +263,10 @@ export async function getExtraMinutesAction(contact: {
     name: string;
     phone: string;
 }): Promise<number> {
-    const name = contact.name.trim();
-    const phone = contact.phone.trim();
+    const parsed = contactLookupSchema.safeParse(contact);
+    if (!parsed.success) return 0;
+
+    const { name, phone } = parsed.data;
     if (!name && !phone) return 0;
 
     const client = await findClient(phone || undefined, name);
@@ -268,5 +278,15 @@ export async function getAvailableSlotsAction(
     serviceIds: number[],
     extraMinutes: number = 0
 ): Promise<number[]> {
-    return getAvailableSlots(date, serviceIds, normalizeExtraMinutes(extraMinutes));
+    // Called in the background by the slot picker — invalid input just
+    // means "no slots", not a redirect.
+    const parsedDate = z.date().safeParse(date);
+    const parsedServiceIds = serviceIdsSchema.safeParse(serviceIds);
+    if (!parsedDate.success || !parsedServiceIds.success) return [];
+
+    return getAvailableSlots(
+        parsedDate.data,
+        parsedServiceIds.data,
+        normalizeExtraMinutes(extraMinutes)
+    );
 }

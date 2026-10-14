@@ -18,10 +18,14 @@ import { sendPushNotification } from "@/lib/send-push.ts";
 import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
+import { dateRangeSchema } from "@/app/rezervace/schema.ts";
+import { dateStrSchema, startTimeSchema } from "@/lib/validation.ts";
+import { tokenSchema } from "./schema.ts";
 
 const NOT_FOUND_ERROR = "Rezervace nebyla nalezena.";
 const WINDOW_PASSED_ERROR =
     "Rezervaci už nelze online upravit – kontaktujte nás prosím telefonicky.";
+const SLOT_TAKEN_ERROR = "Zvolený termín už není volný.";
 
 function serviceContext(bookings: BookingWithRelations[]) {
     return {
@@ -53,6 +57,11 @@ function formatDateTime(date: Date, startTime: number): string {
 export async function cancelBookingByTokenAction(
     token: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+    // An invalid token gets the same answer as an unknown one.
+    if (!tokenSchema.safeParse(token).success) {
+        return { ok: false, error: NOT_FOUND_ERROR };
+    }
+
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") {
         return { ok: false, error: NOT_FOUND_ERROR };
@@ -86,11 +95,14 @@ export async function getRescheduleDaysAction(
     token: string,
     range: { from: Date; to: Date }
 ): Promise<Date[]> {
+    const parsedRange = dateRangeSchema.safeParse(range);
+    if (!tokenSchema.safeParse(token).success || !parsedRange.success) return [];
+
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") return [];
 
     const { bookingIds, serviceIds, extraMinutes } = serviceContext(bookings);
-    return getAvailableDaysInRange(range, serviceIds, extraMinutes, {
+    return getAvailableDaysInRange(parsedRange.data, serviceIds, extraMinutes, {
         excludeBookingIds: bookingIds,
     });
 }
@@ -99,10 +111,13 @@ export async function getRescheduleSlotsAction(
     token: string,
     dateStr: string
 ): Promise<number[]> {
+    const parsedDateStr = dateStrSchema.safeParse(dateStr);
+    if (!tokenSchema.safeParse(token).success || !parsedDateStr.success) return [];
+
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") return [];
 
-    const date = toDateOnly(new Date(dateStr));
+    const date = toDateOnly(new Date(parsedDateStr.data));
     const { bookingIds, serviceIds, extraMinutes } = serviceContext(bookings);
 
     return getAvailableSlots(date, serviceIds, extraMinutes, {
@@ -119,6 +134,16 @@ export async function moveBookingByTokenAction(
     dateStr: string,
     startTime: number
 ): Promise<{ ok: true; newToken: string } | { ok: false; error: string }> {
+    if (!tokenSchema.safeParse(token).success) {
+        return { ok: false, error: NOT_FOUND_ERROR };
+    }
+    // The picker only ever offers real slots — a malformed target is
+    // tampering, answered the same as a slot that's no longer free.
+    const parsedDateStr = dateStrSchema.safeParse(dateStr);
+    if (!parsedDateStr.success || !startTimeSchema.safeParse(startTime).success) {
+        return { ok: false, error: SLOT_TAKEN_ERROR };
+    }
+
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") {
         return { ok: false, error: NOT_FOUND_ERROR };
@@ -127,7 +152,7 @@ export async function moveBookingByTokenAction(
         return { ok: false, error: WINDOW_PASSED_ERROR };
     }
 
-    const date = toDateOnly(new Date(dateStr));
+    const date = toDateOnly(new Date(parsedDateStr.data));
 
     // moveBooking/moveGroupBooking validate the target slot with
     // allowToday: true (admin is allowed to move bookings into today) — the
@@ -139,7 +164,7 @@ export async function moveBookingByTokenAction(
         excludeBookingIds: bookingIds,
     });
     if (!validSlots.includes(startTime)) {
-        return { ok: false, error: "Zvolený termín už není volný." };
+        return { ok: false, error: SLOT_TAKEN_ERROR };
     }
 
     try {

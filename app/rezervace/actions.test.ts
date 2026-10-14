@@ -4,6 +4,7 @@ import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
 import {
     getAvailableDaysAction,
+    getAvailableSlotsAction,
     getExtraMinutesAction,
     submitGroupBooking,
 } from "./actions.ts";
@@ -66,6 +67,7 @@ describe("rezervace actions", () => {
     beforeEach(async () => {
         phone = uniquePhone();
         vi.mocked(getAvailableSlots).mockReset().mockResolvedValue([START]);
+        vi.mocked(getAvailableDaysInRange).mockClear();
 
         const services = await Promise.all([
             prisma.service.create({
@@ -209,6 +211,19 @@ describe("rezervace actions", () => {
         it("returns 0 for empty input", async () => {
             expect(await getExtraMinutesAction({ name: "  ", phone: "  " })).toBe(0);
         });
+
+        it("returns 0 for oversized input without looking anyone up", async () => {
+            expect(await getExtraMinutesAction({ name: "x".repeat(1000), phone })).toBe(0);
+        });
+    });
+
+    describe("getAvailableSlotsAction", () => {
+        it("returns no slots for invalid input without computing availability", async () => {
+            expect(await getAvailableSlotsAction(TEST_DATE, [])).toEqual([]);
+            expect(await getAvailableSlotsAction(TEST_DATE, [1, 2, 3, 4, 5])).toEqual([]);
+            expect(await getAvailableSlotsAction(new Date("nesmysl"), [serviceIds[0]])).toEqual([]);
+            expect(getAvailableSlots).not.toHaveBeenCalled();
+        });
     });
 
     describe("getAvailableDaysAction", () => {
@@ -226,6 +241,15 @@ describe("rezervace actions", () => {
             await getAvailableDaysAction(range, [serviceIds[0]], -30);
 
             expect(getAvailableDaysInRange).toHaveBeenCalledWith(range, [serviceIds[0]], 0);
+        });
+
+        it("rejects a reversed or overlong range without computing availability", async () => {
+            const reversed = { from: TEST_DATE, to: new Date("2099-09-01T00:00:00.000Z") };
+            const tenYears = { from: TEST_DATE, to: new Date("2109-10-01T00:00:00.000Z") };
+
+            expect(await getAvailableDaysAction(reversed, [serviceIds[0]])).toEqual([]);
+            expect(await getAvailableDaysAction(tenYears, [serviceIds[0]])).toEqual([]);
+            expect(getAvailableDaysInRange).not.toHaveBeenCalled();
         });
     });
 });
