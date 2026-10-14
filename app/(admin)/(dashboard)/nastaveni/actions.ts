@@ -1,8 +1,9 @@
 "use server"
 
 import { z } from "zod";
-import { auth, signOut } from "@/auth.ts";
+import { signOut } from "@/auth.ts";
 import { prisma } from "@/lib/prisma.ts";
+import { requireAdmin } from "@/lib/require-admin.ts";
 import argon2 from "argon2";
 
 const changePasswordSchema = z
@@ -22,8 +23,7 @@ export async function changePasswordAction(
     _prevState: ChangePasswordState,
     formData: FormData
 ): Promise<ChangePasswordState> {
-    const session = await auth();
-    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+    const username = await requireAdmin();
 
     const parsed = changePasswordSchema.safeParse({
         currentPassword: formData.get("currentPassword"),
@@ -35,7 +35,7 @@ export async function changePasswordAction(
     }
 
     const admin = await prisma.adminUser.findUnique({
-        where: { username: session.user.name },
+        where: { username },
     });
     if (!admin) return { ok: false, error: "Účet nebyl nalezen." };
     if (
@@ -64,11 +64,10 @@ export async function savePushSubscriptionAction({
     auth: string;
     userAgent?: string;
 }) {
-    const session = await auth();
-    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+    const username = await requireAdmin();
 
     const admin = await prisma.adminUser.findUnique({
-        where: { username: session.user.name },
+        where: { username },
     });
     if (!admin) return { ok: false, error: "Účet nebyl nalezen." };
 
@@ -80,8 +79,7 @@ export async function savePushSubscriptionAction({
 }
 
 export async function deletePushSubscriptionAction(endpoint: string) {
-    const session = await auth();
-    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+    await requireAdmin();
 
     await prisma.pushSubscription.deleteMany({ where: { endpoint } });
 }

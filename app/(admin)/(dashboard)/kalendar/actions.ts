@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma.ts";
+import { requireAdmin } from "@/lib/require-admin.ts";
 import { Prisma } from "@/lib/generated/prisma/client.ts";
 import { cancelBooking } from "@/lib/cancel-booking.ts";
 import {
@@ -28,6 +29,7 @@ export async function getMoveSlotsAction(
     overrideServiceIds?: number[],
     overrideExtraMinutes?: number[]
 ): Promise<number[]> {
+    await requireAdmin();
     const date = toDateOnly(new Date(dateStr));
 
     if (groupId) {
@@ -66,6 +68,7 @@ export async function getMoveSlotsAction(
 }
 
 export async function cancelBookingAction(id: string) {
+    await requireAdmin();
     await cancelBooking(id);
     revalidatePath("/kalendar");
 }
@@ -86,6 +89,7 @@ export async function updateBookingAction(input: {
     startTime: number;
     outsideHours?: boolean;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
+    await requireAdmin();
     const date = toDateOnly(new Date(input.dateStr));
 
     if (date.getTime() < getCzechToday().getTime()) {
@@ -197,6 +201,7 @@ export async function getManualBookingSlotsAction(
     // will validate with, or the dialog offers slots that then get rejected.
     extraMinutes: number = 0
 ): Promise<number[]> {
+    await requireAdmin();
     const date = toDateOnly(new Date(dateStr));
     return getAvailableSlots(date, serviceIds, normalizeExtraMinutes(extraMinutes), {
         allowToday: true,
@@ -214,6 +219,7 @@ export async function createManualBookingAction(input: {
     source: "PHONE" | "IN_PERSON";
     outsideHours?: boolean;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
+    await requireAdmin();
     const date = toDateOnly(new Date(input.dateStr));
 
     if (date.getTime() < getCzechToday().getTime()) {

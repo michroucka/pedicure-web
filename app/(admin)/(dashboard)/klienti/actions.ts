@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
+import { requireAdmin } from "@/lib/require-admin.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 
 export async function updateClientAction(
@@ -14,6 +15,7 @@ export async function updateClientAction(
         note: string;
     }
 ) {
+    await requireAdmin();
     await prisma.client.update({
         where: { id },
         data: {
@@ -38,6 +40,7 @@ export async function updateClientAction(
 // pg driver adapter that error comes back as a generic code (P2039), not a
 // stable FK one, so the explicit check is the reliable signal.
 export async function deleteClientAction(id: string): Promise<void> {
+    await requireAdmin();
     await prisma.$transaction(async (tx) => {
         const bookingCount = await tx.booking.count({ where: { clientId: id } });
         if (bookingCount === 0) {

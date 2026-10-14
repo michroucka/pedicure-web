@@ -6,6 +6,8 @@ import { deleteClientAction, updateClientAction } from "./actions.ts";
 
 // revalidatePath needs a Next.js request context.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Actions call requireAdmin() first; there is no session in tests.
+vi.mock("@/lib/require-admin.ts", () => ({ requireAdmin: vi.fn(async () => "admin") }));
 
 function uniquePhone(): string {
     return `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;

@@ -12,6 +12,8 @@ import {
 // revalidatePath and after() need a Next.js request context; after() runs
 // its callback right away so the moved email can be asserted.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Actions call requireAdmin() first; there is no session in tests.
+vi.mock("@/lib/require-admin.ts", () => ({ requireAdmin: vi.fn(async () => "admin") }));
 vi.mock("next/server", () => ({ after: vi.fn((callback: () => unknown) => callback()) }));
 vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
     sendBookingMovedEmail: vi.fn(),

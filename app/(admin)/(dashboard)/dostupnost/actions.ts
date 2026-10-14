@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
+import { requireAdmin } from "@/lib/require-admin.ts";
 import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { diffDayBlocks, type TimeSlot } from "@/lib/availability.ts";
 import { parseTime, toDateOnly, addUtcDays } from "@/lib/utils.ts";
@@ -15,6 +16,7 @@ import {
 } from "./schema.ts";
 
 export async function saveRecurringAvailability(data: AvailabilityFormData) {
+    await requireAdmin();
     const parsed = availabilitySchema.parse(data);
 
     const rows = parsed.days.flatMap((day) =>
@@ -47,6 +49,7 @@ export async function checkDayOverrideConflicts(
     dateStr: string,
     blockedRanges: TimeSlot[]
 ): Promise<ExceptionConflict[]> {
+    await requireAdmin();
     if (blockedRanges.length === 0) return [];
 
     const date = toDateOnly(new Date(dateStr));
@@ -77,6 +80,7 @@ export async function checkDayOverrideConflicts(
 export async function saveDayOverride(
     data: DayOverrideFormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+    await requireAdmin();
     const result = dayOverrideSchema.safeParse(data);
     if (!result.success) {
         return {
@@ -164,6 +168,7 @@ export async function checkRangeConflicts(
     startDateStr: string,
     endDateStr: string
 ): Promise<ExceptionConflict[]> {
+    await requireAdmin();
     const dates = datesInRange(startDateStr, endDateStr);
 
     const bookings = await prisma.booking.findMany({
@@ -185,6 +190,7 @@ export async function checkRangeConflicts(
 export async function saveCloseRange(
     data: CloseRangeFormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+    await requireAdmin();
     const result = closeRangeSchema.safeParse(data);
     if (!result.success) {
         return {
