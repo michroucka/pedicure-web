@@ -50,7 +50,7 @@ import {
     StickyNote,
     QrCode, ChevronDownIcon,
 } from "lucide-react";
-import { formatTime, toUtcMidnight, toTelHref } from "@/lib/utils.ts";
+import { formatPhoneNumber, formatTime, toUtcMidnight, toTelHref } from "@/lib/utils.ts";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
@@ -434,7 +434,7 @@ export function BookingDetailDialog({
                                     placeholder="+420 123 456 789"
                                     value={editPhone}
                                     onChange={(e) =>
-                                        setEditPhone(e.target.value)
+                                        setEditPhone(formatPhoneNumber(e.target.value))
                                     }
                                 />
                                 <span className="flex items-center gap-1 text-sm font-medium">

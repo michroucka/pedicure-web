@@ -19,6 +19,30 @@ import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { toDateOnly, getCzechToday } from "@/lib/utils.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
+import { idSchema } from "@/lib/validation.ts";
+import {
+    createManualBookingInputSchema,
+    manualBookingSlotsInputSchema,
+    moveSlotsInputSchema,
+    updateBookingInputSchema,
+} from "./schema.ts";
+
+// The admin forms validate the same things first, so this only shows up
+// for tampered input or a phone that couldn't be normalized.
+function invalidInput(error: { issues: { message: string }[] }) {
+    return { ok: false as const, error: error.issues[0]?.message ?? "Neplatné údaje." };
+}
+
+// Ids of services that don't exist (or, with activeOnly, are no longer
+// offered). Counted against the unique ids — `in` returns each service
+// once even when two people picked the same one.
+async function hasUnknownService(serviceIds: number[], activeOnly: boolean) {
+    const uniqueIds = [...new Set(serviceIds)];
+    const found = await prisma.service.count({
+        where: { id: { in: uniqueIds }, ...(activeOnly && { active: true }) },
+    });
+    return found !== uniqueIds.length;
+}
 
 export async function getMoveSlotsAction(
     id: string,
@@ -30,6 +54,16 @@ export async function getMoveSlotsAction(
     overrideExtraMinutes?: number[]
 ): Promise<number[]> {
     await requireAdmin();
+    const parsed = moveSlotsInputSchema.safeParse({
+        id,
+        groupId,
+        dateStr,
+        overrideServiceIds,
+        overrideExtraMinutes,
+    });
+    if (!parsed.success) return [];
+    ({ id, groupId, dateStr, overrideServiceIds, overrideExtraMinutes } = parsed.data);
+
     const date = toDateOnly(new Date(dateStr));
 
     if (groupId) {
@@ -50,9 +84,10 @@ export async function getMoveSlotsAction(
         });
     }
 
-    const booking = await prisma.booking.findUniqueOrThrow({
+    const booking = await prisma.booking.findUnique({
         where: { id },
     });
+    if (!booking) return [];
     return getAvailableSlots(
         date,
         [overrideServiceIds?.[0] ?? booking.serviceId],
@@ -69,6 +104,7 @@ export async function getMoveSlotsAction(
 
 export async function cancelBookingAction(id: string) {
     await requireAdmin();
+    if (!idSchema.safeParse(id).success) return;
     await cancelBooking(id);
     revalidatePath("/kalendar");
 }
@@ -90,10 +126,20 @@ export async function updateBookingAction(input: {
     outsideHours?: boolean;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
     await requireAdmin();
+    const parsed = updateBookingInputSchema.safeParse(input);
+    if (!parsed.success) return invalidInput(parsed.error);
+    input = parsed.data;
+
     const date = toDateOnly(new Date(input.dateStr));
 
     if (date.getTime() < getCzechToday().getTime()) {
         return { ok: false, error: "Nelze přesunout rezervaci do minulosti." };
+    }
+
+    // Existing bookings may keep a service that's no longer offered — only
+    // check that it exists, not that it's active.
+    if (await hasUnknownService(input.people.map((p) => p.serviceId), false)) {
+        return { ok: false, error: "Služba nenalezena." };
     }
 
     const existing = await prisma.booking.findMany({
@@ -118,22 +164,22 @@ export async function updateBookingAction(input: {
     // booking as guestName — writing it to b.clientId would rename the main
     // contact once per member. Must run before the move below, which copies
     // guestName over to the new bookings.
-    const trimmedPhone = input.phone.trim() || null;
-    const trimmedNote = input.note.trim() || null;
+    const phone = input.phone || null;
+    const note = input.note || null;
     await prisma.$transaction(
         existing.map((b, i) =>
             i === 0
                 ? prisma.client.update({
                       where: { id: b.clientId },
                       data: {
-                          name: input.people[0].name.trim(),
-                          phone: trimmedPhone,
-                          note: trimmedNote,
+                          name: input.people[0].name,
+                          phone,
+                          note,
                       },
                   })
                 : prisma.booking.update({
                       where: { id: b.id },
-                      data: { guestName: input.people[i].name.trim() || null },
+                      data: { guestName: input.people[i].name },
                   })
         )
     );
@@ -202,6 +248,10 @@ export async function getManualBookingSlotsAction(
     extraMinutes: number = 0
 ): Promise<number[]> {
     await requireAdmin();
+    const parsed = manualBookingSlotsInputSchema.safeParse({ serviceIds, dateStr, extraMinutes });
+    if (!parsed.success) return [];
+    ({ serviceIds, dateStr, extraMinutes } = parsed.data);
+
     const date = toDateOnly(new Date(dateStr));
     return getAvailableSlots(date, serviceIds, normalizeExtraMinutes(extraMinutes), {
         allowToday: true,
@@ -220,10 +270,20 @@ export async function createManualBookingAction(input: {
     outsideHours?: boolean;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
     await requireAdmin();
+    const parsed = createManualBookingInputSchema.safeParse(input);
+    if (!parsed.success) return invalidInput(parsed.error);
+    input = parsed.data;
+
     const date = toDateOnly(new Date(input.dateStr));
 
     if (date.getTime() < getCzechToday().getTime()) {
         return { ok: false, error: "Nelze vytvořit rezervaci v minulosti." };
+    }
+
+    // Checked before findOrCreateClient — a rejected booking must not
+    // create or update a client.
+    if (await hasUnknownService(input.people.map((p) => p.serviceId), true)) {
+        return { ok: false, error: "Služba už není v nabídce." };
     }
 
     // Only the main contact is a Client — the rest of the group shares
@@ -233,17 +293,17 @@ export async function createManualBookingAction(input: {
     // silently when the admin picked an existing client from the name
     // autocomplete.
     const client = await findOrCreateClient(
-        input.phone,
-        input.people[0].name.trim(),
-        input.email,
-        input.note
+        input.phone || undefined,
+        input.people[0].name,
+        input.email || undefined,
+        input.note || undefined
     );
 
     // Extra time comes from the form per person (prefilled from the main
     // contact's Client), not from Clients — guests don't have one.
     const people = input.people.map((p, i) => ({
         clientId: client.id,
-        guestName: i === 0 ? null : p.name.trim() || null,
+        guestName: i === 0 ? null : p.name,
         extraTimeMinutes: normalizeExtraMinutes(p.extraTimeMinutes),
         serviceId: p.serviceId,
     }));

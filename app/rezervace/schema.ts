@@ -1,11 +1,6 @@
 import { z } from "zod";
-import { PHONE_RE, startTimeSchema } from "@/lib/validation.ts";
+import { nameSchema, PHONE_RE, serviceIdsSchema, startTimeSchema } from "@/lib/validation.ts";
 import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
-
-const nameSchema = z.string().trim().min(1, "Jméno je povinné").max(100);
-
-// 1 for a solo booking, up to 4 for a group.
-export const serviceIdsSchema = z.array(z.int().positive()).min(1).max(4);
 
 export const soloDataSchema = z.object({
     name: nameSchema,

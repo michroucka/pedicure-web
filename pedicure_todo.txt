@@ -8,19 +8,6 @@
     (pro admina vyreseno pres #18 - allowUnfillableGaps; pro verejny booking jsme se domluvili ze to nestoji za komplexitu)
 
 
-[ ] validace dat na serveru - server actions jsou verejne POST endpointy, Zod schema se ted vola jen ve formulari v prohlizeci (zodResolver), server data nekontroluje (TS typy za behu nic negarantuji)
-    - submitGroupBooking / submitBooking: na zacatku groupSchema/soloSchema.safeParse(data), pri chybe akci ukoncit; do schematu .trim() pred .min(1) (min(1) pusti "   ")
-    - priklady co ted projde: names: [] -> names[0].trim() spadne (500), nevalidni email/telefon se ulozi klientovi do DB, jmeno z mezer
-    - projit CELOU aplikaci: vsechny server actions (rezervace, sprava/[token], admin kalendar/dostupnost/klienti/nastaveni) i API routes - kazdy vstup zvenku validovat na serveru, ne jen v UI
-    - u admin akci zaroven overit autorizaci (session) primo v akci, nespolehat jen na proxy.ts
-    - nalezeno navic pri pruchodu:
-        - api/cron/morning-reminders: kdyz CRON_SECRET neni nastaveny, porovnava se proti "Bearer undefined" -> projde komukoliv; nejdriv overit ze env existuje (jako ICS route)
-        - dostupnost/actions.ts: saveRecurringAvailability pouziva .parse() (vyhodi -> 500), ostatni .safeParse() - sjednotit; checkDayOverrideConflicts/checkRangeConflicts nevaliduji vubec
-        - rezervace/schema.ts: phone min(9) pusti "aaaaaaaaa" (zvazit regex); names bez omezeni delky (business pravidlo 2-4 osoby)
-        - submitGroupBooking: jmena se mapuji podle context.serviceIds, ne data.names - schema musi hlidat stejnou delku (refine nebo pole objektu {name, serviceId})
-        - klienti updateClientAction/deleteClientAction: neexistujici id -> Prisma P2025 -> 500; validovat tvar id + pratelska chyba
-        - nastaveni savePushSubscriptionAction: session ok, ale vstup (endpoint/keys) nevalidovany
-        - Date pres hranici server action (verejne akce): z.date() vs z.coerce.date(), osetrit Invalid Date
-        - read-only akce (get*SlotsAction, getExtraMinutesAction, getAvailableDaysAction) taky validovat - getAvailableDaysAction bez limitu rozsahu = drahy dotaz
-    - rozhodnout: requireAdmin() helper v lib/ (redirect vs vyhozeni chyby vs { ok:false }), sdilene primitivy (dateStr, TIME_RE, serviceId, extraMinutes) do lib/validation.ts
-    - poradi: cron fix -> requireAdmin -> verejne akce (rezervace, sprava) -> admin vstupy
+[ ] rucni rezervace s vlastnim casem (outsideHours) nehlida pulnoc - start 23:50 + 60 min projde, endTime pres 1440
+    - createManualBookingAction / updateBookingAction: overit start + delka (vc. extra casu) <= 24*60
+[ ] server nekontroluje prekryv bloku v pravidelne dostupnosti (availabilitySchema) - u vyjimky na jeden den (dayOverrideSchema) to kontroluje, sjednotit

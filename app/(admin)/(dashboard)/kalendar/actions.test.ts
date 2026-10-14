@@ -25,8 +25,11 @@ vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
 const DATE_STR = "2099-11-02";
 const DATE = new Date(`${DATE_STR}T00:00:00.000Z`);
 
+// Already in the "XXX XXX XXX" shape the actions normalize to (see
+// adminPhoneSchema) — otherwise the stored phone wouldn't match `phone`.
 function uniquePhone(): string {
-    return `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+    const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
 }
 
 describe("kalendar actions", () => {

@@ -17,6 +17,15 @@ const changePasswordSchema = z
         path: ["confirmPassword"],
     });
 
+// What PushSubscription.toJSON() gives the browser — endpoint is the push
+// service URL web-push will POST to, so it has to be a real https URL.
+const pushSubscriptionSchema = z.object({
+    endpoint: z.url({ protocol: /^https$/ }).max(2000),
+    p256dh: z.string().min(1).max(200),
+    auth: z.string().min(1).max(200),
+    userAgent: z.string().max(500).optional(),
+});
+
 export type ChangePasswordState = { ok: boolean; error?: string } | null;
 
 export async function changePasswordAction(
@@ -65,6 +74,9 @@ export async function savePushSubscriptionAction({
     userAgent?: string;
 }) {
     const username = await requireAdmin();
+    const parsed = pushSubscriptionSchema.safeParse({ endpoint, p256dh, auth: subAuth, userAgent });
+    if (!parsed.success) return { ok: false, error: "Neplatné údaje o zařízení." };
+    ({ endpoint, p256dh, auth: subAuth, userAgent } = parsed.data);
 
     const admin = await prisma.adminUser.findUnique({
         where: { username },
@@ -80,6 +92,7 @@ export async function savePushSubscriptionAction({
 
 export async function deletePushSubscriptionAction(endpoint: string) {
     await requireAdmin();
+    if (!z.string().max(2000).safeParse(endpoint).success) return;
 
     await prisma.pushSubscription.deleteMany({ where: { endpoint } });
 }

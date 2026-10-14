@@ -20,10 +20,10 @@ import {
     dateRangeSchema,
     groupContextSchema,
     groupDataSchema,
-    serviceIdsSchema,
     soloContextSchema,
     soloDataSchema,
 } from "@/app/rezervace/schema.ts";
+import { serviceIdsSchema } from "@/lib/validation.ts";
 
 // Builds the redirect back to the slot picker when a chosen slot can't be
 // booked. Distinguishes two causes so the message (and the slot list itself,

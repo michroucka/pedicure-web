@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
 import { requireAdmin } from "@/lib/require-admin.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
+import { idSchema } from "@/lib/validation.ts";
+import { updateClientInputSchema } from "./schema.ts";
+
+const NOT_FOUND_ERROR = "Klient nebyl nalezen.";
 
 export async function updateClientAction(
     id: string,
@@ -14,20 +18,30 @@ export async function updateClientAction(
         extraTimeMinutes: number;
         note: string;
     }
-) {
+): Promise<{ ok: true } | { ok: false; error: string }> {
     await requireAdmin();
-    await prisma.client.update({
+    if (!idSchema.safeParse(id).success) return { ok: false, error: NOT_FOUND_ERROR };
+    const parsed = updateClientInputSchema.safeParse(data);
+    if (!parsed.success) {
+        return { ok: false, error: parsed.error.issues[0]?.message ?? "Neplatné údaje." };
+    }
+
+    // updateMany instead of update: an unknown id is a count of 0, not a
+    // thrown P2025 (the client could've been deleted in another tab).
+    const { count } = await prisma.client.updateMany({
         where: { id },
         data: {
-            name: data.name,
-            phone: data.phone || null,
-            email: data.email || null,
-            extraTimeMinutes: normalizeExtraMinutes(data.extraTimeMinutes),
-            note: data.note || null,
+            name: parsed.data.name,
+            phone: parsed.data.phone || null,
+            email: parsed.data.email || null,
+            extraTimeMinutes: normalizeExtraMinutes(parsed.data.extraTimeMinutes),
+            note: parsed.data.note || null,
         },
     });
+    if (count === 0) return { ok: false, error: NOT_FOUND_ERROR };
 
     revalidatePath("/klienti");
+    return { ok: true };
 }
 
 // "Smazat" in the UI. A client without any booking is really deleted; one
@@ -41,12 +55,15 @@ export async function updateClientAction(
 // stable FK one, so the explicit check is the reliable signal.
 export async function deleteClientAction(id: string): Promise<void> {
     await requireAdmin();
+    if (!idSchema.safeParse(id).success) return;
+    // deleteMany/updateMany: an already-deleted client is a no-op, not a
+    // thrown P2025 — the end state the admin wanted is reached either way.
     await prisma.$transaction(async (tx) => {
         const bookingCount = await tx.booking.count({ where: { clientId: id } });
         if (bookingCount === 0) {
-            await tx.client.delete({ where: { id } });
+            await tx.client.deleteMany({ where: { id } });
         } else {
-            await tx.client.update({ where: { id }, data: { active: false } });
+            await tx.client.updateMany({ where: { id }, data: { active: false } });
         }
     });
 
