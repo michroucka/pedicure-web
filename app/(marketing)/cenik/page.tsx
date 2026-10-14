@@ -51,7 +51,7 @@ export default async function CenikPage() {
                 </div>
 
                 {BOOKING_ENABLED && (
-                    <div className="mt-10 flex justify-center">
+                    <div className="mt-10 flex justify-end">
                         <Button
                             asChild
                             size="lg"
