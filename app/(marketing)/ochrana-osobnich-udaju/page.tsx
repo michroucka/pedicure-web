@@ -205,6 +205,11 @@ export default function OchranaOsobnichUdajuPage() {
                     cookies a bez identifikace konkrétních návštěvníků, proto se
                     souhlas nevyžaduje.
                 </p>
+                <p className={P}>
+                    Mapa na stránce Kontakt se načte až po kliknutí. Poté může
+                    služba Mapy.com (Seznam.cz, a.s.) ukládat vlastní cookies
+                    podle svých zásad.
+                </p>
 
                 <h2 className={H2}>Vaše práva</h2>
                 <p className={P}>Máte právo:</p>

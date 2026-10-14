@@ -5,6 +5,7 @@ import { Mail, MapPin, Phone, Star } from "lucide-react";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 import Image from "next/image";
 import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info.ts"
+import { MapEmbed } from "@/components/marketing/map-embed.tsx";
 
 export const metadata: Metadata = {
     title: "Kontakt",
@@ -67,14 +68,7 @@ export default function KontaktPage() {
                     </div>
                 )}
 
-                <div className="mt-6 overflow-hidden rounded-2xl border border-border">
-                    <iframe
-                        src="https://mapy.com/cs/zakladni?x=13.4847511111&y=49.9803738889&z=17&source=firm&id=14057489&widgetFirmy=14057489&frame=1"
-                        width="100%"
-                        height={280}
-                        style={{ border: "none", display: "block" }}
-                    />
-                </div>
+                <MapEmbed />
 
                 <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4">
                     <div className="flex items-center gap-2">
