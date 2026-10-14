@@ -1,8 +1,9 @@
 "use server"
 
 import { z } from "zod";
-import { auth, signOut } from "@/auth.ts";
+import { signOut } from "@/auth.ts";
 import { prisma } from "@/lib/prisma.ts";
+import { requireAdmin } from "@/lib/require-admin.ts";
 import argon2 from "argon2";
 
 const changePasswordSchema = z
@@ -16,14 +17,22 @@ const changePasswordSchema = z
         path: ["confirmPassword"],
     });
 
+// What PushSubscription.toJSON() gives the browser — endpoint is the push
+// service URL web-push will POST to, so it has to be a real https URL.
+const pushSubscriptionSchema = z.object({
+    endpoint: z.url({ protocol: /^https$/ }).max(2000),
+    p256dh: z.string().min(1).max(200),
+    auth: z.string().min(1).max(200),
+    userAgent: z.string().max(500).optional(),
+});
+
 export type ChangePasswordState = { ok: boolean; error?: string } | null;
 
 export async function changePasswordAction(
     _prevState: ChangePasswordState,
     formData: FormData
 ): Promise<ChangePasswordState> {
-    const session = await auth();
-    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+    const username = await requireAdmin();
 
     const parsed = changePasswordSchema.safeParse({
         currentPassword: formData.get("currentPassword"),
@@ -35,7 +44,7 @@ export async function changePasswordAction(
     }
 
     const admin = await prisma.adminUser.findUnique({
-        where: { username: session.user.name },
+        where: { username },
     });
     if (!admin) return { ok: false, error: "Účet nebyl nalezen." };
     if (
@@ -64,11 +73,13 @@ export async function savePushSubscriptionAction({
     auth: string;
     userAgent?: string;
 }) {
-    const session = await auth();
-    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+    const username = await requireAdmin();
+    const parsed = pushSubscriptionSchema.safeParse({ endpoint, p256dh, auth: subAuth, userAgent });
+    if (!parsed.success) return { ok: false, error: "Neplatné údaje o zařízení." };
+    ({ endpoint, p256dh, auth: subAuth, userAgent } = parsed.data);
 
     const admin = await prisma.adminUser.findUnique({
-        where: { username: session.user.name },
+        where: { username },
     });
     if (!admin) return { ok: false, error: "Účet nebyl nalezen." };
 
@@ -80,8 +91,8 @@ export async function savePushSubscriptionAction({
 }
 
 export async function deletePushSubscriptionAction(endpoint: string) {
-    const session = await auth();
-    if (!session?.user?.name) return { ok: false, error: "Nejste přihlášeni." };
+    await requireAdmin();
+    if (!z.string().max(2000).safeParse(endpoint).success) return;
 
     await prisma.pushSubscription.deleteMany({ where: { endpoint } });
 }

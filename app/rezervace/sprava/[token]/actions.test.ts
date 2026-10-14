@@ -83,6 +83,15 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(result).toEqual({ ok: false, error: expect.any(String) });
         });
 
+        it("answers a well-formed but unknown token and a non-string token the same way", async () => {
+            const unknown = await cancelBookingByTokenAction(crypto.randomUUID());
+            // server actions take whatever the client sends, types or not
+            const tampered = await cancelBookingByTokenAction(42 as unknown as string);
+
+            expect(unknown).toEqual({ ok: false, error: expect.any(String) });
+            expect(tampered).toEqual(unknown);
+        });
+
         it("cancels a solo booking within the modification window", async () => {
             const booking = await createBooking({
                 clientId: clientIds[0],
@@ -148,6 +157,23 @@ describe("rezervace/sprava/[token] actions", () => {
                 540
             );
             expect(result.ok).toBe(false);
+        });
+
+        it("rejects a date that doesn't exist and leaves the booking alone", async () => {
+            const booking = await createBooking({
+                clientId: clientIds[0],
+                serviceId,
+                date: ORIGINAL_DATE,
+                startTime: 540,
+                source: "ONLINE",
+            });
+
+            const result = await moveBookingByTokenAction(booking.cancelToken, "2026-02-30", 540);
+
+            expect(result.ok).toBe(false);
+            const after = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
+            expect(after.status).toBe("CONFIRMED");
+            expect(sendBookingMovedEmail).not.toHaveBeenCalled();
         });
 
         it("sends no email when the move is rejected", async () => {
@@ -342,6 +368,24 @@ describe("rezervace/sprava/[token] actions", () => {
                 to: TARGET_DATE,
             });
             expect(days.map((d) => d.getTime())).toEqual([TARGET_DATE.getTime()]);
+        });
+
+        it("returns nothing for a malformed date or an overlong range, even with a valid token", async () => {
+            const booking = await createBooking({
+                clientId: clientIds[0],
+                serviceId,
+                date: ORIGINAL_DATE,
+                startTime: 540,
+                source: "ONLINE",
+            });
+
+            expect(await getRescheduleSlotsAction(booking.cancelToken, "nesmysl")).toEqual([]);
+            expect(
+                await getRescheduleDaysAction(booking.cancelToken, {
+                    from: TARGET_DATE,
+                    to: new Date(Date.UTC(2036, 5, 21)),
+                })
+            ).toEqual([]);
         });
 
         it("sizes a group with guests by the bookings' extra time, not the main client's", async () => {

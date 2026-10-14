@@ -4,6 +4,7 @@ import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
 import {
     getAvailableDaysAction,
+    getAvailableSlotsAction,
     getExtraMinutesAction,
     submitGroupBooking,
 } from "./actions.ts";
@@ -41,8 +42,11 @@ vi.mock("@/lib/get-available-days-in-range.ts", () => ({
 const TEST_DATE = new Date("2099-10-01T00:00:00.000Z");
 const START = 540;
 
+// Formatted the way PhoneInput sends it ("XXX XXX XXX") — the booking
+// schemas reject anything else (see PHONE_RE).
 function uniquePhone(): string {
-    return `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+    const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
 }
 
 async function expectRedirect(promise: Promise<unknown>): Promise<string> {
@@ -63,6 +67,7 @@ describe("rezervace actions", () => {
     beforeEach(async () => {
         phone = uniquePhone();
         vi.mocked(getAvailableSlots).mockReset().mockResolvedValue([START]);
+        vi.mocked(getAvailableDaysInRange).mockClear();
 
         const services = await Promise.all([
             prisma.service.create({
@@ -132,7 +137,10 @@ describe("rezervace actions", () => {
                 data: { name: "Jana Beránková", phone },
             });
 
-            await submitGroup(["Jana Beránková", "Eva Beránková"]);
+            // must actually complete — a validation redirect would leave the
+            // client untouched too and pass the assertions below for nothing
+            const url = await submitGroup(["Jana Beránková", "Eva Beránková"]);
+            expect(url).toMatch(/^\/rezervace\/confirmed\?groupId=/);
 
             const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
             expect(after.name).toBe("Jana Beránková");
@@ -160,12 +168,19 @@ describe("rezervace actions", () => {
             );
         });
 
-        it("trims names and stores a whitespace-only guest name as null", async () => {
-            await submitGroup(["  Jana Beránková  ", "  Eva Beránková ", "   "]);
+        it("trims names", async () => {
+            await submitGroup(["  Jana Beránková  ", "  Eva Beránková "]);
 
             const bookings = await bookingsForPhone();
             expect(bookings[0].client.name).toBe("Jana Beránková");
-            expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva Beránková", null]);
+            expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva Beránková"]);
+        });
+
+        it("rejects a whitespace-only name and creates nothing", async () => {
+            const url = await submitGroup(["Jana Beránková", "   "]);
+
+            expect(url).toBe("/rezervace");
+            expect(await prisma.client.count({ where: { phone } })).toBe(0);
         });
 
         it("redirects back to the slot picker and creates nothing when the slot is gone", async () => {
@@ -196,6 +211,19 @@ describe("rezervace actions", () => {
         it("returns 0 for empty input", async () => {
             expect(await getExtraMinutesAction({ name: "  ", phone: "  " })).toBe(0);
         });
+
+        it("returns 0 for oversized input without looking anyone up", async () => {
+            expect(await getExtraMinutesAction({ name: "x".repeat(1000), phone })).toBe(0);
+        });
+    });
+
+    describe("getAvailableSlotsAction", () => {
+        it("returns no slots for invalid input without computing availability", async () => {
+            expect(await getAvailableSlotsAction(TEST_DATE, [])).toEqual([]);
+            expect(await getAvailableSlotsAction(TEST_DATE, [1, 2, 3, 4, 5])).toEqual([]);
+            expect(await getAvailableSlotsAction(new Date("nesmysl"), [serviceIds[0]])).toEqual([]);
+            expect(getAvailableSlots).not.toHaveBeenCalled();
+        });
     });
 
     describe("getAvailableDaysAction", () => {
@@ -213,6 +241,15 @@ describe("rezervace actions", () => {
             await getAvailableDaysAction(range, [serviceIds[0]], -30);
 
             expect(getAvailableDaysInRange).toHaveBeenCalledWith(range, [serviceIds[0]], 0);
+        });
+
+        it("rejects a reversed or overlong range without computing availability", async () => {
+            const reversed = { from: TEST_DATE, to: new Date("2099-09-01T00:00:00.000Z") };
+            const tenYears = { from: TEST_DATE, to: new Date("2109-10-01T00:00:00.000Z") };
+
+            expect(await getAvailableDaysAction(reversed, [serviceIds[0]])).toEqual([]);
+            expect(await getAvailableDaysAction(tenYears, [serviceIds[0]])).toEqual([]);
+            expect(getAvailableDaysInRange).not.toHaveBeenCalled();
         });
     });
 });

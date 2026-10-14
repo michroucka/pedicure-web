@@ -27,7 +27,16 @@ function buildReminderMessage(bookings: BookingForReminder[]): string {
 
 // Vercel Cron GETs this daily with `Authorization: Bearer $CRON_SECRET`
 // (set automatically once the CRON_SECRET env var exists on the project).
+// If the CRON_SECRET env var is not set, it returns error status 500.
 export async function GET(request: NextRequest) {
+    if (!process.env.CRON_SECRET) {
+        console.error("CRON_SECRET env var not set");
+        return NextResponse.json(
+            { error: "Server misconfigured" },
+            { status: 500 }
+        );
+    }
+
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -15,12 +15,12 @@ import { cs } from "date-fns/locale";
 import { cn, toUtcMidnight } from "@/lib/utils";
 import { getAvailableDaysAction } from "@/app/rezervace/actions.ts";
 import { Spinner } from "@/components/ui/spinner.tsx";
+import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
 
-// Fetched once per service selection instead of once per visible month —
-// browsing a few months back/forth then costs zero extra round-trips.
-// Only a month outside this window (rare — see the second effect below)
-// needs its own fetch.
-const HORIZON_DAYS = 120;
+// The next HORIZON_DAYS are fetched once per service selection instead of
+// once per visible month — browsing a few months back/forth then costs
+// zero extra round-trips. Only a month outside this window (rare — see the
+// second effect below) needs its own fetch.
 
 export function DateStep({ onContinueAction }: { onContinueAction: () => void }) {
     const [currentMonth, setCurrentMonth] = useState<Date>(

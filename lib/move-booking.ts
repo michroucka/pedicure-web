@@ -3,11 +3,13 @@ import { prisma } from "./prisma.ts";
 import { createBooking } from "./create-booking.ts";
 import { getAvailableSlots } from "./get-available-slots.ts";
 import { hasOverlappingBooking } from "./check-booking-overlap.ts";
-import { getCzechToday } from "./utils.ts";
+import { endsAfterMidnight, getCzechToday } from "./utils.ts";
+
+export const PAST_MIDNIGHT_ERROR = "Rezervace by přesáhla půlnoc.";
 
 export class SlotUnavailableError extends Error {
-    constructor() {
-        super("Zvolený termín už není volný.");
+    constructor(message = "Zvolený termín už není volný.") {
+        super(message);
     }
 }
 
@@ -56,6 +58,11 @@ export async function moveBooking(
             });
             const duration =
                 service.durationMinutes + extraTimeMinutes;
+            // A custom time skips the availability windows, which are what
+            // normally keeps a booking inside the day.
+            if (endsAfterMidnight(newStartTime, duration)) {
+                throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
+            }
             const overlaps = await hasOverlappingBooking(
                 newDate,
                 newStartTime,
@@ -148,6 +155,9 @@ export async function moveGroupBooking(
                     const service = services.find((s) => s.id === id);
                     return sum + (service?.durationMinutes ?? 0);
                 }, 0) + totalExtraMinutes;
+            if (endsAfterMidnight(newGroupStart, groupDuration)) {
+                throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
+            }
             const overlaps = await hasOverlappingBooking(
                 newDate,
                 newGroupStart,

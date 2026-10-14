@@ -6,10 +6,3 @@
     (domluveno ze zustane denne - nizky kredit = realne riziko ze klientum prestanou chodit pripominkove SMS, radsi otravovat nez na to zapomenout; dnesni otravnost je jen diky tomu ze booking jeste nejede naostro)
 [-] povolit nechavat na konci dne nezaplnitelny gap - dostupnost je do 19:00 ale volno je uz jen od 18:15, chci pedikuru klasik - povol dat to od 18:15 s tim ze bude do 18:45 ale do 18:45-19:00 uz se nic nevejde - to nevadi
     (pro admina vyreseno pres #18 - allowUnfillableGaps; pro verejny booking jsme se domluvili ze to nestoji za komplexitu)
-
-
-[ ] validace dat na serveru - server actions jsou verejne POST endpointy, Zod schema se ted vola jen ve formulari v prohlizeci (zodResolver), server data nekontroluje (TS typy za behu nic negarantuji)
-    - submitGroupBooking / submitBooking: na zacatku groupSchema/soloSchema.safeParse(data), pri chybe akci ukoncit; do schematu .trim() pred .min(1) (min(1) pusti "   ")
-    - priklady co ted projde: names: [] -> names[0].trim() spadne (500), nevalidni email/telefon se ulozi klientovi do DB, jmeno z mezer
-    - projit CELOU aplikaci: vsechny server actions (rezervace, sprava/[token], admin kalendar/dostupnost/klienti/nastaveni) i API routes - kazdy vstup zvenku validovat na serveru, ne jen v UI
-    - u admin akci zaroven overit autorizaci (session) primo v akci, nespolehat jen na proxy.ts

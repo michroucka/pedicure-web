@@ -22,7 +22,8 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
-import { Check, Mail, Phone, StickyNote, Trash2, UserRound } from "lucide-react";
+import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
+import { AlertCircle, Check, Mail, Phone, StickyNote, Trash2, UserRound } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/utils.ts";
 import {
     deleteClientAction,
@@ -50,6 +51,7 @@ export function ClientEditDialog({
     const [email, setEmail] = useState("");
     const [extraTime, setExtraTime] = useState<ExtraTime>(NO_EXTRA_TIME);
     const [note, setNote] = useState("");
+    const [error, setError] = useState<string>();
     const [lastLoadedId, setLastLoadedId] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 
@@ -63,6 +65,7 @@ export function ClientEditDialog({
         setEmail(client.email ?? "");
         setExtraTime(extraTimeFromMinutes(client.extraTimeMinutes));
         setNote(client.note ?? "");
+        setError(undefined);
         setConfirmDelete(false);
     }
     if (!client && lastLoadedId !== null) {
@@ -71,14 +74,19 @@ export function ClientEditDialog({
 
     function submit() {
         if (!client) return;
+        setError(undefined);
         startTransition(async () => {
-            await updateClientAction(client.id, {
+            const result = await updateClientAction(client.id, {
                 name: name.trim(),
                 phone: phone.trim(),
                 email: email.trim(),
                 extraTimeMinutes: extraTimeToMinutes(extraTime),
                 note: note.trim(),
             });
+            if (!result.ok) {
+                setError(result.error);
+                return;
+            }
             onOpenChange(false);
         });
     }
@@ -158,6 +166,13 @@ export function ClientEditDialog({
                             onChange={(e) => setNote(e.target.value)}
                         />
                     </div>
+
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertCircle />
+                            <AlertTitle>{error}</AlertTitle>
+                        </Alert>
+                    )}
                 </div>
 
                 <DialogFooter className="flex-row justify-between gap-2">

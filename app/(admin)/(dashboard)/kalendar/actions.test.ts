@@ -12,6 +12,8 @@ import {
 // revalidatePath and after() need a Next.js request context; after() runs
 // its callback right away so the moved email can be asserted.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Actions call requireAdmin() first; there is no session in tests.
+vi.mock("@/lib/require-admin.ts", () => ({ requireAdmin: vi.fn(async () => "admin") }));
 vi.mock("next/server", () => ({ after: vi.fn((callback: () => unknown) => callback()) }));
 vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
     sendBookingMovedEmail: vi.fn(),
@@ -23,8 +25,11 @@ vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
 const DATE_STR = "2099-11-02";
 const DATE = new Date(`${DATE_STR}T00:00:00.000Z`);
 
+// Already in the "XXX XXX XXX" shape the actions normalize to (see
+// adminPhoneSchema) — otherwise the stored phone wouldn't match `phone`.
 function uniquePhone(): string {
-    return `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+    const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
 }
 
 describe("kalendar actions", () => {
@@ -210,6 +215,22 @@ describe("kalendar actions", () => {
             ]);
             const client = await prisma.client.findFirstOrThrow({ where: { phone } });
             expect(client.extraTimeMinutes).toBe(5);
+        });
+
+        it("rejects a custom time that would run past midnight and creates nothing", async () => {
+            const result = await createManualBookingAction({
+                phone,
+                people: [{ name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                dateStr: DATE_STR,
+                startTime: 23 * 60 + 50,
+                source: "PHONE",
+                outsideHours: true,
+            });
+
+            expect(result).toEqual({ ok: false, error: "Rezervace by přesáhla půlnoc." });
+            expect(await bookingsForPhone()).toHaveLength(0);
+            // rejected before findOrCreateClient — no orphan client either
+            expect(await prisma.client.count({ where: { phone } })).toBe(0);
         });
 
         it("sanitizes a nonsensical extra time from the form", async () => {

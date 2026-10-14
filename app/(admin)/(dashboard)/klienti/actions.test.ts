@@ -6,9 +6,14 @@ import { deleteClientAction, updateClientAction } from "./actions.ts";
 
 // revalidatePath needs a Next.js request context.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Actions call requireAdmin() first; there is no session in tests.
+vi.mock("@/lib/require-admin.ts", () => ({ requireAdmin: vi.fn(async () => "admin") }));
 
+// Already in the "XXX XXX XXX" shape updateClientAction normalizes to (see
+// adminPhoneSchema) — otherwise afterEach wouldn't find the edited client.
 function uniquePhone(): string {
-    return `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+    const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
 }
 
 describe("klienti actions", () => {
@@ -106,7 +111,7 @@ describe("klienti actions", () => {
                 data: { name: "Jana", phone, active: false },
             });
 
-            await updateClientAction(client.id, {
+            const result = await updateClientAction(client.id, {
                 name: "Jana Nová",
                 phone,
                 email: "",
@@ -114,8 +119,35 @@ describe("klienti actions", () => {
                 note: "",
             });
 
+            expect(result).toEqual({ ok: true });
             const after = await prisma.client.findUniqueOrThrow({ where: { id: client.id } });
+            expect(after.name).toBe("Jana Nová");
             expect(after.active).toBe(false);
+        });
+
+        it("normalizes the phone and rejects one that can't be", async () => {
+            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const data = { name: "Jana", email: "", extraTimeMinutes: 0, note: "" };
+
+            expect(
+                await updateClientAction(client.id, { ...data, phone: phone.replaceAll(" ", "") })
+            ).toEqual({ ok: true });
+            const after = await prisma.client.findUniqueOrThrow({ where: { id: client.id } });
+            expect(after.phone).toBe(phone);
+
+            const rejected = await updateClientAction(client.id, { ...data, phone: "12345" });
+            expect(rejected.ok).toBe(false);
+        });
+
+        it("returns an error for a client that no longer exists", async () => {
+            const result = await updateClientAction("does-not-exist", {
+                name: "Jana",
+                phone,
+                email: "",
+                extraTimeMinutes: 0,
+                note: "",
+            });
+            expect(result.ok).toBe(false);
         });
     });
 });

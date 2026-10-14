@@ -2,11 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma.ts";
+import { requireAdmin } from "@/lib/require-admin.ts";
 import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
-import { diffDayBlocks, type TimeSlot } from "@/lib/availability.ts";
+import {
+    diffDayBlocks,
+    toRecurringRows,
+    type TimeSlot,
+} from "@/lib/availability.ts";
 import { parseTime, toDateOnly, addUtcDays } from "@/lib/utils.ts";
+import { dateStrSchema } from "@/lib/validation.ts";
 import {
     availabilitySchema,
+    blockedRangesSchema,
     dayOverrideSchema,
     closeRangeSchema,
     type AvailabilityFormData,
@@ -15,13 +22,21 @@ import {
 } from "./schema.ts";
 
 export async function saveRecurringAvailability(data: AvailabilityFormData) {
-    const parsed = availabilitySchema.parse(data);
+    await requireAdmin();
+    // The form validates with the same schema (zodResolver), so a failure
+    // here is tampered input — nothing to show, just don't save it.
+    const result = availabilitySchema.safeParse(data);
+    if (!result.success) return;
+    const parsed = result.data;
 
-    const rows = parsed.days.flatMap((day) =>
-        day.blocks.map((block) => ({
+    // Touching blocks get merged into one row — see toRecurringRows.
+    const rows = toRecurringRows(
+        parsed.days.map((day) => ({
             dayOfWeek: day.dayOfWeek,
-            startTime: parseTime(block.startTime),
-            endTime: parseTime(block.endTime),
+            blocks: day.blocks.map((block) => ({
+                start: parseTime(block.startTime),
+                end: parseTime(block.endTime),
+            })),
         }))
     );
 
@@ -47,9 +62,16 @@ export async function checkDayOverrideConflicts(
     dateStr: string,
     blockedRanges: TimeSlot[]
 ): Promise<ExceptionConflict[]> {
+    await requireAdmin();
+    const parsedDateStr = dateStrSchema.safeParse(dateStr);
+    const parsedRanges = blockedRangesSchema.safeParse(blockedRanges);
+    // Invalid input = no conflicts to show; saveDayOverride validates the
+    // actual save on its own.
+    if (!parsedDateStr.success || !parsedRanges.success) return [];
+    blockedRanges = parsedRanges.data;
     if (blockedRanges.length === 0) return [];
 
-    const date = toDateOnly(new Date(dateStr));
+    const date = toDateOnly(new Date(parsedDateStr.data));
 
     const bookings = await prisma.booking.findMany({
         where: {
@@ -77,6 +99,7 @@ export async function checkDayOverrideConflicts(
 export async function saveDayOverride(
     data: DayOverrideFormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+    await requireAdmin();
     const result = dayOverrideSchema.safeParse(data);
     if (!result.success) {
         return {
@@ -164,7 +187,12 @@ export async function checkRangeConflicts(
     startDateStr: string,
     endDateStr: string
 ): Promise<ExceptionConflict[]> {
-    const dates = datesInRange(startDateStr, endDateStr);
+    await requireAdmin();
+    // Same rules (incl. the max length) as saveCloseRange — an invalid
+    // range shows no conflicts and then fails there with the message.
+    const result = closeRangeSchema.safeParse({ startDate: startDateStr, endDate: endDateStr });
+    if (!result.success) return [];
+    const dates = datesInRange(result.data.startDate, result.data.endDate);
 
     const bookings = await prisma.booking.findMany({
         where: { date: { in: dates }, status: "CONFIRMED" },
@@ -185,6 +213,7 @@ export async function checkRangeConflicts(
 export async function saveCloseRange(
     data: CloseRangeFormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+    await requireAdmin();
     const result = closeRangeSchema.safeParse(data);
     if (!result.success) {
         return {

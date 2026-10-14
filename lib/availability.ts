@@ -233,3 +233,24 @@ export function computeAvailableSlots(
     }
     return result;
 }
+
+// Rows to store for the weekly schedule. Overlapping blocks are rejected
+// by the schema before this runs; blocks that only touch (9–12, 12–14)
+// are merged into one row, same as resolveDayTimeSlots would treat them.
+// Grouped by dayOfWeek, not by input entry, so a day sent twice merges
+// too.
+export function toRecurringRows(
+    days: { dayOfWeek: number; blocks: TimeSlot[] }[]
+): { dayOfWeek: number; startTime: number; endTime: number }[] {
+    const slotsByDay = new Map<number, TimeSlot[]>();
+    for (const day of days) {
+        slotsByDay.set(day.dayOfWeek, [...(slotsByDay.get(day.dayOfWeek) ?? []), ...day.blocks]);
+    }
+    return [...slotsByDay].flatMap(([dayOfWeek, slots]) =>
+        mergeSubsequentSlots(slots).map((slot) => ({
+            dayOfWeek,
+            startTime: slot.start,
+            endTime: slot.end,
+        }))
+    );
+}

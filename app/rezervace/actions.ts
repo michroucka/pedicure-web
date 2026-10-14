@@ -14,6 +14,16 @@ import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
 import { sendBookingConfirmationEmail } from "@/lib/send-booking-confirmation-email.ts";
 import { after } from "next/server";
 import { sendPushNotification } from "@/lib/send-push.ts";
+import { z } from "zod";
+import {
+    contactLookupSchema,
+    dateRangeSchema,
+    groupContextSchema,
+    groupDataSchema,
+    soloContextSchema,
+    soloDataSchema,
+} from "@/app/rezervace/schema.ts";
+import { serviceIdsSchema } from "@/lib/validation.ts";
 
 // Builds the redirect back to the slot picker when a chosen slot can't be
 // booked. Distinguishes two causes so the message (and the slot list itself,
@@ -49,27 +59,41 @@ export async function submitBooking(
     context: { date: Date; serviceId: number; startTime: number },
     data: { name: string; phone: string; email: string }
 ) {
-    const name = data.name;
-    const phone = data.phone;
-    const email = data.email;
+    const parsedContext = soloContextSchema.safeParse(context);
+    const parsedData = soloDataSchema.safeParse(data);
+    if (!parsedContext.success || !parsedData.success) {
+        redirect("/rezervace");
+    }
+    const name = parsedData.data.name;
+    const phone = parsedData.data.phone;
+    const email = parsedData.data.email;
+    const serviceId = parsedContext.data.serviceId;
+    const date = parsedContext.data.date;
+    const startTime = parsedContext.data.startTime;
+
+    const service = await prisma.service.findUnique({
+        where: { id: serviceId, active: true },
+    });
+    if (!service) {
+        redirect("/rezervace");
+    }
+
     const client = await findOrCreateClient(phone, name, email);
 
-    const valid = await getAvailableSlots(context.date, [context.serviceId], client.extraTimeMinutes);
-    if (!valid.includes(context.startTime)) {
+    const extraTimeMinutes = client.extraTimeMinutes;
+    const source = "ONLINE";
+
+    const valid = await getAvailableSlots(date, [serviceId], extraTimeMinutes);
+    if (!valid.includes(startTime)) {
         redirect(
             await buildSlotConflictRedirect(
-                context.date,
-                [context.serviceId],
-                context.startTime,
-                client.extraTimeMinutes
+                date,
+                [serviceId],
+                startTime,
+                extraTimeMinutes
             )
         );
     }
-
-    const serviceId = context.serviceId;
-    const date = context.date;
-    const startTime = context.startTime;
-    const source = "ONLINE";
 
     try {
         const booking = await createBooking({
@@ -78,7 +102,7 @@ export async function submitBooking(
             date,
             startTime,
             source,
-            extraTimeMinutes: client.extraTimeMinutes,
+            extraTimeMinutes,
         });
 
         const bookingWithRelations = await prisma.booking.findUniqueOrThrow({
@@ -105,7 +129,7 @@ export async function submitBooking(
                     date,
                     [serviceId],
                     startTime,
-                    client.extraTimeMinutes
+                    extraTimeMinutes
                 )
             );
         } else {
@@ -118,32 +142,53 @@ export async function submitGroupBooking(
     context: { date: Date; serviceIds: number[]; startTime: number },
     data: { names: string[]; phone: string; email: string }
 ) {
-    const phone = data.phone;
-    const email = data.email;
-    const names = context.serviceIds.map((_, i) => data.names[i]);
+    const parsedContext = groupContextSchema.safeParse(context);
+    const parsedData = groupDataSchema.safeParse(data);
+    if (!parsedContext.success || !parsedData.success) {
+        redirect("/rezervace");
+    }
 
-    const client = await findOrCreateClient(phone, names[0].trim(), email);
+    const phone = parsedData.data.phone;
+    const email = parsedData.data.email;
+    const names = parsedData.data.names;
+    const serviceIds = parsedContext.data.serviceIds;
+    const date = parsedContext.data.date;
+    const startTime = parsedContext.data.startTime;
+
+    if (names.length !== serviceIds.length) {
+        redirect("/rezervace");
+    }
+
+    const services = await prisma.service.findMany({
+        where: { id: { in: serviceIds }, active: true },
+    });
+
+    if (services.length !== new Set(serviceIds).size) {
+        redirect("/rezervace");
+    }
+
+    const client = await findOrCreateClient(phone, names[0], email);
 
     const people = names.map((name, i) => ({
         clientId: client.id,
-        guestName: i === 0 ? undefined : name.trim() || undefined,
+        guestName: i === 0 ? undefined : name,
         extraTimeMinutes: i === 0 ? client.extraTimeMinutes : 0,
-        serviceId: context.serviceIds[i],
+        serviceId: serviceIds[i],
     }));
 
     const extraMinutes = people.reduce((acc, person) => acc + person.extraTimeMinutes, 0);
 
     const valid = await getAvailableSlots(
-        context.date,
-        context.serviceIds,
+        date,
+        serviceIds,
         extraMinutes
     );
-    if (!valid.includes(context.startTime)) {
+    if (!valid.includes(startTime)) {
         redirect(
             await buildSlotConflictRedirect(
-                context.date,
-                context.serviceIds,
-                context.startTime,
+                date,
+                serviceIds,
+                startTime,
                 extraMinutes
             )
         );
@@ -154,8 +199,8 @@ export async function submitGroupBooking(
     try {
         const bookings = await createGroupBooking(
             people,
-            context.date,
-            context.startTime,
+            date,
+            startTime,
             "ONLINE",
         )
 
@@ -181,9 +226,9 @@ export async function submitGroupBooking(
         ) {
             redirect(
                 await buildSlotConflictRedirect(
-                    context.date,
-                    context.serviceIds,
-                    context.startTime,
+                    date,
+                    serviceIds,
+                    startTime,
                     extraMinutes
                 )
             );
@@ -201,9 +246,13 @@ export async function getAvailableDaysAction(
     serviceIds: number[],
     extraMinutes: number = 0
 ): Promise<Date[]> {
+    const parsedRange = dateRangeSchema.safeParse(range);
+    const parsedServiceIds = serviceIdsSchema.safeParse(serviceIds);
+    if (!parsedRange.success || !parsedServiceIds.success) return [];
+
     return getAvailableDaysInRange(
-        range,
-        serviceIds,
+        parsedRange.data,
+        parsedServiceIds.data,
         normalizeExtraMinutes(extraMinutes)
     );
 }
@@ -214,8 +263,10 @@ export async function getExtraMinutesAction(contact: {
     name: string;
     phone: string;
 }): Promise<number> {
-    const name = contact.name.trim();
-    const phone = contact.phone.trim();
+    const parsed = contactLookupSchema.safeParse(contact);
+    if (!parsed.success) return 0;
+
+    const { name, phone } = parsed.data;
     if (!name && !phone) return 0;
 
     const client = await findClient(phone || undefined, name);
@@ -227,5 +278,15 @@ export async function getAvailableSlotsAction(
     serviceIds: number[],
     extraMinutes: number = 0
 ): Promise<number[]> {
-    return getAvailableSlots(date, serviceIds, normalizeExtraMinutes(extraMinutes));
+    // Called in the background by the slot picker — invalid input just
+    // means "no slots", not a redirect.
+    const parsedDate = z.date().safeParse(date);
+    const parsedServiceIds = serviceIdsSchema.safeParse(serviceIds);
+    if (!parsedDate.success || !parsedServiceIds.success) return [];
+
+    return getAvailableSlots(
+        parsedDate.data,
+        parsedServiceIds.data,
+        normalizeExtraMinutes(extraMinutes)
+    );
 }

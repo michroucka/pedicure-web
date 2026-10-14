@@ -20,16 +20,13 @@ import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { AlertCircle, ArrowRightLeft, Check, X } from "lucide-react";
 import { formatTime, toUtcMidnight } from "@/lib/utils.ts";
+import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
 import {
     cancelBookingByTokenAction,
     getRescheduleDaysAction,
     getRescheduleSlotsAction,
     moveBookingByTokenAction,
 } from "@/app/rezervace/sprava/[token]/actions.ts";
-
-// Fetched once per move attempt instead of per visible month — matches
-// DateStep's horizon in the main booking wizard.
-const HORIZON_DAYS = 120;
 
 export function ManageBooking({
     token,
