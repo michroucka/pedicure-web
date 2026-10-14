@@ -6,7 +6,7 @@ import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 export function ClosingSection() {
     return (
         <section className="relative bg-background">
-            <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 md:py-24">
+            <div className="mx-auto max-w-2xl px-4 pt-8 pb-24 text-center sm:px-6">
                 <h2 className="font-display text-pretty italic">Vaše nohy v dobrých rukou</h2>
                 <p className="mx-auto mt-4 max-w-prose text-pretty text-base leading-relaxed text-muted-foreground">
                     Po 20 letech praxe stále platí, že mě těší vidět rozdíl,
