@@ -129,6 +129,12 @@ export function BookingConfirmationEmail({
                     >
                         {BRAND}
                     </Link>
+                    <Link
+                        href={`${BASE_URL}/ochrana-osobnich-udaju`}
+                        style={footerSecondary}
+                    >
+                        Ochrana osobních údajů
+                    </Link>
                 </Container>
             </Body>
         </Html>
@@ -213,6 +219,13 @@ const footer: React.CSSProperties = {
     fontSize: "12px",
     margin: "0",
     textAlign: "center",
+};
+
+const footerSecondary: React.CSSProperties = {
+    ...footer,
+    fontSize: "11px",
+    marginTop: "8px",
+    textDecoration: "underline",
 };
 
 // Default export + PreviewProps is the `react-email dev` convention (see

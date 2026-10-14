@@ -49,8 +49,14 @@ export function MarketingFooter() {
                     </Link>
                 </nav>
             </div>
-            <div className="mx-auto flex max-w-5xl justify-center px-4 pb-4 max-sm:pt-2 sm:justify-end sm:px-6">
+            <div className="mx-auto flex max-w-5xl justify-center sm:justify-end px-4 pb-4 max-sm:pt-2 sm:px-6">
                 <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground sm:flex-row sm:gap-6">
+                    <Link
+                        href="/ochrana-osobnich-udaju"
+                        className="underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground"
+                    >
+                        Ochrana osobních údajů
+                    </Link>
                     <Link
                         href="/kontakt"
                         className="underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground"

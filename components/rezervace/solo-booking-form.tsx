@@ -25,6 +25,7 @@ import {
     UserRound,
 } from "lucide-react";
 import Link from "next/link";
+import { PrivacyNotice } from "@/components/rezervace/privacy-notice.tsx";
 import { formatTime } from "@/lib/utils.ts";
 
 type SoloFormData = z.infer<typeof soloDataSchema>;
@@ -137,6 +138,8 @@ export function SoloBookingForm({
                         <FieldError errors={[errors.email]} />
                     </Field>
                 </FieldGroup>
+
+                <PrivacyNotice />
 
                 <div className="mt-6 flex justify-between pb-6">
                     <Button
