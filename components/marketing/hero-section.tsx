@@ -7,10 +7,12 @@ import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 export function HeroSection() {
     return (
         <section className="relative overflow-hidden">
-            <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 md:py-24">
+            <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 pt-8 pb-24 sm:px-6 md:grid-cols-2">
                 <div>
-                    <h1 className="italic text-pretty">Vaše nohy vás nosí celý život.</h1>
-                    <p className="mt-4 max-w-prose text-pretty text-lg text-muted-foreground">
+                    <h1 className="text-pretty italic">
+                        Vaše nohy vás nosí celý život.
+                    </h1>
+                    <p className="mt-4 max-w-prose text-lg text-pretty text-muted-foreground">
                         Každý den, na každém kroku. A právě proto si zaslouží
                         kvalitní a profesionální péči – už 20 let.
                     </p>
@@ -35,7 +37,9 @@ export function HeroSection() {
 
                 <div
                     className="relative aspect-4/5 overflow-hidden bg-muted"
-                    style={{ borderRadius: "62% 38% 55% 45% / 45% 55% 45% 55%" }}
+                    style={{
+                        borderRadius: "62% 38% 55% 45% / 45% 55% 45% 55%",
+                    }}
                 >
                     <Image
                         src="/portret.jpg"

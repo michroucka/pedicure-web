@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth.ts";
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav.tsx";
 import { PushResubscribe } from "@/components/admin/push-resubscribe.tsx";
+import { KeepAwake } from "@/components/admin/keep-awake.tsx";
 
 export const metadata: Metadata = {
     title: {
@@ -27,11 +28,12 @@ export default async function AdminDashboardLayout({
 
     return (
         <div className="flex h-svh flex-col">
-            <main className="flex-1 overflow-y-auto scrollbar-gutter-both">
+            <main className="flex-1 overflow-y-auto scrollbar-gutter-both pt-4">
                 {children}
             </main>
             <AdminBottomNav />
             <PushResubscribe />
+            <KeepAwake />
         </div>
     );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 export function MarketingFooter() {
     return (
         <footer className="border-t border-border/60 bg-card">
-            <div className="mx-auto flex max-w-5xl flex-row justify-between gap-6 px-4 py-4 sm:px-6">
+            <div className="mx-auto flex max-w-5xl flex-row justify-between gap-6 px-4 pb-6 sm:px-6">
                 <div className="flex select-none items-center cursor-default">
                     <div>
                         <p className="font-display text-lg md:text-xl">Nohy v cajku</p>

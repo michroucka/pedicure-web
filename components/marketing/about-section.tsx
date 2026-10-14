@@ -14,7 +14,7 @@ export function AboutSection() {
             id="o-mne"
             className="relative scroll-mt-20 bg-card"
         >
-            <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-24">
+            <div className="mx-auto max-w-3xl px-4 pt-8 pb-24 md:pb-30 sm:px-6">
                 <Image
                     src="/logo-light.svg"
                     alt="Nohy v cajku"
@@ -53,7 +53,7 @@ export function AboutSection() {
                     {PRINCIPLES.map((principle) => (
                         <li
                             key={principle}
-                            className="flex items-start gap-2 text-pretty text-sm text-card-foreground/90"
+                            className="flex items-start gap-2 text-sm text-pretty text-card-foreground/90"
                         >
                             <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
                             {principle}
