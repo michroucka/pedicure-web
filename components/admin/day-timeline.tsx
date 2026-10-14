@@ -28,7 +28,7 @@ export function DayTimeline({
     date: Date;
 }) {
     const [selected, setSelected] = useState<BookingItem | null>(null);
-    const [nowMinutes, setNowMinutes] = useState<number>(15 * 60 + 30); // TODO: remove, temp for testing
+    const [nowMinutes, setNowMinutes] = useState<number>(getCzechNowMinutes);
 
     useEffect(() => {
         const id = setInterval(
