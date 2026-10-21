@@ -6,3 +6,6 @@
     (domluveno ze zustane denne - nizky kredit = realne riziko ze klientum prestanou chodit pripominkove SMS, radsi otravovat nez na to zapomenout; dnesni otravnost je jen diky tomu ze booking jeste nejede naostro)
 [-] povolit nechavat na konci dne nezaplnitelny gap - dostupnost je do 19:00 ale volno je uz jen od 18:15, chci pedikuru klasik - povol dat to od 18:15 s tim ze bude do 18:45 ale do 18:45-19:00 uz se nic nevejde - to nevadi
     (pro admina vyreseno pres #18 - allowUnfillableGaps; pro verejny booking jsme se domluvili ze to nestoji za komplexitu)
+[ ] nezhasinani obrazovky (keep-awake) prestane po case fungovat (iPad standalone, iPadOS 27), pomuze az vypnout/zapnout prepinac v nastaveni
+    (podezreni: KeepAwake znovu ziskava zamek jen na visibilitychange - kdyz request() pri navratu selze (NotAllowedError, jen se zaloguje, zadny retry) nebo system zamek uvolni pri viditelne strance (event "release" se neposloucha, mozna usporny rezim), uz se nikdy neobnovi.
+     overit: Safari Web Inspector z MacBooku pres kabel - logovat acquire ok/fail + "release" event. oprava: listener na "release" + retry pri selhani + dalsi spoustece (pageshow/focus/periodicka kontrola))
