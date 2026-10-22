@@ -70,6 +70,7 @@ import {
     type ExtraTime,
 } from "@/components/admin/extra-time-field.tsx";
 import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
+import { NoteHealthHint } from "@/components/admin/note-health-hint.tsx";
 
 const SOURCE_LABELS: Record<string, string> = {
     ONLINE: "Online",
@@ -499,6 +500,7 @@ export function BookingDetailDialog({
                                                 setEditNote(e.target.value)
                                             }
                                         />
+                                        <NoteHealthHint />
                                     </CollapsibleContent>
                                 </Collapsible>
                             </div>

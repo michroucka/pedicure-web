@@ -37,6 +37,7 @@ import {
     extraTimeToMinutes,
     type ExtraTime,
 } from "@/components/admin/extra-time-field.tsx";
+import { NoteHealthHint } from "@/components/admin/note-health-hint.tsx";
 
 export function ClientEditDialog({
     client,
@@ -165,6 +166,7 @@ export function ClientEditDialog({
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                         />
+                        <NoteHealthHint />
                     </div>
 
                     {error && (

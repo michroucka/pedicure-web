@@ -7,7 +7,7 @@ Vzor zásad je v `../web-dokumenty/sablony/web/zasady-ochrany-osobnich-udaju.md`
 
 Rezervace jsou zatím vypnuté (`lib/booking-enabled.ts`). Bod 1–4 je potřeba hotový **před** jejich zapnutím.
 
-**Stav 2026-10-14:** body 1, 2, 3, 5 hotové, 4 čeká na ověřovací audit. Zbývá 7 (+ volitelně 6) a body bez kódu.
+**Stav 2026-10-22:** body 1, 2, 3, 5, 7 hotové, 4 čeká na ověřovací audit. Zbývá volitelně 6 a body bez kódu.
 Práce je na větvi `feat/shared-business-info` (nepushnutá, ne v `main`).
 
 ## Kód
@@ -30,7 +30,7 @@ Práce je na větvi `feat/shared-business-info` (nepushnutá, ne v `main`).
 - [x] **5. Mazání klienta v administraci** – hotovo (`deleteClientAction` v `klienti/actions.ts` + test): klient bez rezervací se smaže, s rezervacemi se skryje (`active: false`).
   - Pozn.: skrytý klient zůstává v DB kvůli historii – úplné odstranění řeší až bod 6.
 - [ ] **6. Automatický úklid starých dat** (volitelné): cron jednou měsíčně anonymizuje nebo smaže klienty bez návštěvy déle než `CLIENT_RETENTION_YEARS` (`lib/data-retention.ts`). Bez něj se musí mazat ručně – zásady slibují 3 roky.
-- [ ] **7. Pole `note` u klienta a rezervace**: do UI v adminu (`client-edit-dialog`, `add-booking-dialog`, `booking-detail-dialog`) přidat nápovědu „Nezapisujte zdravotní údaje (diagnózy, nemoci)“. Zdravotní údaje jsou zvláštní kategorie podle čl. 9 GDPR a vyžadovaly by výslovný souhlas klienta. Online formulář pole na poznámku nemá, tam nic.
+- [x] **7. Pole `note` u klienta** – hotovo 2026-10-22: pod poznámkou nápověda „Nezapisujte zdravotní údaje.“ (`components/admin/note-health-hint.tsx`) ve všech třech dialozích, které ji upravují (`client-edit-dialog`, `add-booking-dialog`, `booking-detail-dialog`). Poznámku má jen `Client`, `Booking` pole `note` nemá. Zdravotní údaje jsou zvláštní kategorie podle čl. 9 GDPR a vyžadovaly by výslovný souhlas klienta. Online formulář pole na poznámku nemá.
 
 ## Provoz a účty (bez kódu)
 
