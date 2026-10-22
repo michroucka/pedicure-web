@@ -8,7 +8,7 @@ Vzor zásad je v `../web-dokumenty/sablony/web/zasady-ochrany-osobnich-udaju.md`
 Rezervace jsou zatím vypnuté (`lib/booking-enabled.ts`). Bod 1–4 je potřeba hotový **před** jejich zapnutím.
 
 **Stav 2026-10-22:** body 1, 2, 3, 5, 6, 7 hotové, 4 čeká na ověřovací audit. Zbývají body bez kódu.
-Práce je na větvi `feat/shared-business-info` (nepushnutá, ne v `main`).
+Práce je na větvi `feat/shared-business-info` (pushnutá na `origin`, ne v `main`).
 
 ## Kód
 
