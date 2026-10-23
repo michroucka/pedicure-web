@@ -128,13 +128,18 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   klient se znovu aktivuje sám, když si přes `findOrCreateClient`
   vytvoří novou rezervaci (párování skryté klienty záměrně zahrnuje,
   jinak by vznikaly duplicity)
-- Párování klienta (`lib/find-client.ts`, sdílí ho `findOrCreateClient`
+- Párování klienta (`lib/find-client.ts`, používá ho `findOrCreateClient`
   i náhled extra času v booking formuláři): podle telefonu, a jen když
   telefon chybí, podle přesné shody jména. Telefon se páruje přes
   indexovaný sloupec `Client.phoneNormalized` – generated column, počítá
   ho Postgres sám z `phone` (stejné pravidlo jako `normalizePhoneForMatch`,
   shodu hlídá `lib/client-phone-normalized.test.ts`). Nikdy do něj
   nezapisovat
+- Náhled extra času ve veřejném formuláři (`getExtraMinutesAction`) je
+  přísnější než odeslání: odpoví jen při shodě telefonu **i** jména (bez
+  ohledu na velikost písmen/diakritiku), aby samotné číslo neprozradilo, že
+  je někdo klient. Odeslání páruje jen podle telefonu – při jinak napsaném
+  jménu se delší slot projeví až po odeslání (redirect na výběr slotu)
 - Telefon = identita, ostatní údaje bere **poslední zadaná hodnota**
   (jméno, e-mail – online i v adminu). Klient se ale zapisuje až po
   ověření slotu, neúspěšná rezervace nic nepřepíše. Vědomě přijaté riziko:
@@ -207,6 +212,16 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   `NEXT_PUBLIC_TURNSTILE_SITE_KEY`) + max. 3 nadcházející online rezervace
   na telefon/e-mail (`lib/online-booking-limit.ts`). Online horizont
   (`HORIZON_DAYS`) se vynucuje i na serveru, admina neomezuje
+- **Ochrana admin loginu** – rate limit ve **Vercel Firewall** (dashboard,
+  ne v repu): POST na `/login` i `/api/auth/callback/credentials` (endpoint
+  Auth.js jde volat přímo, mimo stránku), limit podle IP. Ne počítadlo
+  v DB – to by útočník zneužil k zamknutí přihlášení pedikérky. Neexistující
+  username se ověřuje proti dummy hashi (`auth.ts`), aby doba odpovědi
+  neprozradila, který existuje
+- **Bezpečnostní hlavičky** v `next.config.ts` – CSP s whitelistem domén
+  (nový externí skript/iframe/obrázek = přidat jeho origin, jinak ho
+  prohlížeč tiše zablokuje), `frame-ancestors 'none'`. Bez nonce, aby
+  marketing zůstal staticky generovaný
 - **Push pedikérce** při každé nové rezervaci se `source: "online"` (ne
   pro telefonické/osobní rezervace zadané pedikérkou ručně — ty už zná)
 - **Ranní cron** (Vercel Cron, denně) — push pedikérce s denním souhrnem
@@ -226,7 +241,10 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   (`canClientModifyBooking`, konstanta v kódu, ne DB pole). Tohle omezení
   platí jen pro klienta přes magic link — admin (pedikérka) může
   rezervaci zrušit/přesunout z admin rozhraní kdykoliv, bez 24h limitu.
-  Klientská stránka je `app/rezervace/sprava/[token]/`
+  Klientská stránka je `app/rezervace/sprava/[token]/` – je zároveň
+  potvrzením po vytvoření rezervace (`?created=1`), samostatná stránka
+  podle ID rezervace není (fungovala by jako druhý, nikdy nevypršující
+  magic link)
   (`ManageBooking` komponenta) — pro skupinovou rezervaci token kteréhokoli
   člena spravuje celou skupinu najednou (`cancelGroupBooking`,
   `moveGroupBooking`), stejná konvence jako v adminu
