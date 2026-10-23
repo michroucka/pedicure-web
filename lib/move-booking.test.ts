@@ -3,6 +3,7 @@ import { prisma } from "./prisma.ts";
 import { createBooking } from "./create-booking.ts";
 import { createGroupBooking } from "./create-group-booking.ts";
 import {
+    ALREADY_CANCELLED_ERROR,
     moveBooking,
     moveGroupBooking,
     PAST_MIDNIGHT_ERROR,
@@ -71,6 +72,29 @@ describe("moveBooking / moveGroupBooking", () => {
         expect(moved.date.getTime()).toBe(otherDate.getTime());
         expect(moved.startTime).toBe(600);
         expect(moved.cancelToken).not.toBe(original.cancelToken);
+    });
+
+    it("refuses to move an already cancelled booking", async () => {
+        const original = await createBooking({
+            clientId: clientIds[0],
+            serviceId: serviceIds[0],
+            date: testDate,
+            startTime: 540,
+            source: "ONLINE",
+        });
+        await prisma.booking.update({
+            where: { id: original.id },
+            data: { status: "CANCELLED" },
+        });
+
+        await expect(
+            moveBooking(original.id, otherDate, 600, { outsideHours: true })
+        ).rejects.toThrow(ALREADY_CANCELLED_ERROR);
+        expect(
+            await prisma.booking.count({
+                where: { clientId: clientIds[0], status: "CONFIRMED" },
+            })
+        ).toBe(0);
     });
 
     it("throws SlotUnavailableError when the target overlaps another booking", async () => {

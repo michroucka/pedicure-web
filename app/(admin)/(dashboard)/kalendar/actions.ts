@@ -146,7 +146,7 @@ export async function updateBookingAction(input: {
     const existing = await prisma.booking.findMany({
         where: input.groupId
             ? { groupId: input.groupId, status: "CONFIRMED" }
-            : { id: input.people[0].bookingId },
+            : { id: input.people[0].bookingId, status: "CONFIRMED" },
         orderBy: { startTime: "asc" },
     });
 
