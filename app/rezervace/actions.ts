@@ -14,6 +14,8 @@ import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
 import { sendBookingConfirmationEmail } from "@/lib/send-booking-confirmation-email.ts";
 import { after } from "next/server";
 import { sendPushNotification } from "@/lib/send-push.ts";
+import { verifyTurnstileToken } from "@/lib/turnstile.ts";
+import { hasReachedOnlineBookingLimit } from "@/lib/online-booking-limit.ts";
 import { z } from "zod";
 import {
     contactLookupSchema,
@@ -81,9 +83,46 @@ async function notifyNewOnlineBooking(where: { id: string } | { groupId: string 
     );
 }
 
+// Back to the contact form with an error that's about the submission, not
+// the slot (failed bot check, too many bookings on one contact). Carries the
+// matched client's extra time like the slot picker's link does, or the page
+// would show the end time without it and the form would flag a "longer
+// booking" that was already known.
+async function detailsErrorUrl(
+    contact: { phone: string; name: string },
+    slot: { date: Date; serviceIds: number[]; startTime: number },
+    error: "verification" | "booking_limit"
+): Promise<string> {
+    const params = new URLSearchParams({
+        date: slot.date.toISOString().slice(0, 10),
+        services: slot.serviceIds.join(","),
+        slot: String(slot.startTime),
+        error,
+    });
+    const extraMinutes =
+        (await findClient(contact.phone, contact.name))?.extraTimeMinutes ?? 0;
+    if (extraMinutes > 0) params.set("extraMinutes", String(extraMinutes));
+    return `/rezervace/details?${params.toString()}`;
+}
+
+// Both checks run before anything is written.
+async function rejectAbusiveSubmission(
+    turnstileToken: string | null | undefined,
+    contact: { phone: string; email: string; name: string },
+    slot: { date: Date; serviceIds: number[]; startTime: number }
+): Promise<void> {
+    if (!(await verifyTurnstileToken(turnstileToken))) {
+        redirect(await detailsErrorUrl(contact, slot, "verification"));
+    }
+    if (await hasReachedOnlineBookingLimit(contact.phone, contact.email)) {
+        redirect(await detailsErrorUrl(contact, slot, "booking_limit"));
+    }
+}
+
 export async function submitBooking(
     context: { date: Date; serviceId: number; startTime: number },
-    data: { name: string; phone: string; email: string }
+    data: { name: string; phone: string; email: string },
+    turnstileToken?: string | null
 ) {
     const parsedContext = soloContextSchema.safeParse(context);
     const parsedData = soloDataSchema.safeParse(data);
@@ -93,6 +132,11 @@ export async function submitBooking(
     const { name, phone, email } = parsedData.data;
     const { serviceId, date, startTime } = parsedContext.data;
 
+    await rejectAbusiveSubmission(turnstileToken, { phone, email, name }, {
+        date,
+        serviceIds: [serviceId],
+        startTime,
+    });
 
     const service = await prisma.service.findUnique({
         where: { id: serviceId, active: true },
@@ -149,7 +193,8 @@ export async function submitBooking(
 
 export async function submitGroupBooking(
     context: { date: Date; serviceIds: number[]; startTime: number },
-    data: { names: string[]; phone: string; email: string }
+    data: { names: string[]; phone: string; email: string },
+    turnstileToken?: string | null
 ) {
     const parsedContext = groupContextSchema.safeParse(context);
     const parsedData = groupDataSchema.safeParse(data);
@@ -164,6 +209,11 @@ export async function submitGroupBooking(
         redirect("/rezervace");
     }
 
+    await rejectAbusiveSubmission(turnstileToken, { phone, email, name: names[0] }, {
+        date,
+        serviceIds,
+        startTime,
+    });
 
     const services = await prisma.service.findMany({
         where: { id: { in: serviceIds }, active: true },

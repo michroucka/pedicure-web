@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PrivacyNotice } from "@/components/rezervace/privacy-notice.tsx";
+import { useTurnstile } from "@/components/rezervace/use-turnstile.tsx";
 import { formatTime } from "@/lib/utils.ts";
 
 type SoloFormData = z.infer<typeof soloDataSchema>;
@@ -37,7 +38,7 @@ export function SoloBookingForm({
     durationMinutes,
     initialExtraMinutes = 0,
 }: {
-    boundSubmitAction: (data: SoloFormData) => Promise<void>;
+    boundSubmitAction: (data: SoloFormData, turnstileToken: string | null) => Promise<void>;
     backHref: string;
     startTime: number;
     durationMinutes: number;
@@ -47,11 +48,20 @@ export function SoloBookingForm({
         register,
         handleSubmit,
         control,
-        formState: { errors },
+        formState: { errors, isSubmitting },
     } = useForm<SoloFormData>({
         resolver: zodResolver(soloDataSchema),
         mode: "onChange",
     });
+    const turnstile = useTurnstile();
+
+    async function submit(data: SoloFormData) {
+        try {
+            await boundSubmitAction(data, turnstile.token);
+        } finally {
+            turnstile.reset();
+        }
+    }
 
     const name = useWatch({ control, name: "name" });
     const phone = useWatch({ control, name: "phone" });
@@ -96,7 +106,7 @@ export function SoloBookingForm({
                 </Alert>
             )}
             <h3 className="mb-4">Kontaktní údaje</h3>
-            <form onSubmit={handleSubmit(boundSubmitAction)}>
+            <form onSubmit={handleSubmit(submit)}>
                 <FieldGroup>
                     <Field>
                         <FieldLabel htmlFor="name">
@@ -140,6 +150,7 @@ export function SoloBookingForm({
                 </FieldGroup>
 
                 <PrivacyNotice />
+                {turnstile.widget}
 
                 <div className="mt-6 flex justify-between pb-6">
                     <Button
@@ -155,6 +166,7 @@ export function SoloBookingForm({
                     </Button>
                     <Button
                         type="submit"
+                        disabled={!turnstile.ready || isSubmitting}
                         size="lg"
                     >
                         <Check className="size-4" />

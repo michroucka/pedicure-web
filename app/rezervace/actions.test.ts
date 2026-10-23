@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
+import { verifyTurnstileToken } from "@/lib/turnstile.ts";
+import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit.ts";
 import {
     getAvailableDaysAction,
     getAvailableSlotsAction,
@@ -30,6 +32,11 @@ vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
     sendBookingConfirmationEmail: vi.fn(),
 }));
 vi.mock("@/lib/send-push.ts", () => ({ sendPushNotification: vi.fn() }));
+// Cloudflare is never called from tests; its own check has unit tests in
+// lib/turnstile.test.ts.
+vi.mock("@/lib/turnstile.ts", () => ({
+    verifyTurnstileToken: vi.fn().mockResolvedValue(true),
+}));
 // Real availability on the test branch is inherited from production and
 // can change — these tests are about who gets which name/extra time, not
 // about slot computation (covered in get-available-slots.test.ts).
@@ -218,6 +225,50 @@ describe("rezervace actions", () => {
             const [booking] = await bookingsForPhone();
             expect(booking.clientId).toBe(existing.id);
             expect(booking.guestName).toBeNull();
+        });
+
+        it("rejects a failed bot check before touching anything", async () => {
+            vi.mocked(verifyTurnstileToken).mockResolvedValueOnce(false);
+
+            const url = await submitSolo("Jana Beránková", "jana@example.com");
+
+            expect(url).toMatch(/^\/rezervace\/details\?.*error=verification/);
+            expect(await prisma.client.count({ where: { phone } })).toBe(0);
+        });
+
+        it("keeps the client's known extra time in the URL when sending them back", async () => {
+            await prisma.client.create({
+                data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
+            });
+            vi.mocked(verifyTurnstileToken).mockResolvedValueOnce(false);
+
+            const url = await submitSolo("Jana Beránková", "jana@example.com");
+
+            expect(url).toContain("error=verification");
+            expect(url).toContain("extraMinutes=15");
+        });
+
+        it("rejects another booking once the contact holds the maximum of upcoming ones", async () => {
+            for (let i = 0; i < MAX_UPCOMING_ONLINE_BOOKINGS; i++) {
+                vi.mocked(getAvailableSlots).mockResolvedValueOnce([START + i * 60]);
+                await expectRedirect(
+                    submitBooking(
+                        { date: TEST_DATE, serviceId: serviceIds[0], startTime: START + i * 60 },
+                        { name: "Jana Beránková", phone, email: "jana@example.com" }
+                    )
+                );
+            }
+
+            // Same e-mail, different phone – still the same person's limit.
+            const url = await expectRedirect(
+                submitBooking(
+                    { date: TEST_DATE, serviceId: serviceIds[0], startTime: 900 },
+                    { name: "Jana Beránková", phone: uniquePhone(), email: "JANA@example.com" }
+                )
+            );
+
+            expect(url).toContain("error=booking_limit");
+            expect(await bookingsForPhone()).toHaveLength(MAX_UPCOMING_ONLINE_BOOKINGS);
         });
 
         it("creates or changes no client when the slot is gone", async () => {

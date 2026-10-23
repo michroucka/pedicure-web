@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PrivacyNotice } from "@/components/rezervace/privacy-notice.tsx";
+import { useTurnstile } from "@/components/rezervace/use-turnstile.tsx";
 import { formatTime } from "@/lib/utils.ts";
 
 type GroupFormData = z.infer<typeof groupDataSchema>;
@@ -42,7 +43,7 @@ export function GroupBookingForm({
     durationMinutes,
     initialExtraMinutes = 0,
 }: {
-    boundSubmitAction: (data: GroupFormData) => Promise<void>;
+    boundSubmitAction: (data: GroupFormData, turnstileToken: string | null) => Promise<void>;
     serviceNames: string[];
     backHref: string;
     startTime: number;
@@ -53,11 +54,20 @@ export function GroupBookingForm({
         register,
         handleSubmit,
         control,
-        formState: { errors },
+        formState: { errors, isSubmitting },
     } = useForm<GroupFormData>({
         resolver: zodResolver(groupDataSchema),
         mode: "onChange",
     });
+    const turnstile = useTurnstile();
+
+    async function submit(data: GroupFormData) {
+        try {
+            await boundSubmitAction(data, turnstile.token);
+        } finally {
+            turnstile.reset();
+        }
+    }
 
     const names = useWatch({ control, name: "names" });
     const phone = useWatch({ control, name: "phone" });
@@ -86,7 +96,7 @@ export function GroupBookingForm({
     }, [mainName, phone]);
 
     return (
-        <form onSubmit={handleSubmit(boundSubmitAction)}>
+        <form onSubmit={handleSubmit(submit)}>
             <FieldGroup>
                 <FieldSet>
                     <FieldLegend>
@@ -182,6 +192,7 @@ export function GroupBookingForm({
             )}
 
             <PrivacyNotice />
+            {turnstile.widget}
 
             <div className="mt-6 flex justify-between pb-6">
                 <Button
@@ -197,6 +208,7 @@ export function GroupBookingForm({
                 </Button>
                 <Button
                     type="submit"
+                    disabled={!turnstile.ready || isSubmitting}
                     size="lg"
                 >
                     <Check className="size-4" />
