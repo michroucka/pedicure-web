@@ -130,7 +130,18 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   jinak by vznikaly duplicity)
 - Párování klienta (`lib/find-client.ts`, sdílí ho `findOrCreateClient`
   i náhled extra času v booking formuláři): podle telefonu, a jen když
-  telefon chybí, podle přesné shody jména
+  telefon chybí, podle přesné shody jména. Telefon se páruje přes
+  indexovaný sloupec `Client.phoneNormalized` – generated column, počítá
+  ho Postgres sám z `phone` (stejné pravidlo jako `normalizePhoneForMatch`,
+  shodu hlídá `lib/client-phone-normalized.test.ts`). Nikdy do něj
+  nezapisovat
+- Telefon = identita, ostatní údaje bere **poslední zadaná hodnota**
+  (jméno, e-mail – online i v adminu). Klient se ale zapisuje až po
+  ověření slotu, neúspěšná rezervace nic nepřepíše. Vědomě přijaté riziko:
+  kdo zná cizí telefon, může online přepsat jméno/e-mail klienta a
+  dostávat jeho budoucí e-maily (magic link po přesunu). Zvažovaná
+  alternativa (jiné jméno do `guestName`, e-mail neměnit) zavrhnuta jako
+  zbytečně složitá vzhledem k reálnému riziku
 - `email` je v DB nepovinné (telefonické/osobní rezervace zadané
   pedikérkou nemusí email řešit) — ale online booking formulář ho
   vyžaduje jako povinný, protože na něm stojí potvrzovací email i magic
@@ -184,9 +195,18 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 ## Business logika (rozhodnuto)
 
 - **FCFS, auto-confirm** — žádné schvalování rezervací pedikérkou
-- **Race condition při vytváření** — DB transakce nebo unique constraint na
-  (date, startTime), insert selže při kolizi → klient dostane chybu a musí
-  vybrat jiný slot. Ne aplikační mutex (Vercel = více instancí, nepomůže).
+- **Race condition při vytváření** – řeší DB: partial unique index na
+  (date, startTime) + exclusion constraint `Booking_no_overlap` (btree_gist,
+  žádné dvě CONFIRMED rezervace se stejným datem a překrývajícím se
+  `[startTime, endTime)`). Insert selže → `isBookingSlotConflict`
+  (`lib/booking-conflict-error.ts`) → klient dostane chybu a musí vybrat
+  jiný slot. Constraint Prisma nezná, je jen v migraci. Ne aplikační mutex
+  (Vercel = více instancí, nepomůže).
+- **Ochrana veřejného formuláře** – Cloudflare Turnstile
+  (`lib/turnstile.ts`, `useTurnstile`, vypnutý bez
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY`) + max. 3 nadcházející online rezervace
+  na telefon/e-mail (`lib/online-booking-limit.ts`). Online horizont
+  (`HORIZON_DAYS`) se vynucuje i na serveru, admina neomezuje
 - **Push pedikérce** při každé nové rezervaci se `source: "online"` (ne
   pro telefonické/osobní rezervace zadané pedikérkou ručně — ty už zná)
 - **Ranní cron** (Vercel Cron, denně) — push pedikérce s denním souhrnem

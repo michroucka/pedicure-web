@@ -1,6 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "./prisma.ts";
 import { getAvailableDaysInRange } from "./get-available-days-in-range.ts";
+import { HORIZON_DAYS } from "./booking-horizon.ts";
+import { addUtcDays } from "./utils.ts";
 
 // dayOfWeek 0 (Sunday) exclusively — RecurringAvailability has no date
 // column, only dayOfWeek, so two test files touching the same dayOfWeek
@@ -11,8 +13,21 @@ import { getAvailableDaysInRange } from "./get-available-days-in-range.ts";
 // some other (potentially colliding) dayOfWeek.
 const SUNDAY = new Date(Date.UTC(2099, 9, 4)); // 2099-10-04
 const RANGE = { from: SUNDAY, to: SUNDAY };
+// The online booking horizon is counted from "today" - pretend today is a
+// few weeks before the far-future test dates so they're bookable.
+const FAKE_NOW = new Date("2099-08-01T10:00:00.000Z");
 
 describe("getAvailableDaysInRange", () => {
+    beforeAll(() => {
+        // Only Date - faking timers would stall the DB client.
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(FAKE_NOW);
+    });
+
+    afterAll(() => {
+        vi.useRealTimers();
+    });
+
     let serviceId: number;
     let clientId: string | undefined;
 
@@ -46,6 +61,19 @@ describe("getAvailableDaysInRange", () => {
         const days = await getAvailableDaysInRange(RANGE, [serviceId]);
 
         expect(days.map((d) => d.getTime())).toEqual([SUNDAY.getTime()]);
+    });
+
+    it("excludes a day past the online booking horizon", async () => {
+        await prisma.recurringAvailability.create({
+            data: { dayOfWeek: 0, startTime: 540, endTime: 600 },
+        });
+        vi.setSystemTime(addUtcDays(SUNDAY, -(HORIZON_DAYS + 2)));
+
+        try {
+            expect(await getAvailableDaysInRange(RANGE, [serviceId])).toEqual([]);
+        } finally {
+            vi.setSystemTime(FAKE_NOW);
+        }
     });
 
     it("includes a day opened purely by an EXTRA_OPEN exception", async () => {

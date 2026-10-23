@@ -3,7 +3,7 @@ import { prisma } from "./prisma.ts";
 import { findClient } from "./find-client.ts";
 import { findOrCreateClient } from "./find-or-create-client.ts";
 
-// findClient scans every client with a phone on the shared test branch, so
+// findClient matches by phone across the whole shared test branch, so
 // each test uses its own random number — a fixed one (e.g. "999999999",
 // used elsewhere) could match leftovers from other test files.
 function uniquePhone(): string {

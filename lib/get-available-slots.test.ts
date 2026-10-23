@@ -1,6 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "./prisma.ts";
 import { getAvailableSlots } from "./get-available-slots.ts";
+import { HORIZON_DAYS } from "./booking-horizon.ts";
+import { addUtcDays } from "./utils.ts";
 
 // Saturday, far enough in the future not to collide with anything real.
 // Production only has recurring availability on weekdays (Mon-Fri), so
@@ -10,8 +12,21 @@ import { getAvailableSlots } from "./get-available-slots.ts";
 // inherited from production at fork time.
 const SATURDAY = new Date(Date.UTC(2099, 8, 5));
 const DAY_OF_WEEK = 6;
+// The online booking horizon is counted from "today" - pretend today is a
+// few weeks before the far-future test dates so they're bookable.
+const FAKE_NOW = new Date("2099-08-01T10:00:00.000Z");
 
 describe("getAvailableSlots", () => {
+    beforeAll(() => {
+        // Only Date - faking timers would stall the DB client.
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(FAKE_NOW);
+    });
+
+    afterAll(() => {
+        vi.useRealTimers();
+    });
+
     let serviceId: number;
     let service2Id: number | undefined;
     // Tests run in parallel with other test files — a broad deleteMany by
@@ -49,6 +64,23 @@ describe("getAvailableSlots", () => {
     it("returns nothing for a day with no recurring availability", async () => {
         const slots = await getAvailableSlots(SATURDAY, [serviceId]);
         expect(slots).toEqual([]);
+    });
+
+    it("returns nothing past the online booking horizon, but admin still sees it", async () => {
+        await prisma.recurringAvailability.create({
+            data: { dayOfWeek: DAY_OF_WEEK, startTime: 540, endTime: 570 },
+        });
+        // System time is moved so SATURDAY lands one day past the horizon.
+        vi.setSystemTime(addUtcDays(SATURDAY, -(HORIZON_DAYS + 2)));
+
+        try {
+            expect(await getAvailableSlots(SATURDAY, [serviceId])).toEqual([]);
+            expect(
+                await getAvailableSlots(SATURDAY, [serviceId], 0, { allowToday: true })
+            ).toEqual([540]);
+        } finally {
+            vi.setSystemTime(FAKE_NOW);
+        }
     });
 
     it("returns the single slot exactly filling a recurring window", async () => {

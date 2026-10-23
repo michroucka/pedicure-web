@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "./prisma.ts";
 import { createBooking } from "./create-booking.ts";
 import { cancelBooking } from "./cancel-booking.ts";
+import { isBookingSlotConflict } from "./booking-conflict-error.ts";
 
 // Runs against the isolated Neon "test" branch (see .env.test / package.json's
 // pretest + test scripts) — real rows get committed here, not rolled back,
@@ -71,5 +72,31 @@ describe("booking slot uniqueness", () => {
                 source: "ONLINE",
             })
         ).rejects.toMatchObject({ code: "P2002" });
+    });
+
+    // Booking_no_overlap – different start times, overlapping ranges.
+    it("rejects a confirmed booking overlapping another one with a different start", async () => {
+        await createBooking({ clientId, serviceId, date: testDate, startTime: 720, source: "ONLINE" });
+
+        const error = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 735,
+            source: "ONLINE",
+        }).catch((e: unknown) => e);
+
+        expect(isBookingSlotConflict(error)).toBe(true);
+    });
+
+    it("allows back-to-back bookings and overlap with a cancelled one", async () => {
+        const first = await createBooking({ clientId, serviceId, date: testDate, startTime: 780, source: "ONLINE" });
+
+        const adjacent = await createBooking({ clientId, serviceId, date: testDate, startTime: 810, source: "ONLINE" });
+        expect(adjacent.status).toBe("CONFIRMED");
+
+        await cancelBooking(first.id);
+        const overCancelled = await createBooking({ clientId, serviceId, date: testDate, startTime: 765, source: "ONLINE" });
+        expect(overCancelled.status).toBe("CONFIRMED");
     });
 });

@@ -4,10 +4,26 @@ import { prisma } from "@/lib/prisma.ts";
 import { SoloBookingForm } from "@/components/rezervace/solo-booking-form.tsx";
 import { GroupBookingForm } from "@/components/rezervace/group-booking-form.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
-import { UsersRound, CalendarDays, Clock } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import { AlertCircle, UsersRound, CalendarDays, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
+import { sumServiceDurations } from "@/lib/service-duration.ts";
+import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit.ts";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
+
+// Set by submitBooking/submitGroupBooking (see detailsErrorUrl).
+const SUBMIT_ERRORS: Record<string, { title: string; description: string }> = {
+    verification: {
+        title: "Ověření se nezdařilo",
+        description: "Nepodařilo se ověřit, že rezervaci odesílá člověk. Zkuste ji prosím odeslat znovu.",
+    },
+    booking_limit: {
+        title: "Příliš mnoho rezervací",
+        description: `Na tento telefon nebo e-mail už jsou vytvořené ${MAX_UPCOMING_ONLINE_BOOKINGS} nadcházející rezervace. Pro další termín nám prosím zavolejte na ${BUSINESS_INFO.phoneDisplay}.`,
+    },
+};
 
 
 export default async function DetailsPage({ searchParams }: {
@@ -16,9 +32,10 @@ export default async function DetailsPage({ searchParams }: {
         services?: string;
         slot?: string;
         extraMinutes?: string;
+        error?: string;
     }>;
 }) {
-    const { date, services, slot, extraMinutes } = await searchParams;
+    const { date, services, slot, extraMinutes, error } = await searchParams;
     const serviceIds = services?.split(",").filter(Boolean).map(Number) ?? [];
     const knownExtraMinutes = Number(extraMinutes ?? 0);
 
@@ -36,15 +53,22 @@ export default async function DetailsPage({ searchParams }: {
 
     const backHref = `/rezervace?date=${date}&services=${services}&slot=${slot}`;
 
-    const totalDuration = availableServices.reduce(
-        (sum, s) => sum + s.durationMinutes,
-        0
-    );
+    const totalDuration = sumServiceDurations(serviceIds, availableServices);
     const dateSummary = format(new Date(date), "d. MMMM yyyy", { locale: cs });
     const timeSummary = `${formatTime(Number(slot))} – ${formatTime(Number(slot) + totalDuration + knownExtraMinutes)}`;
 
     return (
         <div className="max-w-md mx-auto">
+            {error && SUBMIT_ERRORS[error] && (
+                <Alert
+                    variant="warning"
+                    className="mb-4"
+                >
+                    <AlertCircle />
+                    <AlertTitle>{SUBMIT_ERRORS[error].title}</AlertTitle>
+                    <AlertDescription>{SUBMIT_ERRORS[error].description}</AlertDescription>
+                </Alert>
+            )}
             <Card className="mb-6">
                 <CardContent className="flex flex-col gap-2 text-sm">
                     <div className="flex items-center gap-2">

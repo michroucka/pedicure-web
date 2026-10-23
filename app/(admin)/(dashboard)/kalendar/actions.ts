@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma.ts";
 import { requireAdmin } from "@/lib/require-admin.ts";
-import { Prisma } from "@/lib/generated/prisma/client.ts";
+import { isBookingSlotConflict } from "@/lib/booking-conflict-error.ts";
 import { cancelBooking } from "@/lib/cancel-booking.ts";
 import {
     moveBooking,
@@ -146,7 +146,7 @@ export async function updateBookingAction(input: {
     const existing = await prisma.booking.findMany({
         where: input.groupId
             ? { groupId: input.groupId, status: "CONFIRMED" }
-            : { id: input.people[0].bookingId },
+            : { id: input.people[0].bookingId, status: "CONFIRMED" },
         orderBy: { startTime: "asc" },
     });
 
@@ -368,10 +368,7 @@ export async function createManualBookingAction(input: {
             await createGroupBooking(bookingPeople, date, input.startTime, input.source);
         }
     } catch (error) {
-        if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === "P2002"
-        ) {
+        if (isBookingSlotConflict(error)) {
             return { ok: false, error: "Zvolený termín už není volný." };
         }
         throw error;

@@ -4,13 +4,23 @@ import { createBooking } from "./create-booking.ts";
 import { getAvailableSlots } from "./get-available-slots.ts";
 import { hasOverlappingBooking } from "./check-booking-overlap.ts";
 import { endsAfterMidnight, getCzechToday } from "./utils.ts";
+import { isBookingSlotConflict } from "./booking-conflict-error.ts";
 
 export const PAST_MIDNIGHT_ERROR = "Rezervace by přesáhla půlnoc.";
+export const ALREADY_CANCELLED_ERROR = "Rezervace už byla zrušena.";
 
 export class SlotUnavailableError extends Error {
     constructor(message = "Zvolený termín už není volný.") {
         super(message);
     }
+}
+
+// The availability check inside the move transaction runs at READ
+// COMMITTED, so a concurrent booking can still slip in – the DB constraints
+// catch that, and the caller should see it as a slot that's no longer free.
+function rethrowSlotConflict(error: unknown): never {
+    if (isBookingSlotConflict(error)) throw new SlotUnavailableError();
+    throw error;
 }
 
 // Move = cancel the old booking + create a new one (never edited in place),
@@ -36,6 +46,11 @@ export async function moveBooking(
             throw new Error(
                 "Skupinovou rezervaci přesuň přes moveGroupBooking."
             );
+        }
+        // A stale edit dialog (booking cancelled meanwhile on another device)
+        // must not bring it back by "moving" it.
+        if (booking.status !== "CONFIRMED") {
+            throw new SlotUnavailableError(ALREADY_CANCELLED_ERROR);
         }
 
         await tx.booking.update({
@@ -100,7 +115,7 @@ export async function moveBooking(
             },
             tx
         );
-    });
+    }).catch(rethrowSlotConflict);
 }
 
 // Moves every booking in the group together, preserving each person's own
@@ -206,5 +221,5 @@ export async function moveGroupBooking(
         }
 
         return created;
-    });
+    }).catch(rethrowSlotConflict);
 }
