@@ -6,6 +6,8 @@ import {
     type Exception,
     type TimeSlot,
 } from "./availability.ts";
+import { sumServiceDurations } from "./service-duration.ts";
+import { getLastBookableDay } from "./booking-horizon.ts";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function getAvailableDaysInRange(
@@ -66,20 +68,17 @@ export async function getAvailableDaysInRange(
         bookingsByDay.set(key, existing);
     }
 
-    // Summed per requested id, not per fetched service — `in` returns each
-    // service once, so two people with the same service would otherwise
-    // only count it once (same as getAvailableSlots).
-    const durationById = new Map(services.map((s) => [s.id, s.durationMinutes]));
     const serviceDuration =
-        serviceIds.reduce((sum, id) => sum + (durationById.get(id) ?? 0), 0) +
-        extraMinutes;
+        sumServiceDurations(serviceIds, services) + extraMinutes;
 
     const availableDays: Date[] = [];
     const czechToday = getCzechToday();
+    const lastBookableDay = getLastBookableDay();
 
     for (let t = from.getTime(); t <= to.getTime(); t += DAY_MS) {
         const dayOnly = new Date(t);
         if (dayOnly.getTime() <= czechToday.getTime()) continue;
+        if (dayOnly.getTime() > lastBookableDay.getTime()) break;
 
         const dayOfWeek = dayOnly.getUTCDay();
         const key = dayOnly.getTime();

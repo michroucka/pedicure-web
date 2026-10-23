@@ -8,6 +8,7 @@ import { UsersRound, CalendarDays, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
+import { sumServiceDurations } from "@/lib/service-duration.ts";
 
 
 export default async function DetailsPage({ searchParams }: {
@@ -36,10 +37,7 @@ export default async function DetailsPage({ searchParams }: {
 
     const backHref = `/rezervace?date=${date}&services=${services}&slot=${slot}`;
 
-    const totalDuration = availableServices.reduce(
-        (sum, s) => sum + s.durationMinutes,
-        0
-    );
+    const totalDuration = sumServiceDurations(serviceIds, availableServices);
     const dateSummary = format(new Date(date), "d. MMMM yyyy", { locale: cs });
     const timeSummary = `${formatTime(Number(slot))} – ${formatTime(Number(slot) + totalDuration + knownExtraMinutes)}`;
 

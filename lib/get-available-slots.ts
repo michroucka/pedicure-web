@@ -6,6 +6,8 @@ import {
     type Exception,
     type TimeSlot,
 } from "./availability.ts";
+import { sumServiceDurations } from "./service-duration.ts";
+import { getLastBookableDay } from "./booking-horizon.ts";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 export async function getAvailableSlots(
@@ -37,6 +39,7 @@ export async function getAvailableSlots(
         if (day.getTime() < today.getTime()) return [];
     } else {
         if (day.getTime() <= today.getTime()) return [];
+        if (day.getTime() > getLastBookableDay().getTime()) return [];
     }
 
     const dayOfWeek = day.getUTCDay();
@@ -83,10 +86,8 @@ export async function getAvailableSlots(
 
     const dayWindows = resolveDayTimeSlots(recurringWindows, exceptionRanges);
 
-    const durationById = new Map(services.map((s) => [s.id, s.durationMinutes]));
     const serviceDuration =
-        serviceIds.reduce((sum, id) => sum + (durationById.get(id) ?? 0), 0) +
-        extraMinutes;
+        sumServiceDurations(serviceIds, services) + extraMinutes;
 
     const result = computeAvailableSlots(
         dayWindows,
