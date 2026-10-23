@@ -2,7 +2,7 @@ import type { BookingStatus } from "@/lib/generated/prisma/enums.ts";
 
 // How long client records are kept after their last visit. Matches the
 // general 3-year limitation period (§ 629 OZ), so a claim can still be backed
-// by the booking history. Stated in the privacy policy — change both together
+// by the booking history. Stated in the privacy policy – change both together
 // (and mind the Czech plural there: 2–4 "roky", 5+ "let").
 export const CLIENT_RETENTION_YEARS = 3;
 
@@ -22,10 +22,10 @@ export type RetentionClient = {
 //
 // - Last visit = the latest CONFIRMED booking dated before today.
 // - Any CONFIRMED booking today or later keeps the client, whatever the
-//   history — they're still an active client.
+//   history – they're still an active client.
 // - No visit at all (only cancelled bookings, or created by hand without one):
-//   counted from the latest contact instead — client creation or any booking
-//   being made — so someone who booked and cancelled last month isn't deleted
+//   counted from the latest contact instead – client creation or any booking
+//   being made – so someone who booked and cancelled last month isn't deleted
 //   just because their Client row is old.
 export function getExpiredClientIds(
     clients: RetentionClient[],

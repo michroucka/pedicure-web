@@ -3,7 +3,6 @@ export const OPERATOR_INFO = {
     address: "Boženy Němcové 204, 331 41 Kralovice",
     ico: "13866435",
     registryNote: "Fyzická osoba zapsaná v živnostenském rejstříku",
-    email: "roucka.m@email.cz"
 } as const;
 
 export const BUSINESS_INFO = {

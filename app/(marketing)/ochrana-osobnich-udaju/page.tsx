@@ -7,8 +7,7 @@ import {
 
 export const metadata: Metadata = {
     title: "Ochrana osobních údajů",
-    description:
-        "Jak pedikúra Nohy v cajku zpracovává osobní údaje klientů – účel, doba uložení a vaše práva.",
+    description: `Jak pedikúra ${BUSINESS_INFO.name} zpracovává osobní údaje klientů – účel, doba uložení a vaše práva.`,
     alternates: { canonical: "/ochrana-osobnich-udaju" },
 };
 

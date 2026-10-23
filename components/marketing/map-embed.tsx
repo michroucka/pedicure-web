@@ -12,9 +12,9 @@ const MAP_HEIGHT = 280;
 
 // The mapy.com iframe stores Seznam's tracking identifiers (User-Id cookie,
 // DOT analytics in localStorage), which need prior consent. Loading it only
-// after an explicit click is that consent — no cookie banner needed.
+// after an explicit click is that consent – no cookie banner needed.
 // The blurred backdrop is a static, self-hosted OpenStreetMap snapshot
-// (public/map-placeholder.webp) — no third-party request before the click.
+// (public/map-placeholder.webp) – no third-party request before the click.
 export function MapEmbed() {
     const [showMap, setShowMap] = useState(false);
 

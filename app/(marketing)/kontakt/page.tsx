@@ -9,8 +9,7 @@ import { MapEmbed } from "@/components/marketing/map-embed.tsx";
 
 export const metadata: Metadata = {
     title: "Kontakt",
-    description:
-        "Kontakt na pedikúru Nohy v cajku – Boženy Němcové 204, Kralovice. Telefon, e-mail a mapa provozovny.",
+    description: `Kontakt na pedikúru ${BUSINESS_INFO.name} – ${BUSINESS_INFO.address.street}, ${BUSINESS_INFO.address.city}. Telefon, e-mail a mapa provozovny.`,
     alternates: { canonical: "/kontakt" },
 };
 
