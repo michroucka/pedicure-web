@@ -132,8 +132,14 @@
  * Background/neutrals are derived from the app's --primary hue (2.79) so
  * the storefront reads as a sibling of the admin app; --primary/--secondary
  * are sampled straight from the logo's gradient (gold/dusty rose).
+ *
+ * <body> belongs to the root layout, so the storefront layouts can't put the
+ * class on it – :has() themes it from below instead. Otherwise anything past
+ * the wrapper (under iOS 26 Safari's floating toolbar, overscroll, collapsed
+ * margins) shows the admin's near-white background.
  */
-.storefront {
+.storefront,
+body:has(.storefront) {
     --background: #38252a;
     --foreground: #f4e9de;
     --card: #483439;

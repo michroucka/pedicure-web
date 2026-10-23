@@ -23,20 +23,22 @@ import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
 // second effect below) needs its own fetch.
 
 export function DateStep({ onContinueAction }: { onContinueAction: () => void }) {
-    const [currentMonth, setCurrentMonth] = useState<Date>(
-        new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-    );
-    const [availableDays, setAvailableDays] = useState<Date[]>([]);
-    const [horizon, setHorizon] = useState<{ from: number; to: number }>();
-    const [isLoading, startTransition] = useTransition();
-    const hasAutoJumped = useRef(false);
-
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
     const dateParam = searchParams.get("date");
     const date = dateParam ? new Date(dateParam) : undefined;
+
+    // The accordion unmounts this step when collapsed, so reopening it
+    // starts over – open on the picked date's month, not today's.
+    const [currentMonth, setCurrentMonth] = useState<Date>(() =>
+        startOfMonth(date ?? new Date())
+    );
+    const [availableDays, setAvailableDays] = useState<Date[]>([]);
+    const [horizon, setHorizon] = useState<{ from: number; to: number }>();
+    const [isLoading, startTransition] = useTransition();
+    const hasAutoJumped = useRef(false);
 
     const tomorrow = toUtcMidnight(addDays(startOfDay(new Date()), 1));
     const horizonEnd = addDays(tomorrow, HORIZON_DAYS);
