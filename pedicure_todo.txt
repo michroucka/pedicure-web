@@ -9,6 +9,3 @@
 [ ] nezhasinani obrazovky (keep-awake) prestane po case fungovat (iPad standalone, iPadOS 27), pomuze az vypnout/zapnout prepinac v nastaveni
     (podezreni: KeepAwake znovu ziskava zamek jen na visibilitychange - kdyz request() pri navratu selze (NotAllowedError, jen se zaloguje, zadny retry) nebo system zamek uvolni pri viditelne strance (event "release" se neposloucha, mozna usporny rezim), uz se nikdy neobnovi.
      overit: Safari Web Inspector z MacBooku pres kabel - logovat acquire ok/fail + "release" event. oprava: listener na "release" + retry pri selhani + dalsi spoustece (pageshow/focus/periodicka kontrola))
-[ ] v rezervaci pri vytvareni rezervace se nejprve nacte nejblizsi mozny termin napr kdyz je az dalsi mesic tak se spravne zobrazi kalendar az pristi mesic defaultne, ale kdyz nejaky termin vyberu a pak kalendar otevru znovu, uz se otevre na soucasnem mesici, ne na mesici vybraneho terminu
-[ ] v rezervaci pri vytvareni rezervace kdyz po vybrani terminu znovu otevru kalendar se pod action tlacitky dole zobrazi bily pruh, ktery nema pozadi te vinove jako zbytek stranky
-[ ] footer na mobilu nevypada hezky - zarovnat spodni 3 linky ke strane, ne doprostred

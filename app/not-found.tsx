@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button.tsx";
 import { MarketingNav } from "@/components/marketing/marketing-nav.tsx";
 import { MarketingFooter } from "@/components/marketing/marketing-footer.tsx";
 import { PortalContainerProvider } from "@/components/portal-container.tsx";
-import { SafeAreaBottomSentinel } from "@/components/safe-area-bottom-sentinel.tsx";
 
 export const metadata: Metadata = {
     title: "Stránka nenalezena",
@@ -46,7 +45,6 @@ export default function NotFound() {
                 </section>
             </main>
             <MarketingFooter />
-            <SafeAreaBottomSentinel />
         </PortalContainerProvider>
     );
 }
