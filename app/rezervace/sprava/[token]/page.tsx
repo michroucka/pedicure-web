@@ -27,10 +27,14 @@ export default async function SpravaPage({
     // ?moved=1 — set by ManageBooking right after a successful move, which
     // lands here on the new token; otherwise the page looks the same as
     // before and the client can't tell the move happened.
-    searchParams: Promise<{ moved?: string }>;
+    // ?created=1 - set by submitBooking/submitGroupBooking, which land here
+    // right after booking (this page is the confirmation; there's no
+    // separate one keyed by booking id that would work as a second,
+    // never-expiring magic link).
+    searchParams: Promise<{ moved?: string; created?: string }>;
 }) {
     const { token } = await params;
-    const { moved } = await searchParams;
+    const { moved, created } = await searchParams;
     const bookings = await getBookingGroupByToken(token);
     if (!bookings) notFound();
 
@@ -62,6 +66,20 @@ export default async function SpravaPage({
     return (
         <div className="mx-auto max-w-md">
             <h2 className="mb-4 text-center">Vaše rezervace</h2>
+            {created && (
+                <Alert
+                    variant="success"
+                    className="mb-4"
+                >
+                    <CheckCircle2 />
+                    <AlertTitle>Rezervace potvrzena</AlertTitle>
+                    <AlertDescription className="text-muted-foreground!">
+                        {booking.client.email &&
+                            `Potvrzení s odkazem na tuto stránku jsme Vám poslali na ${booking.client.email}. `}
+                        Ráno v den rezervace Vám pošleme SMS připomínku.
+                    </AlertDescription>
+                </Alert>
+            )}
             {moved && (
                 <Alert
                     variant="success"
@@ -117,6 +135,16 @@ export default async function SpravaPage({
                     termínu). V případě potřeby nás prosím kontaktujte
                     telefonicky.
                 </p>
+            )}
+
+            {created && (
+                <Button
+                    asChild
+                    variant="outline"
+                    className="mt-6 w-full"
+                >
+                    <Link href="/">Zpět na hlavní stránku</Link>
+                </Button>
             )}
         </div>
     );

@@ -4,15 +4,21 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { StepIndicator } from "@/components/rezervace/step-indicator.tsx";
 
-const STEP_BY_PATH: Record<string, 1 | 2 | 3> = {
+const STEP_BY_PATH: Record<string, 1 | 2> = {
     "/rezervace": 1,
     "/rezervace/details": 2,
-    "/rezervace/confirmed": 3,
 };
+
+// The manage page (/rezervace/sprava/[token]) doubles as the booking
+// confirmation, so it's the last step.
+function getCurrentStep(pathname: string): 1 | 2 | 3 {
+    if (pathname.startsWith("/rezervace/sprava/")) return 3;
+    return STEP_BY_PATH[pathname] ?? 1;
+}
 
 export function BookingNav() {
     const pathname = usePathname();
-    const currentStep = STEP_BY_PATH[pathname] ?? 1;
+    const currentStep = getCurrentStep(pathname);
 
     return (
         <header className="sticky top-0 z-10 bg-background pt-[env(safe-area-inset-top)]">

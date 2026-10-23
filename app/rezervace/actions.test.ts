@@ -116,9 +116,14 @@ describe("rezervace actions", () => {
     describe("submitGroupBooking", () => {
         it("keeps every person's own name (regression: all got the last name)", async () => {
             const url = await submitGroup(["Jana Beránková", "Eva Beránková", "Petr Beránek"]);
-            expect(url).toMatch(/^\/rezervace\/confirmed\?groupId=/);
+            expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
+            // lands on the manage page of this very group - the redirect is the
+            // client's only confirmation besides the e-mail
+            const token = url.split("/").at(-1)!.split("?")[0];
+            const owner = await prisma.booking.findUniqueOrThrow({ where: { cancelToken: token } });
 
             const bookings = await bookingsForPhone();
+            expect(owner.groupId).toBe(bookings[0].groupId);
             expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva Beránková", "Petr Beránek"]);
             expect(bookings.map((b) => b.client.name)).toEqual([
                 "Jana Beránková",
@@ -148,7 +153,7 @@ describe("rezervace actions", () => {
             // must actually complete — a validation redirect would leave the
             // client untouched too and pass the assertions below for nothing
             const url = await submitGroup(["Jana Beránková", "Eva Beránková"]);
-            expect(url).toMatch(/^\/rezervace\/confirmed\?groupId=/);
+            expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
 
             const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
             expect(after.name).toBe("Jana Beránková");
@@ -217,7 +222,7 @@ describe("rezervace actions", () => {
             });
 
             const url = await submitSolo("Jana Nováková", "novy@example.com");
-            expect(url).toMatch(/^\/rezervace\/confirmed\?id=/);
+            expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
 
             const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
             expect(after.name).toBe("Jana Nováková");
