@@ -73,6 +73,8 @@ model AvailabilityException {
   type        AvailabilityExceptionType
   startTime   Int?
   endTime     Int?
+
+  @@index([date])
 }
 
 enum BookingStatus {
