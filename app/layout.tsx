@@ -1,4 +1,4 @@
-import { Fraunces, Montserrat, Playfair_Display } from "next/font/google";
+import { Montserrat, Playfair_Display } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -54,12 +54,6 @@ const fontSerif = Playfair_Display({
     variable: "--font-serif",
 });
 
-const fontDisplay = Fraunces({
-    subsets: ["latin"],
-    style: ["normal", "italic"],
-    variable: "--font-display",
-});
-
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -71,7 +65,6 @@ export default function RootLayout({
             className={cn(
                 "antialiased",
                 fontSerif.variable,
-                fontDisplay.variable,
                 "font-sans",
                 fontSans.variable
             )}

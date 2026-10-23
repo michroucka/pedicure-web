@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { MarketingNav } from "@/components/marketing/marketing-nav.tsx";
 import { MarketingFooter } from "@/components/marketing/marketing-footer.tsx";
 import { PortalContainerProvider } from "@/components/portal-container.tsx";
+import { fontDisplay } from "@/lib/fonts.ts";
 
 export const metadata: Metadata = {
     title: "Stránka nenalezena",
@@ -21,7 +22,9 @@ export const metadata: Metadata = {
 // redirect() call) lets Next.js return an actual 404 status.
 export default function NotFound() {
     return (
-        <PortalContainerProvider className="storefront flex min-h-svh flex-col bg-background text-foreground">
+        <PortalContainerProvider
+            className={`storefront flex min-h-svh flex-col bg-background text-foreground ${fontDisplay.variable}`}
+        >
             <MarketingNav />
             <main className="flex flex-1 items-center justify-center">
                 <section>

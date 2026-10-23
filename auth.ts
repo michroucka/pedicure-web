@@ -20,6 +20,14 @@ const credentialsSchema = z.object({
     password: z.string().min(1),
 });
 
+// Verified against when the username doesn't exist, so a wrong username
+// takes as long as a wrong password and response time doesn't reveal which
+// usernames exist. Same argon2 defaults as real hashes (scripts/create-admin.ts);
+// the password behind it is irrelevant. Brute force itself is rate-limited
+// by the Vercel Firewall (see CLAUDE.md).
+const DUMMY_PASSWORD_HASH =
+    "$argon2id$v=19$m=65536,p=4,t=3$aT2BY23ws2Oa7dDA1Hgqaw$6hCT/FvGGIwJCMvGtRWRBFxgWOpgsv0UmHNHu1A3MoU";
+
 function passwordFingerprint(passwordHash: string) {
     return createHash("sha256").update(passwordHash).digest("hex");
 }
@@ -76,7 +84,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 const admin = await prisma.adminUser.findUnique({
                     where: { username: parsed.data.username },
                 });
-                if (!admin) return null;
+                if (!admin) {
+                    await argon2.verify(DUMMY_PASSWORD_HASH, parsed.data.password);
+                    return null;
+                }
 
                 const valid = await argon2.verify(
                     admin.passwordHash,

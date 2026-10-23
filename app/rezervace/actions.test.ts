@@ -116,9 +116,14 @@ describe("rezervace actions", () => {
     describe("submitGroupBooking", () => {
         it("keeps every person's own name (regression: all got the last name)", async () => {
             const url = await submitGroup(["Jana Beránková", "Eva Beránková", "Petr Beránek"]);
-            expect(url).toMatch(/^\/rezervace\/confirmed\?groupId=/);
+            expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
+            // lands on the manage page of this very group - the redirect is the
+            // client's only confirmation besides the e-mail
+            const token = url.split("/").at(-1)!.split("?")[0];
+            const owner = await prisma.booking.findUniqueOrThrow({ where: { cancelToken: token } });
 
             const bookings = await bookingsForPhone();
+            expect(owner.groupId).toBe(bookings[0].groupId);
             expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva Beránková", "Petr Beránek"]);
             expect(bookings.map((b) => b.client.name)).toEqual([
                 "Jana Beránková",
@@ -148,7 +153,7 @@ describe("rezervace actions", () => {
             // must actually complete — a validation redirect would leave the
             // client untouched too and pass the assertions below for nothing
             const url = await submitGroup(["Jana Beránková", "Eva Beránková"]);
-            expect(url).toMatch(/^\/rezervace\/confirmed\?groupId=/);
+            expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
 
             const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
             expect(after.name).toBe("Jana Beránková");
@@ -217,7 +222,7 @@ describe("rezervace actions", () => {
             });
 
             const url = await submitSolo("Jana Nováková", "novy@example.com");
-            expect(url).toMatch(/^\/rezervace\/confirmed\?id=/);
+            expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
 
             const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
             expect(after.name).toBe("Jana Nováková");
@@ -287,14 +292,29 @@ describe("rezervace actions", () => {
     });
 
     describe("getExtraMinutesAction", () => {
-        it("returns the extra time of the client matched by phone, even with a differently written name", async () => {
+        it("returns the extra time when phone and name match, ignoring case, diacritics and spaces", async () => {
             await prisma.client.create({
                 data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
             });
 
-            // same rule as findOrCreateClient on submit — the phone decides
-            expect(await getExtraMinutesAction({ name: "Jana Berankova", phone })).toBe(15);
+            expect(await getExtraMinutesAction({ name: "jana  berankova", phone })).toBe(15);
             expect(await getExtraMinutesAction({ name: "Jana Beránková", phone: `+420 ${phone}` })).toBe(15);
+        });
+
+        it("reveals nothing when only the phone matches", async () => {
+            await prisma.client.create({
+                data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
+            });
+
+            expect(await getExtraMinutesAction({ name: "Někdo Jiný", phone })).toBe(0);
+        });
+
+        it("reveals nothing for a name alone, without a phone", async () => {
+            await prisma.client.create({
+                data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
+            });
+
+            expect(await getExtraMinutesAction({ name: "Jana Beránková", phone: "" })).toBe(0);
         });
 
         it("returns 0 for an unknown phone", async () => {

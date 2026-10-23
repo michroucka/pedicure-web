@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma.ts";
-import { formatTime } from "@/lib/utils.ts";
+import { formatTime, normalizeForSearch } from "@/lib/utils.ts";
 import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
 import { findClient } from "@/lib/find-client.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
@@ -164,9 +164,9 @@ export async function submitBooking(
 
     const client = await findOrCreateClient(phone, name, email);
 
-    let bookingId: string;
+    let booking: { id: string; cancelToken: string };
     try {
-        const booking = await createBooking({
+        booking = await createBooking({
             clientId: client.id,
             serviceId,
             date,
@@ -174,7 +174,6 @@ export async function submitBooking(
             source: "ONLINE",
             extraTimeMinutes,
         });
-        bookingId = booking.id;
     } catch (error) {
         if (!isBookingSlotConflict(error)) throw error;
         redirect(
@@ -187,8 +186,8 @@ export async function submitBooking(
         );
     }
 
-    after(() => notifyNewOnlineBooking({ id: bookingId }));
-    redirect(`/rezervace/confirmed?id=${bookingId}`);
+    after(() => notifyNewOnlineBooking({ id: booking.id }));
+    redirect(`/rezervace/sprava/${booking.cancelToken}?created=1`);
 }
 
 export async function submitGroupBooking(
@@ -253,9 +252,12 @@ export async function submitGroupBooking(
     }));
 
     let groupId: string;
+    let cancelToken: string;
     try {
         const bookings = await createGroupBooking(people, date, startTime, "ONLINE");
         groupId = bookings[0].groupId!;
+        // Any member's token manages the whole group (getBookingGroupByToken).
+        cancelToken = bookings[0].cancelToken;
     } catch (error) {
         if (!isBookingSlotConflict(error)) throw error;
         redirect(
@@ -269,7 +271,7 @@ export async function submitGroupBooking(
     }
 
     after(() => notifyNewOnlineBooking({ groupId }));
-    redirect(`/rezervace/confirmed?groupId=${groupId}`);
+    redirect(`/rezervace/sprava/${cancelToken}?created=1`);
 }
 
 // extraMinutes comes from the URL after an extra_time_conflict redirect
@@ -293,6 +295,17 @@ export async function getAvailableDaysAction(
 
 // Extra time of the (main) contact only — group guests aren't Clients and
 // always get 0, same as submitGroupBooking.
+//
+// Public and unauthenticated, so it only answers when both the phone and
+// the name match (ignoring case, diacritics and extra spaces) - knowing
+// someone's number alone mustn't reveal that they're a client, let alone
+// that their visits take longer. Submit itself still matches by phone only
+// (findOrCreateClient), so a differently written name just means the
+// longer slot shows up after submit instead of in this preview.
+function comparableName(name: string): string {
+    return normalizeForSearch(name).trim().replace(/\s+/g, " ");
+}
+
 export async function getExtraMinutesAction(contact: {
     name: string;
     phone: string;
@@ -301,10 +314,11 @@ export async function getExtraMinutesAction(contact: {
     if (!parsed.success) return 0;
 
     const { name, phone } = parsed.data;
-    if (!name && !phone) return 0;
+    if (!name || !phone) return 0;
 
-    const client = await findClient(phone || undefined, name);
-    return client?.extraTimeMinutes ?? 0;
+    const client = await findClient(phone, name);
+    if (!client || comparableName(client.name) !== comparableName(name)) return 0;
+    return client.extraTimeMinutes;
 }
 
 export async function getAvailableSlotsAction(

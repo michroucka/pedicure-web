@@ -10,6 +10,8 @@ import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
 import { sumServiceDurations } from "@/lib/service-duration.ts";
+import { dateStrSchema, serviceIdsSchema, startTimeSchema } from "@/lib/validation.ts";
+import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit.ts";
 import { BUSINESS_INFO } from "@/lib/business-info.ts";
 
@@ -36,16 +38,28 @@ export default async function DetailsPage({ searchParams }: {
     }>;
 }) {
     const { date, services, slot, extraMinutes, error } = await searchParams;
-    const serviceIds = services?.split(",").filter(Boolean).map(Number) ?? [];
-    const knownExtraMinutes = Number(extraMinutes ?? 0);
 
-    if (!date || serviceIds.length === 0 || !slot) {
+    // Everything here comes from the URL - a hand-edited or stale link goes
+    // back to the start of the wizard instead of crashing on Invalid Date/NaN.
+    const parsedDate = dateStrSchema.safeParse(date);
+    const parsedServiceIds = serviceIdsSchema.safeParse(
+        services?.split(",").filter(Boolean).map(Number) ?? []
+    );
+    const parsedSlot = startTimeSchema.safeParse(slot ? Number(slot) : NaN);
+    if (!parsedDate.success || !parsedServiceIds.success || !parsedSlot.success) {
         redirect("/rezervace");
     }
+    const serviceIds = parsedServiceIds.data;
+    const startTime = parsedSlot.data;
+    const bookingDate = new Date(parsedDate.data);
+    const knownExtraMinutes = normalizeExtraMinutes(Number(extraMinutes ?? 0));
 
     const availableServices = await prisma.service.findMany({
-        where: { id: { in: serviceIds } },
-    })
+        where: { id: { in: serviceIds }, active: true },
+    });
+    if (availableServices.length !== new Set(serviceIds).size) {
+        redirect("/rezervace");
+    }
 
     const serviceNames = serviceIds.map(
         (id) => availableServices.find((s) => s.id === id)?.name ?? ""
@@ -54,12 +68,12 @@ export default async function DetailsPage({ searchParams }: {
     const backHref = `/rezervace?date=${date}&services=${services}&slot=${slot}`;
 
     const totalDuration = sumServiceDurations(serviceIds, availableServices);
-    const dateSummary = format(new Date(date), "d. MMMM yyyy", { locale: cs });
-    const timeSummary = `${formatTime(Number(slot))} – ${formatTime(Number(slot) + totalDuration + knownExtraMinutes)}`;
+    const dateSummary = format(bookingDate, "d. MMMM yyyy", { locale: cs });
+    const timeSummary = `${formatTime(startTime)} – ${formatTime(startTime + totalDuration + knownExtraMinutes)}`;
 
     return (
         <div className="max-w-md mx-auto">
-            {error && SUBMIT_ERRORS[error] && (
+            {error && Object.hasOwn(SUBMIT_ERRORS, error) && (
                 <Alert
                     variant="warning"
                     className="mb-4"
@@ -89,25 +103,25 @@ export default async function DetailsPage({ searchParams }: {
             {serviceIds.length === 1 ? (
                 <SoloBookingForm
                     boundSubmitAction={submitBooking.bind(null, {
-                        date: new Date(date),
+                        date: bookingDate,
                         serviceId: serviceIds[0],
-                        startTime: Number(slot),
+                        startTime: startTime,
                     })}
                     backHref={backHref}
-                    startTime={Number(slot)}
+                    startTime={startTime}
                     durationMinutes={totalDuration}
                     initialExtraMinutes={knownExtraMinutes}
                 />
             ) : (
                 <GroupBookingForm
                     boundSubmitAction={submitGroupBooking.bind(null, {
-                        date: new Date(date),
+                        date: bookingDate,
                         serviceIds,
-                        startTime: Number(slot),
+                        startTime: startTime,
                     })}
                     serviceNames={serviceNames}
                     backHref={backHref}
-                    startTime={Number(slot)}
+                    startTime={startTime}
                     durationMinutes={totalDuration}
                     initialExtraMinutes={knownExtraMinutes}
                 />
