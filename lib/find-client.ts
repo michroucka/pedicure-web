@@ -12,9 +12,12 @@ export async function findClient(
     name: string
 ): Promise<Client | undefined> {
     if (phone) {
-        const normalizedPhone = normalizePhoneForMatch(phone);
-        const candidates = await prisma.client.findMany({ where: { phone: { not: null } } });
-        return candidates.find((c) => normalizePhoneForMatch(c.phone!) === normalizedPhone);
+        return (
+            (await prisma.client.findFirst({
+                where: { phoneNormalized: normalizePhoneForMatch(phone) },
+                orderBy: { createdAt: "asc" },
+            })) ?? undefined
+        );
     }
     return (await prisma.client.findFirst({ where: { name } })) ?? undefined;
 }

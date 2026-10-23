@@ -35,6 +35,13 @@ model Client {
   // it as required on the client, since the morning reminder SMS and
   // (for email) confirmation/magic-link flow depend on it.
   phone             String?
+  // normalizePhoneForMatch(phone) as a Postgres GENERATED ... STORED column
+  // (see migration 20261023200000_client_phone_normalized), so findClient
+  // matches by an indexed column. Read-only: the DB computes it, never
+  // write it. Prisma has no syntax for generated columns – dbgenerated()
+  // holds the expression exactly as Postgres reports it, otherwise
+  // `migrate dev` would try to drop it as a stray default.
+  phoneNormalized   String?   @default(dbgenerated("\nCASE\n    WHEN ((regexp_replace(phone, '\\D'::text, ''::text, 'g'::text) ~~ '420%'::text) AND (length(regexp_replace(phone, '\\D'::text, ''::text, 'g'::text)) > 9)) THEN SUBSTRING(regexp_replace(phone, '\\D'::text, ''::text, 'g'::text) FROM 4)\n    ELSE regexp_replace(phone, '\\D'::text, ''::text, 'g'::text)\nEND"))
   email             String?
   extraTimeMinutes  Int       @default(0)
   note              String?
@@ -44,6 +51,8 @@ model Client {
   active            Boolean   @default(true)
   createdAt         DateTime  @default(now())
   bookings          Booking[]
+
+  @@index([phoneNormalized])
 }
 
 model RecurringAvailability {
@@ -94,6 +103,9 @@ model Booking {
   cancelToken         String          @unique
   reminderSent        Boolean         @default(false)
   createdAt           DateTime        @default(now())
+
+  @@index([clientId])
+  @@index([groupId])
 }
 
 model AdminUser {
