@@ -1,6 +1,5 @@
 import { Resend } from "resend";
-
-const FROM_EMAIL = "Pedikúra Kralovice <rezervace@pedikurakralovice.cz>";
+import { EMAIL_FROM } from "@/lib/business-info.ts";
 
 // Internal ops alert, not client-facing — plain text is enough, no
 // react-email template needed.
@@ -19,7 +18,7 @@ export async function sendLowCreditAlertEmail(
     try {
         const resend = new Resend(apiKey);
         await resend.emails.send({
-            from: FROM_EMAIL,
+            from: EMAIL_FROM,
             to,
             subject: "Nízký kredit SMS brány",
             text: `Zůstatek na SMSManager.cz klesl na ${creditCzk.toFixed(2)} Kč. Doplňte prosím kredit, aby se dál mohly odesílat připomínkové SMS klientům.`,

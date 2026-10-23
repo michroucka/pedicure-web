@@ -29,6 +29,7 @@ import {
     UsersRound,
 } from "lucide-react";
 import Link from "next/link";
+import { PrivacyNotice } from "@/components/rezervace/privacy-notice.tsx";
 import { formatTime } from "@/lib/utils.ts";
 
 type GroupFormData = z.infer<typeof groupDataSchema>;
@@ -179,6 +180,8 @@ export function GroupBookingForm({
                     </AlertDescription>
                 </Alert>
             )}
+
+            <PrivacyNotice />
 
             <div className="mt-6 flex justify-between pb-6">
                 <Button

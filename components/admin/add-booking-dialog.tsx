@@ -68,6 +68,7 @@ import {
     extraTimeToMinutes,
     type ExtraTime,
 } from "@/components/admin/extra-time-field.tsx";
+import { NoteHealthHint } from "@/components/admin/note-health-hint.tsx";
 
 type PersonInput = {
     name: string;
@@ -479,6 +480,7 @@ export function AddBookingDialog({
                                             setNote(e.target.value)
                                         }
                                     />
+                                    <NoteHealthHint />
                                 </CollapsibleContent>
                             </Collapsible>
                         </div>

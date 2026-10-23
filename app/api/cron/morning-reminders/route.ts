@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma.ts";
-import { getCzechToday, formatTime } from "@/lib/utils.ts";
+import { getCzechToday, formatTime, stripDiacritics } from "@/lib/utils.ts";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
+import { verifyCronRequest } from "@/lib/verify-cron-request.ts";
 import { sendSms, getSmsCreditCzk } from "@/lib/sms.ts";
 import { sendLowCreditAlertEmail } from "@/lib/send-low-credit-alert-email.ts";
 import type { Booking, Client } from "@/lib/generated/prisma/client.ts";
@@ -8,7 +10,11 @@ import { sendPushNotification } from "@/lib/send-push.ts";
 
 type BookingForReminder = Booking & { client: Client };
 
-const SIGNATURE = "Nohy v cajku - Pedikura Kralovice";
+// SMS text stays diacritics-free (GSM-7 fits 160 chars per part, Unicode
+// only 70), so the brand from BUSINESS_INFO gets stripped too.
+const SIGNATURE = stripDiacritics(
+    `${BUSINESS_INFO.name} - ${BUSINESS_INFO.tagline}`,
+);
 
 // Constant in code, not a DB field — same convention as
 // canClientModifyBooking's 24h window (see lib/booking-modification-window.ts).
@@ -25,22 +31,10 @@ function buildReminderMessage(bookings: BookingForReminder[]): string {
     return `Dobry den, pripominam Vam dnesni rezervaci na pedikuru od ${startTime}. Tesim se na Vas! ${SIGNATURE}`;
 }
 
-// Vercel Cron GETs this daily with `Authorization: Bearer $CRON_SECRET`
-// (set automatically once the CRON_SECRET env var exists on the project).
-// If the CRON_SECRET env var is not set, it returns error status 500.
+// Vercel Cron GETs this daily (auth in verifyCronRequest).
 export async function GET(request: NextRequest) {
-    if (!process.env.CRON_SECRET) {
-        console.error("CRON_SECRET env var not set");
-        return NextResponse.json(
-            { error: "Server misconfigured" },
-            { status: 500 }
-        );
-    }
-
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const unauthorizedResponse = verifyCronRequest(request);
+    if (unauthorizedResponse) return unauthorizedResponse;
 
     const today = getCzechToday();
     const bookings = await prisma.booking.findMany({

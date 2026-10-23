@@ -12,6 +12,9 @@ import {
     Section,
     Text,
 } from "@react-email/components";
+import { BUSINESS_INFO } from "../lib/business-info.ts";
+
+const BRAND = `${BUSINESS_INFO.name} – ${BUSINESS_INFO.tagline}`;
 
 type Person = { name: string; serviceName: string };
 
@@ -27,16 +30,16 @@ const COPY: Record<
     created: {
         preview: "je potvrzena",
         heading: "Rezervace potvrzena!",
-        body: "Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla úspěšně vytvořena.",
+        body: `Vaše rezervace v ${BRAND} byla úspěšně vytvořena.`,
     },
     moved: {
         preview: "– termín byl změněn",
         heading: "Rezervace přesunuta",
-        body: "Vaše rezervace v Nohy v cajku – Pedikúra Kralovice byla přesunuta na nový termín. Pro správu rezervace použijte tlačítko níže.",
+        body: `Vaše rezervace v ${BRAND} byla přesunuta na nový termín. Pro správu rezervace použijte tlačítko níže.`,
     },
 };
 
-const BASE_URL = "https://www.pedikurakralovice.cz";
+const BASE_URL = BUSINESS_INFO.siteUrl;
 
 // Email clients fetch images over the internet when the message is opened,
 // so this has to be an absolute URL — and a raster format, since SVG
@@ -86,7 +89,7 @@ export function BookingConfirmationEmail({
                         src={LOGO_URL}
                         width="128"
                         height="128"
-                        alt="Pedikúra Kralovice"
+                        alt={BUSINESS_INFO.tagline}
                         style={logo}
                     />
                     <Heading style={heading}>{copy.heading}</Heading>
@@ -124,7 +127,13 @@ export function BookingConfirmationEmail({
                         href={BASE_URL}
                         style={footer}
                     >
-                        Nohy v cajku – Pedikúra Kralovice
+                        {BRAND}
+                    </Link>
+                    <Link
+                        href={`${BASE_URL}/ochrana-osobnich-udaju`}
+                        style={footerSecondary}
+                    >
+                        Ochrana osobních údajů
                     </Link>
                 </Container>
             </Body>
@@ -210,6 +219,13 @@ const footer: React.CSSProperties = {
     fontSize: "12px",
     margin: "0",
     textAlign: "center",
+};
+
+const footerSecondary: React.CSSProperties = {
+    ...footer,
+    fontSize: "11px",
+    marginTop: "8px",
+    textDecoration: "underline",
 };
 
 // Default export + PreviewProps is the `react-email dev` convention (see
