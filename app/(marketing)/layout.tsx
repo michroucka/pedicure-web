@@ -1,4 +1,5 @@
 import type { Viewport } from "next";
+import { fontDisplay } from "@/lib/fonts.ts";
 import { ReactNode } from "react";
 import { MarketingNav } from "@/components/marketing/marketing-nav.tsx";
 import { MarketingFooter } from "@/components/marketing/marketing-footer.tsx";
@@ -43,7 +44,9 @@ export default function MarketingLayout({
     children: ReactNode;
 }) {
     return (
-        <PortalContainerProvider className="storefront flex min-h-svh flex-col bg-background text-foreground">
+        <PortalContainerProvider
+            className={`storefront flex min-h-svh flex-col bg-background text-foreground ${fontDisplay.variable}`}
+        >
             <script
                 type="application/ld+json"
                 // eslint-disable-next-line react/no-danger
