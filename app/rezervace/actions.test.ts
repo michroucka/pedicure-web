@@ -6,6 +6,7 @@ import {
     getAvailableDaysAction,
     getAvailableSlotsAction,
     getExtraMinutesAction,
+    submitBooking,
     submitGroupBooking,
 } from "./actions.ts";
 
@@ -190,6 +191,47 @@ describe("rezervace actions", () => {
 
             expect(url).toContain("error=slot_taken");
             expect(await bookingsForPhone()).toHaveLength(0);
+        });
+    });
+
+    describe("submitBooking", () => {
+        async function submitSolo(name: string, email: string) {
+            return expectRedirect(
+                submitBooking(
+                    { date: TEST_DATE, serviceId: serviceIds[0], startTime: START },
+                    { name, phone, email }
+                )
+            );
+        }
+
+        it("updates an existing client's name and e-mail to the latest provided", async () => {
+            const existing = await prisma.client.create({
+                data: { name: "Jana Beránková", phone, email: "stary@example.com" },
+            });
+
+            const url = await submitSolo("Jana Nováková", "novy@example.com");
+            expect(url).toMatch(/^\/rezervace\/confirmed\?id=/);
+
+            const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
+            expect(after.name).toBe("Jana Nováková");
+            expect(after.email).toBe("novy@example.com");
+            const [booking] = await bookingsForPhone();
+            expect(booking.clientId).toBe(existing.id);
+            expect(booking.guestName).toBeNull();
+        });
+
+        it("creates or changes no client when the slot is gone", async () => {
+            vi.mocked(getAvailableSlots).mockResolvedValue([]);
+            const existing = await prisma.client.create({
+                data: { name: "Jana Beránková", phone },
+            });
+
+            const url = await submitSolo("Jana Beránková", "jana@example.com");
+
+            expect(url).toContain("error=slot_taken");
+            const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
+            expect(after.email).toBeNull();
+            expect(await prisma.client.count({ where: { phone } })).toBe(1);
         });
     });
 

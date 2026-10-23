@@ -7,7 +7,7 @@ import { findClient } from "@/lib/find-client.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { createBooking } from "@/lib/create-booking.ts";
 import { redirect } from "next/navigation";
-import { Prisma } from "@/lib/generated/prisma/client";
+import { isBookingSlotConflict } from "@/lib/booking-conflict-error.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
@@ -55,6 +55,32 @@ async function buildSlotConflictRedirect(
     return `/rezervace?${params.toString()}`;
 }
 
+// Everything sent after an online booking, run via after() so the client's
+// redirect doesn't wait for Resend/Web Push.
+async function notifyNewOnlineBooking(where: { id: string } | { groupId: string }) {
+    const bookings = await prisma.booking.findMany({
+        where,
+        include: { client: true, service: true },
+        orderBy: { startTime: "asc" },
+    });
+    if (bookings.length === 0) return;
+
+    await sendBookingConfirmationEmail(bookings);
+    await sendPushNotification(
+        bookings.length > 1
+            ? {
+                  title: "👥 Nová skupinová rezervace",
+                  body: `${bookings[0].client.name} – ${bookings.length} osoby, ${formatTime(bookings[0].startTime)}`,
+                  url: "/kalendar",
+              }
+            : {
+                  title: "📅 Nová rezervace",
+                  body: `${bookings[0].client.name} – ${bookings[0].service.name}, ${formatTime(bookings[0].startTime)}`,
+                  url: "/kalendar",
+              }
+    );
+}
+
 export async function submitBooking(
     context: { date: Date; serviceId: number; startTime: number },
     data: { name: string; phone: string; email: string }
@@ -64,12 +90,9 @@ export async function submitBooking(
     if (!parsedContext.success || !parsedData.success) {
         redirect("/rezervace");
     }
-    const name = parsedData.data.name;
-    const phone = parsedData.data.phone;
-    const email = parsedData.data.email;
-    const serviceId = parsedContext.data.serviceId;
-    const date = parsedContext.data.date;
-    const startTime = parsedContext.data.startTime;
+    const { name, phone, email } = parsedData.data;
+    const { serviceId, date, startTime } = parsedContext.data;
+
 
     const service = await prisma.service.findUnique({
         where: { id: serviceId, active: true },
@@ -78,10 +101,10 @@ export async function submitBooking(
         redirect("/rezervace");
     }
 
-    const client = await findOrCreateClient(phone, name, email);
-
-    const extraTimeMinutes = client.extraTimeMinutes;
-    const source = "ONLINE";
+    // Read-only lookup first: nothing about the client may be written until
+    // the slot is known to be bookable.
+    const extraTimeMinutes =
+        (await findClient(phone, name))?.extraTimeMinutes ?? 0;
 
     const valid = await getAvailableSlots(date, [serviceId], extraTimeMinutes);
     if (!valid.includes(startTime)) {
@@ -95,47 +118,33 @@ export async function submitBooking(
         );
     }
 
+    const client = await findOrCreateClient(phone, name, email);
+
+    let bookingId: string;
     try {
         const booking = await createBooking({
             clientId: client.id,
             serviceId,
             date,
             startTime,
-            source,
+            source: "ONLINE",
             extraTimeMinutes,
         });
-
-        const bookingWithRelations = await prisma.booking.findUniqueOrThrow({
-            where: { id: booking.id },
-            include: { client: true, service: true },
-        });
-        await sendBookingConfirmationEmail([bookingWithRelations]);
-        after(() =>
-            sendPushNotification({
-                title: "📅 Nová rezervace",
-                body: `${bookingWithRelations.client.name} – ${bookingWithRelations.service.name}, ${formatTime(bookingWithRelations.startTime)}`,
-                url: "/kalendar",
-            })
-        );
-
-        redirect(`/rezervace/confirmed?id=${booking.id}`);
+        bookingId = booking.id;
     } catch (error) {
-        if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === "P2002"
-        ) {
-            redirect(
-                await buildSlotConflictRedirect(
-                    date,
-                    [serviceId],
-                    startTime,
-                    extraTimeMinutes
-                )
-            );
-        } else {
-            throw error;
-        }
+        if (!isBookingSlotConflict(error)) throw error;
+        redirect(
+            await buildSlotConflictRedirect(
+                date,
+                [serviceId],
+                startTime,
+                extraTimeMinutes
+            )
+        );
     }
+
+    after(() => notifyNewOnlineBooking({ id: bookingId }));
+    redirect(`/rezervace/confirmed?id=${bookingId}`);
 }
 
 export async function submitGroupBooking(
@@ -148,16 +157,13 @@ export async function submitGroupBooking(
         redirect("/rezervace");
     }
 
-    const phone = parsedData.data.phone;
-    const email = parsedData.data.email;
-    const names = parsedData.data.names;
-    const serviceIds = parsedContext.data.serviceIds;
-    const date = parsedContext.data.date;
-    const startTime = parsedContext.data.startTime;
+    const { names, phone, email } = parsedData.data;
+    const { serviceIds, date, startTime } = parsedContext.data;
 
     if (names.length !== serviceIds.length) {
         redirect("/rezervace");
     }
+
 
     const services = await prisma.service.findMany({
         where: { id: { in: serviceIds }, active: true },
@@ -167,21 +173,14 @@ export async function submitGroupBooking(
         redirect("/rezervace");
     }
 
-    const client = await findOrCreateClient(phone, names[0], email);
-
-    const people = names.map((name, i) => ({
-        clientId: client.id,
-        guestName: i === 0 ? undefined : name,
-        extraTimeMinutes: i === 0 ? client.extraTimeMinutes : 0,
-        serviceId: serviceIds[i],
-    }));
-
-    const extraMinutes = people.reduce((acc, person) => acc + person.extraTimeMinutes, 0);
+    // Only the main contact can have extra time - guests aren't Clients.
+    const mainContactExtraMinutes =
+        (await findClient(phone, names[0]))?.extraTimeMinutes ?? 0;
 
     const valid = await getAvailableSlots(
         date,
         serviceIds,
-        extraMinutes
+        mainContactExtraMinutes
     );
     if (!valid.includes(startTime)) {
         redirect(
@@ -189,53 +188,38 @@ export async function submitGroupBooking(
                 date,
                 serviceIds,
                 startTime,
-                extraMinutes
+                mainContactExtraMinutes
             )
         );
     }
 
+    const client = await findOrCreateClient(phone, names[0], email);
 
+    const people = names.map((name, i) => ({
+        clientId: client.id,
+        guestName: i === 0 ? undefined : name,
+        extraTimeMinutes: i === 0 ? mainContactExtraMinutes : 0,
+        serviceId: serviceIds[i],
+    }));
 
+    let groupId: string;
     try {
-        const bookings = await createGroupBooking(
-            people,
-            date,
-            startTime,
-            "ONLINE",
-        )
-
-        const bookingsWithRelations = await prisma.booking.findMany({
-            where: { groupId: bookings[0].groupId },
-            include: { client: true, service: true },
-            orderBy: { startTime: "asc" },
-        });
-        await sendBookingConfirmationEmail(bookingsWithRelations);
-        after(() =>
-            sendPushNotification({
-                title: "👥 Nová skupinová rezervace",
-                body: `${bookingsWithRelations[0].client.name} – ${bookingsWithRelations.length} osoby, ${formatTime(bookingsWithRelations[0].startTime)}`,
-                url: "/kalendar",
-            })
-        );
-
-        redirect(`/rezervace/confirmed?groupId=${bookings[0].groupId}`);
+        const bookings = await createGroupBooking(people, date, startTime, "ONLINE");
+        groupId = bookings[0].groupId!;
     } catch (error) {
-        if (
-            error instanceof Prisma.PrismaClientKnownRequestError &&
-            error.code === "P2002"
-        ) {
-            redirect(
-                await buildSlotConflictRedirect(
-                    date,
-                    serviceIds,
-                    startTime,
-                    extraMinutes
-                )
-            );
-        } else {
-            throw error;
-        }
+        if (!isBookingSlotConflict(error)) throw error;
+        redirect(
+            await buildSlotConflictRedirect(
+                date,
+                serviceIds,
+                startTime,
+                mainContactExtraMinutes
+            )
+        );
     }
+
+    after(() => notifyNewOnlineBooking({ groupId }));
+    redirect(`/rezervace/confirmed?groupId=${groupId}`);
 }
 
 // extraMinutes comes from the URL after an extra_time_conflict redirect
