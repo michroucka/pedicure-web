@@ -157,9 +157,38 @@ describe("computeGaps", () => {
 
         expect(computeGaps(windows, bookings)).toEqual([]);
     });
+
+    it("counts a booking that runs past the end of the window", () => {
+        // 9:00-12:00 window, "outside hours" booking 11:30-12:30
+        const windows: TimeSlot[] = [{ start: 540, end: 720 }];
+        const bookings: TimeSlot[] = [{ start: 690, end: 750 }];
+
+        expect(computeGaps(windows, bookings)).toEqual([
+            { start: 540, end: 690 },
+        ]);
+    });
+
+    it("counts a booking that starts before the window", () => {
+        // window shortened to 10:00-12:00 after a 9:30-10:30 booking was made
+        const windows: TimeSlot[] = [{ start: 600, end: 720 }];
+        const bookings: TimeSlot[] = [{ start: 570, end: 630 }];
+
+        expect(computeGaps(windows, bookings)).toEqual([
+            { start: 630, end: 720 },
+        ]);
+    });
 });
 
 describe("computeAvailableSlots", () => {
+    it("never offers a slot overlapping a booking that sticks out of the window", () => {
+        const windows: TimeSlot[] = [{ start: 540, end: 720 }];
+        const bookings: TimeSlot[] = [{ start: 690, end: 750 }];
+
+        const result = computeAvailableSlots(windows, bookings, 60, 30);
+
+        expect(result.every((start) => start + 60 <= 690)).toBe(true);
+    });
+
     it("only offers starts that don't leave an unfillable remainder", () => {
         // gap 0-90, service duration 60, shortest service 30, grid 15
         const windows: TimeSlot[] = [{ start: 0, end: 90 }];

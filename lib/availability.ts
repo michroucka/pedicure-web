@@ -97,8 +97,11 @@ export function filterBookings(
     slot: TimeSlot
 ): TimeSlot[] {
     const result: TimeSlot[] = [];
+    // Overlap, not containment: a booking sticking out of the window (custom
+    // "outside hours" time, or hours shortened after it was made) still
+    // occupies the part inside it.
     for (const booking of bookings) {
-        if (booking.start >= slot.start && booking.end <= slot.end) {
+        if (rangesOverlap(booking, slot)) {
             result.push(booking);
         }
     }
