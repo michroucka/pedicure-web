@@ -292,14 +292,29 @@ describe("rezervace actions", () => {
     });
 
     describe("getExtraMinutesAction", () => {
-        it("returns the extra time of the client matched by phone, even with a differently written name", async () => {
+        it("returns the extra time when phone and name match, ignoring case, diacritics and spaces", async () => {
             await prisma.client.create({
                 data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
             });
 
-            // same rule as findOrCreateClient on submit — the phone decides
-            expect(await getExtraMinutesAction({ name: "Jana Berankova", phone })).toBe(15);
+            expect(await getExtraMinutesAction({ name: "jana  berankova", phone })).toBe(15);
             expect(await getExtraMinutesAction({ name: "Jana Beránková", phone: `+420 ${phone}` })).toBe(15);
+        });
+
+        it("reveals nothing when only the phone matches", async () => {
+            await prisma.client.create({
+                data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
+            });
+
+            expect(await getExtraMinutesAction({ name: "Někdo Jiný", phone })).toBe(0);
+        });
+
+        it("reveals nothing for a name alone, without a phone", async () => {
+            await prisma.client.create({
+                data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
+            });
+
+            expect(await getExtraMinutesAction({ name: "Jana Beránková", phone: "" })).toBe(0);
         });
 
         it("returns 0 for an unknown phone", async () => {
