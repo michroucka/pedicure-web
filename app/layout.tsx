@@ -7,6 +7,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
 
 const DESCRIPTION =
     "Pedikúra v Kralovicích s dvacetiletou praxí. Kateřina Roučková nabízí individuální a šetrnou péči o nohy – od pravidelné pedikúry po řešení problematických chodidel.";
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     // Vercel 308-redirects the bare apex to www — metadataBase (and the
     // canonical/OG URLs resolved from it) must point straight at www, or
     // search engines see a redirect where they expect a page.
-    metadataBase: new URL("https://www.pedikurakralovice.cz"),
+    metadataBase: new URL(BUSINESS_INFO.siteUrl),
     title: {
         default: "Nohy v cajku",
         template: "%s | Nohy v cajku",

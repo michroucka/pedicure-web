@@ -39,7 +39,7 @@ const COPY: Record<
     },
 };
 
-const BASE_URL = "https://www.pedikurakralovice.cz";
+const BASE_URL = BUSINESS_INFO.siteUrl;
 
 // Email clients fetch images over the internet when the message is opened,
 // so this has to be an absolute URL — and a raster format, since SVG

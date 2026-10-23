@@ -4,9 +4,10 @@ import { useState } from "react";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
 
-const MAP_QUERY =
-    "x=13.4847511111&y=49.9803738889&z=17&source=firm&id=14057489";
+// mapy.com takes x = longitude, y = latitude.
+const MAP_QUERY = `x=${BUSINESS_INFO.geo.longitude}&y=${BUSINESS_INFO.geo.latitude}&z=17&source=firm&id=${BUSINESS_INFO.mapyFirmId}`;
 const MAP_HEIGHT = 280;
 
 // The mapy.com iframe stores Seznam's tracking identifiers (User-Id cookie,
@@ -21,7 +22,7 @@ export function MapEmbed() {
         <div className="mt-6 overflow-hidden rounded-2xl border border-border">
             {showMap ? (
                 <iframe
-                    src={`https://mapy.com/cs/zakladni?${MAP_QUERY}&widgetFirmy=14057489&frame=1`}
+                    src={`https://mapy.com/cs/zakladni?${MAP_QUERY}&widgetFirmy=${BUSINESS_INFO.mapyFirmId}&frame=1`}
                     title="Mapa provozovny"
                     width="100%"
                     height={MAP_HEIGHT}

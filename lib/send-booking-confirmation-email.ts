@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { BUSINESS_INFO } from "@/lib/business-info.ts";
+import { BUSINESS_INFO, EMAIL_FROM } from "@/lib/business-info.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import {
@@ -11,8 +11,6 @@ import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { prisma } from "@/lib/prisma.ts";
 import type { Booking, Client, Service } from "@/lib/generated/prisma/client.ts";
 
-const FROM_EMAIL = `${BUSINESS_INFO.tagline} <rezervace@pedikurakralovice.cz>`;
-const BASE_URL = "https://www.pedikurakralovice.cz";
 
 const SUBJECTS: Record<BookingEmailVariant, string> = {
     created: "Potvrzení rezervace",
@@ -45,12 +43,12 @@ export async function sendBookingConfirmationEmail(
 
     const dateLabel = format(bookings[0].date, "d. MMMM yyyy", { locale: cs });
     const timeLabel = `${formatTime(bookings[0].startTime)} – ${formatTime(bookings.at(-1)!.endTime)}`;
-    const manageUrl = `${BASE_URL}/rezervace/sprava/${bookings[0].cancelToken}`;
+    const manageUrl = `${BUSINESS_INFO.siteUrl}/rezervace/sprava/${bookings[0].cancelToken}`;
 
     try {
         const resend = new Resend(apiKey);
         await resend.emails.send({
-            from: FROM_EMAIL,
+            from: EMAIL_FROM,
             to: email,
             subject: SUBJECTS[variant],
             react: BookingConfirmationEmail({

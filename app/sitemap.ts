@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { BUSINESS_INFO } from "@/lib/business-info.ts";
 
 // Vercel 308-redirects the bare apex domain to www, so URLs listed here
 // must point straight at www — otherwise search engines see a redirect
 // instead of a page and refuse to index it (this bit Seznam Webmaster).
-const BASE_URL = "https://www.pedikurakralovice.cz";
+const BASE_URL = BUSINESS_INFO.siteUrl;
 
 export default function sitemap(): MetadataRoute.Sitemap {
     return [

@@ -8,75 +8,37 @@ import {
 export const metadata: Metadata = {
     title: "Ochrana osobních údajů",
     description:
-        "Jak pedikúra Nohy v cajku zpracovává osobní údaje klientů – účel, doba uložení, zpracovatelé a vaše práva.",
+        "Jak pedikúra Nohy v cajku zpracovává osobní údaje klientů – účel, doba uložení a vaše práva.",
     alternates: { canonical: "/ochrana-osobnich-udaju" },
 };
 
 // Bump on every substantive change to the text below.
-const EFFECTIVE_DATE = "14. 10. 2026";
+const EFFECTIVE_DATE = "23. 10. 2026";
 
-const RETENTION = `${CLIENT_RETENTION_YEARS} roky od poslední návštěvy`;
-
-const PURPOSES = [
+// `data` only where Art. 13 GDPR isn't enough: guest names come from the main
+// contact (Art. 14), and the client never types the web technical data.
+const PURPOSES: {
+    purpose: string;
+    data?: string;
+    basis: string;
+    retention: string;
+}[] = [
     {
-        purpose: "Vyřízení rezervace a poskytnutí služby",
+        purpose: "Rezervace, potvrzení e-mailem a připomenutí SMS",
         data: "jméno, telefon, e-mail, termín a zvolená služba; u skupinové rezervace i jména dalších osob",
         basis: "plnění smlouvy (čl. 6 odst. 1 písm. b GDPR)",
         retention: "po dobu trvání rezervace, poté jako evidence klientů",
     },
     {
-        purpose: "Potvrzení rezervace e-mailem a připomenutí termínu SMS",
-        data: "e-mail, telefon, termín",
-        basis: "plnění smlouvy (čl. 6 odst. 1 písm. b GDPR)",
-        retention: "do uskutečnění termínu",
-    },
-    {
         purpose: "Evidence klientů a historie návštěv",
-        data: "jméno, kontakt, historie rezervací, provozní poznámky",
         basis: "oprávněný zájem na evidenci klientů a ochraně práv (čl. 6 odst. 1 písm. f GDPR)",
-        retention: RETENTION,
+        retention: `${CLIENT_RETENTION_YEARS} roky od poslední návštěvy`,
     },
     {
         purpose: "Provoz a zabezpečení webu, anonymní statistika návštěvnosti",
         data: "IP adresa, údaje o prohlížeči a zařízení",
         basis: "oprávněný zájem na bezpečném a funkčním webu (čl. 6 odst. 1 písm. f GDPR)",
         retention: "dle nastavení poskytovatele hostingu, řádově dny až týdny",
-    },
-];
-
-// Must match what the app actually uses (and gdpr.podzpracovatele in
-// web-dokumenty/zakazky/pedikura/zakazka.yaml). Web Push isn't listed on
-// purpose: payloads are end-to-end encrypted, the push service can't read them.
-const PROCESSORS = [
-    {
-        name: "Bc. Michal Roučka",
-        detail: null,
-        role: "technická správa webu a rezervačního systému",
-    },
-    {
-        name: "Vercel Inc.",
-        detail: "USA",
-        role: "hosting webu, anonymní statistika návštěvnosti a měření výkonu webu",
-    },
-    {
-        name: "Neon",
-        detail: "Databricks, Inc., USA; data uložena v EU, Frankfurt",
-        role: "databáze rezervací",
-    },
-    {
-        name: "Resend",
-        detail: "Plus Five Five, Inc., USA",
-        role: "odesílání potvrzovacích e-mailů",
-    },
-    {
-        name: "SMSManager.cz",
-        detail: "ČR",
-        role: "odesílání SMS připomínek",
-    },
-    {
-        name: "GitHub, Inc.",
-        detail: "USA",
-        role: "úložiště šifrovaných záloh databáze",
     },
 ];
 
@@ -90,7 +52,9 @@ const RIGHTS = [
 ];
 
 const H2 = "mt-10 text-2xl";
-const P = "mt-3 max-w-prose text-sm leading-relaxed text-pretty text-muted-foreground";
+const PROSE =
+    "max-w-prose text-sm leading-relaxed text-pretty text-muted-foreground";
+const P = `mt-3 ${PROSE}`;
 
 export default function OchranaOsobnichUdajuPage() {
     return (
@@ -114,10 +78,10 @@ export default function OchranaOsobnichUdajuPage() {
                 <p className={P}>
                     Kontakt pro otázky k osobním údajům:{" "}
                     <a
-                        href={`mailto:info@pedikurakralovice.cz`}
+                        href={`mailto:${BUSINESS_INFO.privacyEmail}`}
                         className="underline underline-offset-2"
                     >
-                        info@pedikurakralovice.cz
+                        {BUSINESS_INFO.privacyEmail}
                     </a>
                     .
                 </p>
@@ -125,90 +89,62 @@ export default function OchranaOsobnichUdajuPage() {
                 <h2 className={H2}>
                     Jaké údaje se zpracovávají, proč a jak dlouho
                 </h2>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {PURPOSES.map((item) => (
-                        <div
-                            key={item.purpose}
-                            className="rounded-2xl border border-border bg-card px-5 py-4"
-                        >
-                            <h3 className="text-base">{item.purpose}</h3>
-                            <dl className="mt-2 space-y-2 text-sm">
-                                <div>
-                                    <dt className="font-medium">Údaje</dt>
-                                    <dd className="text-muted-foreground">
-                                        {item.data}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="font-medium">
-                                        Právní základ
-                                    </dt>
-                                    <dd className="text-muted-foreground">
-                                        {item.basis}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="font-medium">
-                                        Doba uložení
-                                    </dt>
-                                    <dd className="text-muted-foreground">
-                                        {item.retention}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </div>
-                    ))}
-                </div>
+                {PURPOSES.map((item) => (
+                    <div key={item.purpose} className="mt-6">
+                        <h3 className="text-base">{item.purpose}</h3>
+                        <p className={`mt-1 ${PROSE}`}>
+                            {item.data && (
+                                <>
+                                    Údaje: {item.data}
+                                    <br />
+                                </>
+                            )}
+                            Právní základ: {item.basis}
+                            <br />
+                            Doba uložení: {item.retention}
+                        </p>
+                    </div>
+                ))}
                 <p className={P}>
                     Stejně se zpracovávají i rezervace domluvené telefonicky
                     nebo osobně v provozovně.
                 </p>
                 <p className={P}>
-                    Databáze se denně zálohuje v šifrované podobě a zálohy se
-                    uchovávají {BACKUP_RETENTION_DAYS} dní. Smazané údaje tak ze
-                    záloh zmizí nejpozději po {BACKUP_RETENTION_DAYS} dnech.
+                    Zálohy databáze se uchovávají {BACKUP_RETENTION_DAYS} dní,
+                    smazané údaje z nich zmizí nejpozději po této době.
                 </p>
                 <p className={P}>
-                    Údaje o zdravotním stavu správce nesbírá ani neeviduje.
+                    Správce nesbírá ani neeviduje údaje o zdravotním stavu.
+                    Neprobíhá automatizované rozhodování ani profilování.
                 </p>
                 <p className={P}>
                     Poskytnutí údajů k rezervaci je dobrovolné, bez nich ale
-                    rezervaci online provést nelze. Objednat se můžete i
-                    telefonicky.
+                    rezervaci online provést nelze.
                 </p>
 
                 <h2 className={H2}>Kdo k údajům má přístup</h2>
+                {/* Categories of recipients are enough (Art. 13(1)(e) GDPR).
+                    The named list is in the processing agreement
+                    (gdpr.podzpracovatele in web-dokumenty zakazka.yaml). */}
                 <p className={P}>
-                    Vaše údaje se neprodávají ani nepředávají pro marketing.
-                    Přístup k nim mají jen poskytovatelé služeb, které web
-                    potřebuje ke svému chodu (zpracovatelé):
+                    K údajům má kromě správce přístup jen správce webu a
+                    poskytovatelé technických služeb (hosting, databáze a
+                    zálohy, e-mail, SMS, kalendář).
                 </p>
-                <ul className="mt-3 max-w-prose list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
-                    {PROCESSORS.map((p) => (
-                        <li key={p.name}>
-                            <span className="text-foreground">{p.name}</span>
-                            {p.detail && ` (${p.detail})`} – {p.role}
-                        </li>
-                    ))}
-                </ul>
                 <p className={P}>
-                    Poskytovatelé se sídlem v USA jsou certifikováni v rámci
-                    EU-US Data Privacy Framework, případně je předání zajištěno
-                    standardními smluvními doložkami schválenými Evropskou
-                    komisí.
+                    Někteří poskytovatelé sídlí v USA. Předání je zajištěno
+                    rámcem EU-US Data Privacy Framework nebo standardními
+                    smluvními doložkami Evropské komise.
                 </p>
 
                 <h2 className={H2}>Cookies</h2>
                 <p className={P}>
-                    Web používá pouze technicky nezbytné cookies (pro přihlášení
-                    do administrace). Statistika návštěvnosti funguje bez
-                    cookies a bez identifikace konkrétních návštěvníků, proto se
-                    souhlas nevyžaduje.
+                    Web používá jen technicky nezbytné cookies, statistika
+                    návštěvnosti funguje bez nich.
                 </p>
                 <p className={P}>
                     Mapa na stránce Kontakt se načte až po kliknutí. Poté může
-                    služba Mapy.com (Seznam.cz, a.s.) ukládat vlastní cookies
-                    podle svých zásad.
+                    služba Mapy.com ukládat vlastní cookies podle svých zásad.
                 </p>
 
                 <h2 className={H2}>Vaše práva</h2>
@@ -221,21 +157,20 @@ export default function OchranaOsobnichUdajuPage() {
                 <p className={P}>
                     Žádost stačí poslat na{" "}
                     <a
-                        href={`mailto:info@pedikurakralovice.cz`}
+                        href={`mailto:${BUSINESS_INFO.privacyEmail}`}
                         className="underline underline-offset-2"
                     >
-                        info@pedikurakralovice.cz
+                        {BUSINESS_INFO.privacyEmail}
                     </a>
-                    . Správce ji vyřídí bez zbytečného odkladu, nejpozději do 1
-                    měsíce.
+                    . Správce ji vyřídí nejpozději do 1 měsíce.
                 </p>
                 <p className={P}>
                     Pokud se domníváte, že se s vašimi údaji nakládá v rozporu s
-                    právem, můžete podat stížnost u{" "}
+                    právem, můžete podat stížnost na{" "}
                     <span className="text-foreground">
-                        Úřadu pro ochranu osobních údajů
+                        Úřad pro ochranu osobních údajů
                     </span>{" "}
-                    (Pplk. Sochora 27, 170 00 Praha 7,{" "}
+                    (
                     <a
                         href="https://uoou.gov.cz"
                         target="_blank"
