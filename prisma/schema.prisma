@@ -104,6 +104,10 @@ model Booking {
   reminderSent        Boolean         @default(false)
   createdAt           DateTime        @default(now())
 
+  // Not expressible in Prisma, added by hand in migrations:
+  // - partial unique (date, startTime) among CONFIRMED
+  // - exclusion constraint Booking_no_overlap: no two CONFIRMED bookings
+  //   on the same date with overlapping [startTime, endTime)
   @@index([clientId])
   @@index([groupId])
 }
