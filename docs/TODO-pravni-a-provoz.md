@@ -5,7 +5,7 @@ sbírají jméno, telefon a e-mail klientů, takže web musí splňovat GDPR. Sm
 vývojářem a provozovatelem jsou v samostatném repu `web-dokumenty` (zakázka `pedikura`).
 Vzor zásad je v `../web-dokumenty/sablony/web/zasady-ochrany-osobnich-udaju.md`.
 
-Rezervace jsou zatím vypnuté (`lib/booking-enabled.ts`). Bod 1–4 je potřeba hotový **před** jejich zapnutím.
+Rezervace jsou zapnuté od 2026-10-23 (`lib/booking-enabled.ts`).
 
 **Stav 2026-10-22:** body 1, 2, 3, 5, 6, 7 hotové, 4 čeká na ověřovací audit. Zbývají body bez kódu.
 Práce je na větvi `feat/shared-business-info` (pushnutá na `origin`, ne v `main`).
@@ -15,8 +15,8 @@ Práce je na větvi `feat/shared-business-info` (pushnutá na `origin`, ne v `ma
 - [x] **1. Stránka Zásady ochrany osobních údajů** – hotovo 2026-10-14
   - `app/(marketing)/ochrana-osobnich-udaju/page.tsx`, v sitemapě. Zdrojový text: `web-dokumenty/zakazky/pedikura/zasady-ochrany-osobnich-udaju.md` (rozhodnutí v komentáři nahoře) – **při změně upravit obojí**.
   - Údaje správce z `lib/business-info.ts` (`OPERATOR_INFO`, `BUSINESS_INFO`), doby uchování z `lib/data-retention.ts` (3 roky od poslední návštěvy, zálohy 30 dní).
-  - Zpracovatelé: správce webu, Vercel (hosting + Analytics + Speed Insights), Neon (EU), Resend, SMSManager, GitHub (zálohy). Web Push záměrně ne – obsah je šifrovaný end-to-end.
-  - Neosobní tvar („správce“), bez řádku Účetnictví (doklady se vydávají bez jména), kontakt pro žádosti `rouckova@pedikurakralovice.cz`.
+  - Příjemci jen jako kategorie (hosting, databáze a zálohy, e-mail, SMS, kalendář), jmenovitý seznam je ve zpracovatelské smlouvě (`zakazka.yaml`). Web Push záměrně ne – obsah je šifrovaný end-to-end.
+  - Neosobní tvar („správce“), bez řádku Účetnictví (doklady se vydávají bez jména), kontakt pro žádosti `info@pedikurakralovice.cz` (alias na schránku `rouckova@`).
   - **Při nasazení:** přepsat `EFFECTIVE_DATE` („Platné od“) v `page.tsx` na skutečné datum nasazení.
 - [x] **2. Odkazy na zásady** – hotovo 2026-10-14
   - patička webu (`marketing-footer.tsx`), informační věta nad tlačítkem odeslání v obou rezervačních formulářích (`components/rezervace/privacy-notice.tsx`, bez checkboxu), patička potvrzovacího e-mailu.
@@ -36,13 +36,15 @@ Práce je na větvi `feat/shared-business-info` (pushnutá na `origin`, ne v `ma
 
 ## Provoz a účty (bez kódu)
 
-- [ ] **8. Vercel Hobby (free) tarif nesmí být použit komerčně.** Podmínky Vercelu omezují Hobby na osobní a nekomerční užití, web podnikatele je komerční. Možnosti:
+- [x] **8. Vercel Hobby (free) tarif nesmí být použit komerčně.** Podmínky Vercelu omezují Hobby na osobní a nekomerční užití, web podnikatele je komerční.
   
-  - Vercel Pro (20 USD/měsíc),
-  - přesun na hosting, který komerční užití ve free tarifu povoluje (ověřit aktuální podmínky např. u Netlify nebo Cloudflare; Next.js + cron a ICS feed musí jít přenést),
-  - vlastní VPS.
+  **Rozhodnuto 2026-10-23: Vercel Pro** (20 USD/měsíc za člena týmu, ne za projekt) na vlastním účtu vývojáře, pro osobní projekty i pedikúru. Nulová migrace.
   
-  Rozhodnout a případné náklady domluvit s provozovatelem. Smlouva o dílo s tím počítá (čl. Provoz, odst. 2).
+  - Zvažované alternativy: Netlify Free (tvrdý strop 300 kreditů/měsíc, produkční deploy = 15 kreditů, po vyčerpání se pozastaví všechny weby), Cloudflare Workers (free limit 10 ms CPU na request nestačí na argon2 ani SSR, podpora `proxy.ts` v OpenNext je experimentální), VPS + Coolify (netcup; Hetzner CX/CAX od 2026-09 nedostupné).
+  - Podmínky Vercelu (§2, §12(i), §12(iv)) zakazují služby přeprodávat nebo provozovat „for the benefit of a third-party“. Pedikúra na účtu vývojáře je šedá zóna (vědomě přijato, hosting se neúčtuje). Weby budoucích zákazníků **ne** na tomto účtu – buď jejich vlastní Vercel účet, nebo VPS.
+  - [x] Přejít na Pro (hotovo 2026-10-23). Platí zhotovitel, polovinu mu soukromě hradí provozovatelka – do smlouvy ani nákladů provozovatele se to nepromítá.
+  - [x] Nastavit region funkcí na `fra1` (Settings → Functions) – Neon je ve Frankfurtu, výchozí `iad1` je v USA.
+  - [x] V `zakazka.yaml` u Vercelu `plati: "zhotovitel"` místo „bezplatný tarif“, smlouva znovu vygenerována (2026-10-23).
 
 - [x] **9. Neon**:
   
@@ -50,19 +52,27 @@ Práce je na větvi `feat/shared-business-info` (pushnutá na `origin`, ne v `ma
   - ~~zkontrolovat limity free tarifu a délku obnovy dat (PITR)~~ – free tarif: PITR jen 6 h, 1 ruční snapshot, plánované snapshoty ne,
   - ~~zvážit vlastní pravidelnou zálohu~~ – hotovo 2026-10-11: soukromé repo `michroucka/pedicure-db-backup`, noční `pg_dump` šifrovaný AES-256, artefakty GitHub Actions s uchováním 30 dní. Postup obnovy v jeho README.
 
-- [ ] **10. Resend**: ověřená odesílací doména. Zkontrolovat, že free tarif pokrývá objem e-mailů.
+- [ ] **10. Resend a e-mailová doména** – DNS pro Resend zkontrolováno 2026-10-23
+  - Resend: DKIM `resend._domainkey`, SPF + MX na `send.` (Amazon SES `eu-west-1`) v pořádku. Free tarif stačí s rezervou (e-mail jen u online rezervace, přesunu a nízkého kreditu SMS). `rezervace@` je alias na `info@`, `replyTo` není potřeba.
+  - [x] Ověřit v Resend dashboardu, že doména je **Verified**.
+  - [ ] Ověřit v DPA Resendu právní základ předávání do USA (DPF nebo SCC).
+  - [x] (ověřeno 2026-10-23, test e-mail má SPF, DKIM i DMARC PASS) Hlavní doména neměla SPF ani DKIM pro schránky na Seznam Email Profi (DNS je u Wedosu). Přidat TXT `v=spf1 include:spf.seznam.cz ~all` na hlavní doménu a CNAME `szn1`–`szn3._domainkey` → `szn1`–`szn3._domainkey.seznam.cz.`. Ověřit testovacím e-mailem na Gmail (SPF, DKIM i DMARC PASS).
+  - [ ] Za pár týdnů po ověření zpřísnit DMARC z `p=none` na `v=DMARC1; p=quarantine; adkim=r; aspf=r;` a zkontrolovat, že rezervační e-mail z Resendu pořád projde.
 
-- [ ] **11. SMSManager**: účet je na vývojáře, kredit platí provozovatel. Aby šel kredit provozovateli do účetnictví jako výdaj, musí být **doklad za kredit vystavený na jeho IČO**. Buď převést účet na provozovatele, nebo nastavit fakturační údaje provozovatele.
+- [x] **11. SMSManager**: účet je na vývojáře, kredit platí provozovatel. Aby šel kredit provozovateli do účetnictví jako výdaj, musí být **doklad za kredit vystavený na jeho IČO**. Rozhodnuto 2026-10-23: účet zůstává na vývojáři, fakturační údaje jsou nastavené na provozovatele (už hotovo). Převod účtu zvážen a zamítnut.
 
-- [ ] **12. Doména `pedikurakralovice.cz`**: zjistit držitele. Ideálně provozovatel. V `zakazka.yaml` je zatím `domena_drzitel: "Miroslav Roučka"` s TODO – ověřit (např. whois / registrátor).
+- [ ] **12. Doména `pedikurakralovice.cz`**: držitel ověřen 2026-10-23 přes whois CZ.NIC – `WEDOS-CCA-759260, Miroslav Roučka` = provozovatel, registrátor WEDOS, expirace **13. 8. 2027**.
+  - [x] Odstranit TODO u `domena_drzitel` v `web-dokumenty/zakazky/pedikura/zakazka.yaml`.
+  - [ ] Ověřit automatické prodloužení domény u Wedosu a kdo ho platí.
 
-- [ ] **13. Záznamy o činnostech zpracování (čl. 30 GDPR)**: provozovatel by měl mít jednostránkový přehled zpracování (účel, údaje, doba, zpracovatelé). Dá se odvodit z hotových zásad (`web-dokumenty/zakazky/pedikura/zasady-ochrany-osobnich-udaju.md`). Není to kód, ale patří to k spuštění.
+- [ ] **13. Záznamy o činnostech zpracování (čl. 30 GDPR)** – sepsáno 2026-10-23: `web-dokumenty/zakazky/pedikura/zaznamy-o-cinnostech-zpracovani.md` (interní, nezveřejňuje se). Výjimka pro malé firmy (čl. 30 odst. 5) se nepoužije, zpracování není příležitostné.
+  - [ ] Předat provozovateli (vytisknout nebo poslat).
 
-- [ ] **14. Admin účty**: silné heslo a 2FA na Vercelu, Neonu, Resendu, SMSManageru a GitHubu (zavázáno ve zpracovatelské smlouvě, čl. III odst. 3).
+- [x] **14. Admin účty** (hotovo 2026-10-23): silné heslo a 2FA na Vercelu, Neonu, Resendu, SMSManageru a GitHubu (zavázáno ve zpracovatelské smlouvě, čl. III odst. 3).
 
 ## Po dokončení
 
-- [ ] Podepsat dokumenty z `web-dokumenty` (`./build.ps1 pedikura`): smlouva o dílo, zpracovatelská smlouva, předávací protokol. Po zaplacení potvrzení o přijetí platby. Pozor: od 2026-10-14 je v seznamu zpracovatelů i GitHub (zálohy) – vygenerovat PDF znovu.
-- [ ] Přepsat `EFFECTIVE_DATE` v zásadách na datum nasazení.
+- [ ] Podepsat dokumenty z `web-dokumenty` (`./build.ps1 pedikura`): smlouva o dílo, zpracovatelská smlouva, předávací protokol. Po zaplacení potvrzení o přijetí platby. PDF znovu vygenerována 2026-10-23 (GitHub mezi zpracovateli, Vercel placený zhotovitelem).
+- [x] Přepsat `EFFECTIVE_DATE` v zásadách na datum nasazení (23. 10. 2026).
 - [ ] Mergnout `feat/shared-business-info` do `main`.
-- [ ] Zapnout rezervace (`lib/booking-enabled.ts`). Pozor: v pracovním stromu je lokálně `true` necommitnuté – necommitovat dřív.
+- [x] Zapnout rezervace (`lib/booking-enabled.ts`) – 2026-10-23.

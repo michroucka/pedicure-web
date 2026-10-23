@@ -61,17 +61,16 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   všechny absolutní URL v SEO kódu (`metadataBase`, `app/sitemap.ts`,
   `Sitemap:` řádek v `app/robots.ts`, LocalBusiness JSON-LD) musí mířit na
   `www.`, jinak vyhledávače narazí na redirect místo stránky
-- **Booking je dočasně vypnutý** přes `lib/booking-enabled.ts`
-  (`BOOKING_ENABLED = false`) — `RecurringAvailability` zatím nemá
-  nastavené žádné sloty, takže klient by na `/rezervace` stejně nic
-  nenašel. Dokud je flag `false`, `proxy.ts` přesměruje `/rezervace` na
-  `/` a všechna CTA "Objednat se" (hero, closing section, nav, ceník,
-  kontakt) jsou podmíněně skrytá. Až bude reálná dostupnost nastavená,
-  stačí přepnout flag na `true` – vrátí obojí najednou, nepřidávat CTA/gate
-  ručně po jednom
+- **Booking jde vypnout** přes `lib/booking-enabled.ts`
+  (`BOOKING_ENABLED`, od 2026-10-23 `true`). Při `false` `proxy.ts`
+  přesměruje `/rezervace` na `/` a všechna CTA "Objednat se" (hero,
+  closing section, nav, ceník, kontakt) jsou podmíněně skrytá – flag
+  přepíná obojí najednou, nepřidávat CTA/gate ručně po jednom
 - **Resend** — transakční emaily z vlastní domény (SPF/DKIM/DMARC DNS záznamy)
-- **Hosting: Vercel** (Hobby/free plan stačí; zvážit Pro $20/měs jen pokud
-  bude potřeba častější cron)
+- **Hosting: Vercel Pro** na účtu vývojáře (Hobby nesmí komerčně), region
+  funkcí `fra1` kvůli Neonu. Weby jiných zákazníků na tenhle účet ne
+  (podmínky Vercelu zakazují přeprodej) – viz bod 8 v
+  `docs/TODO-pravni-a-provoz.md`
 
 ## Kalendářní integrace (Apple Calendar)
 
