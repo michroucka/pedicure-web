@@ -5,15 +5,15 @@ describe("generateIcsFeed", () => {
     it("generates an event with the correct date and time", () => {
         const result = generateIcsFeed([
             {
-                date: new Date(Date.UTC(2026,5,13)),
+                date: new Date(Date.UTC(2026, 5, 13)),
                 startTime: 540,
                 endTime: 570,
                 client: { name: "Jana Nováková" },
                 guestName: null,
                 service: { name: "Pedikúra klasik" },
-            }
+            },
         ]);
-        
+
         expect(result).toContain("DTSTART:20260613T090000");
         expect(result).toContain("SUMMARY:Jana Nováková – Pedikúra klasik");
     });
@@ -65,5 +65,5 @@ describe("generateIcsFeed", () => {
 
         expect(result).toContain("BEGIN:VCALENDAR");
         expect(result).not.toContain("BEGIN:VEVENT");
-    })
-})
+    });
+});

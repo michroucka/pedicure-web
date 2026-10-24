@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import {
+    ArrowLeft,
     CalendarDays,
     CheckCircle2,
     Clock,
@@ -24,7 +25,7 @@ export default async function SpravaPage({
     searchParams,
 }: {
     params: Promise<{ token: string }>;
-    // ?moved=1 — set by ManageBooking right after a successful move, which
+    // ?moved=1 – set by ManageBooking right after a successful move, which
     // lands here on the new token; otherwise the page looks the same as
     // before and the client can't tell the move happened.
     // ?created=1 - set by submitBooking/submitGroupBooking, which land here
@@ -48,7 +49,7 @@ export default async function SpravaPage({
                 <XCircle className="mx-auto mb-2 size-10 text-muted-foreground" />
                 <h2 className="mb-2">Rezervace zrušena</h2>
                 <p className="mb-6 text-sm text-muted-foreground">
-                    Tato rezervace už byla zrušena.
+                    Tato rezervace byla zrušena.
                 </p>
                 <Button asChild>
                     <Link href="/rezervace">
@@ -143,7 +144,9 @@ export default async function SpravaPage({
                     variant="outline"
                     className="mt-6 w-full"
                 >
-                    <Link href="/">Zpět na hlavní stránku</Link>
+                    <Link href="/">
+                        <ArrowLeft /> Zpět na hlavní stránku
+                    </Link>
                 </Button>
             )}
         </div>

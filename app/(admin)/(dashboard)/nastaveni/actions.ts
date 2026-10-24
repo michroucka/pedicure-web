@@ -1,4 +1,4 @@
-"use server"
+"use server";
 
 import { z } from "zod";
 import { signOut } from "@/auth.ts";
@@ -9,7 +9,11 @@ import argon2 from "argon2";
 const changePasswordSchema = z
     .object({
         currentPassword: z.string().min(1, "Zadejte současné heslo."),
-        newPassword: z.string().min(8, "Nové heslo musí mít alespoň 8 znaků."),
+        newPassword: z
+            .string()
+            .min(8, "Nové heslo musí mít alespoň 8 znaků.")
+            // argon2 hashes whatever it gets - no reason to accept megabytes.
+            .max(256, "Nové heslo může mít nejvýš 256 znaků."),
         confirmPassword: z.string(),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
@@ -17,7 +21,7 @@ const changePasswordSchema = z
         path: ["confirmPassword"],
     });
 
-// What PushSubscription.toJSON() gives the browser — endpoint is the push
+// What PushSubscription.toJSON() gives the browser – endpoint is the push
 // service URL web-push will POST to, so it has to be a real https URL.
 const pushSubscriptionSchema = z.object({
     endpoint: z.url({ protocol: /^https$/ }).max(2000),
@@ -74,8 +78,14 @@ export async function savePushSubscriptionAction({
     userAgent?: string;
 }) {
     const username = await requireAdmin();
-    const parsed = pushSubscriptionSchema.safeParse({ endpoint, p256dh, auth: subAuth, userAgent });
-    if (!parsed.success) return { ok: false, error: "Neplatné údaje o zařízení." };
+    const parsed = pushSubscriptionSchema.safeParse({
+        endpoint,
+        p256dh,
+        auth: subAuth,
+        userAgent,
+    });
+    if (!parsed.success)
+        return { ok: false, error: "Neplatné údaje o zařízení." };
     ({ endpoint, p256dh, auth: subAuth, userAgent } = parsed.data);
 
     const admin = await prisma.adminUser.findUnique({
@@ -86,8 +96,14 @@ export async function savePushSubscriptionAction({
     await prisma.pushSubscription.upsert({
         where: { endpoint },
         update: { p256dh, auth: subAuth, userAgent },
-        create: { adminUserId: admin.id, endpoint , p256dh , auth: subAuth, userAgent }
-    })
+        create: {
+            adminUserId: admin.id,
+            endpoint,
+            p256dh,
+            auth: subAuth,
+            userAgent,
+        },
+    });
 }
 
 export async function deletePushSubscriptionAction(endpoint: string) {

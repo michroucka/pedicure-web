@@ -11,7 +11,7 @@ export async function createBooking(
         startTime,
         source,
         groupId,
-        extraTimeMinutes = 0
+        extraTimeMinutes = 0,
     }: {
         clientId: string;
         guestName?: string | null;

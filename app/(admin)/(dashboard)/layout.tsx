@@ -18,7 +18,7 @@ export default async function AdminDashboardLayout({
     children: React.ReactNode;
 }) {
     // Primary enforcement is proxy.ts, which runs on every request
-    // (including soft client-side navigation between these pages) — this
+    // (including soft client-side navigation between these pages) – this
     // layout only re-renders on a hard load, so it's a defense-in-depth
     // backstop, not the main gate.
     const session = await auth();
@@ -28,7 +28,7 @@ export default async function AdminDashboardLayout({
 
     return (
         <div className="flex h-svh flex-col">
-            <main className="flex-1 overflow-y-auto scrollbar-gutter-both pt-4">
+            <main className="flex-1 scrollbar-gutter-both overflow-y-auto pt-4">
                 {children}
             </main>
             <AdminBottomNav />

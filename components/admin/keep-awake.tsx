@@ -43,7 +43,10 @@ export function KeepAwake() {
                 });
                 logKeepAwakeEvent(`${trigger}: zámek získán`);
             } catch (error) {
-                const reason = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+                const reason =
+                    error instanceof Error
+                        ? `${error.name}: ${error.message}`
+                        : String(error);
                 logKeepAwakeEvent(`${trigger}: získání selhalo – ${reason}`);
                 console.error("Wake lock request failed:", error);
             }
@@ -53,7 +56,8 @@ export function KeepAwake() {
         // (switching apps, locking the iPad), so take it again on return.
         function handleVisibilityChange() {
             logKeepAwakeEvent(`visibilitychange: ${document.visibilityState}`);
-            if (document.visibilityState === "visible") void acquire("visibilitychange");
+            if (document.visibilityState === "visible")
+                void acquire("visibilitychange");
         }
 
         // Diagnostics only: shows whether iPadOS fires these at all, before
@@ -69,10 +73,16 @@ export function KeepAwake() {
         // state changes so the bounded log isn't flooded with heartbeats.
         let lastLockState = "";
         const lockStateCheck = setInterval(() => {
-            const lockState = !sentinel ? "žádný" : sentinel.released ? "uvolněný" : "drží";
+            const lockState = !sentinel
+                ? "žádný"
+                : sentinel.released
+                  ? "uvolněný"
+                  : "drží";
             if (lockState === lastLockState) return;
             lastLockState = lockState;
-            logKeepAwakeEvent(`kontrola: zámek ${lockState}, stránka ${document.visibilityState}`);
+            logKeepAwakeEvent(
+                `kontrola: zámek ${lockState}, stránka ${document.visibilityState}`
+            );
         }, LOCK_STATE_CHECK_INTERVAL_MS);
 
         void acquire("start");
@@ -84,7 +94,10 @@ export function KeepAwake() {
             cancelled = true;
             logKeepAwakeEvent("stop");
             clearInterval(lockStateCheck);
-            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityChange
+            );
             window.removeEventListener("pageshow", handlePageShow);
             window.removeEventListener("focus", handleFocus);
             void sentinel?.release();

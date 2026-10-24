@@ -1,4 +1,6 @@
 import type { Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { fontDisplay } from "@/lib/fonts.ts";
 import { ReactNode } from "react";
 import { MarketingNav } from "@/components/marketing/marketing-nav.tsx";
@@ -10,7 +12,7 @@ export const viewport: Viewport = {
     themeColor: "#38252A",
 };
 
-// LocalBusiness structured data — lets Google tie this site to the same
+// LocalBusiness structured data – lets Google tie this site to the same
 // business as the Google Business Profile/Firmy.cz listings instead of
 // treating them as unrelated.
 const LOCAL_BUSINESS_JSON_LD = {
@@ -38,18 +40,13 @@ const LOCAL_BUSINESS_JSON_LD = {
     ],
 };
 
-export default function MarketingLayout({
-    children,
-}: {
-    children: ReactNode;
-}) {
+export default function MarketingLayout({ children }: { children: ReactNode }) {
     return (
         <PortalContainerProvider
             className={`storefront flex min-h-svh flex-col bg-background text-foreground ${fontDisplay.variable}`}
         >
             <script
                 type="application/ld+json"
-                // eslint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{
                     __html: JSON.stringify(LOCAL_BUSINESS_JSON_LD),
                 }}
@@ -57,6 +54,10 @@ export default function MarketingLayout({
             <MarketingNav />
             <main className="flex-1">{children}</main>
             <MarketingFooter />
+            {/* Public pages only - the admin isn't traffic worth measuring,
+                and it saves the tablet two scripts. */}
+            <Analytics />
+            <SpeedInsights />
         </PortalContainerProvider>
     );
 }

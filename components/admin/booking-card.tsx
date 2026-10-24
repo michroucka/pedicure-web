@@ -10,7 +10,7 @@ import type {
 
 export type BookingItem = Booking & { client: Client; service: Service };
 
-// Already started (or on an earlier day) — dimmed in the timeline, but
+// Already started (or on an earlier day) – dimmed in the timeline, but
 // cancel/move stay fully usable (no-shows get rebooked after the fact).
 export function isBookingPast(
     booking: BookingItem,
@@ -57,19 +57,19 @@ export function BookingCard({
             style={{ top, height }}
         >
             <div className="min-w-0">
-                <div className="truncate max-2xl:text-xs font-medium">
+                <div className="truncate font-medium max-2xl:text-xs">
                     {getBookingPersonName(booking)}
                 </div>
-                <div className="truncate text-xxs 2xl:text-xs text-muted-foreground">
+                <div className="truncate text-xxs text-muted-foreground 2xl:text-xs">
                     {booking.service.name}
                     {booking.extraTimeMinutes > 0 && "+"}
                 </div>
             </div>
             <div className="shrink-0 text-right text-xs">
-                <div className="tabular-nums font-medium text-foreground">
+                <div className="font-medium text-foreground tabular-nums">
                     {formatTime(booking.startTime)}
                 </div>
-                <div className="tabular-nums font-medium text-muted-foreground">
+                <div className="font-medium text-muted-foreground tabular-nums">
                     {formatTime(booking.endTime)}
                 </div>
             </div>

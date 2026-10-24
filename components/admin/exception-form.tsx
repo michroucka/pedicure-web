@@ -13,7 +13,7 @@ import { TimePicker } from "@/components/ui/time-picker.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { AlertCircle, Plus, Trash2, Check, CalendarX } from "lucide-react";
 import {
-    toUtcMidnight,
+    localDateToUtcMidnight,
     formatTime,
     parseTime,
     roundToQuarterHour,
@@ -38,7 +38,7 @@ import { Spinner } from "@/components/ui/spinner.tsx";
 
 const SLIDER_STEP = 15;
 // Fallback track bounds when a day has no blocks yet to derive a range
-// from — widened automatically (see trackBoundsFor) to always fit whatever
+// from – widened automatically (see trackBoundsFor) to always fit whatever
 // real data ends up on it.
 const DEFAULT_TRACK: TimeSlot = { start: 13 * 60, end: 20 * 60 };
 
@@ -78,11 +78,11 @@ export function ExceptionForm({
     );
     const [isPending, startTransition] = useTransition();
 
-    const minDate = addDays(toUtcMidnight(new Date()), 1);
+    const minDate = addDays(localDateToUtcMidnight(new Date()), 1);
 
     const exceptionsByDate = new Map<number, AvailabilityException[]>();
     for (const exception of exceptions) {
-        const key = toUtcMidnight(exception.date).getTime();
+        const key = localDateToUtcMidnight(exception.date).getTime();
         const existing = exceptionsByDate.get(key) ?? [];
         existing.push(exception);
         exceptionsByDate.set(key, existing);
@@ -102,10 +102,10 @@ export function ExceptionForm({
 
     function recurringFor(d: Date): TimeSlot[] {
         // `d` comes straight from the Calendar's onSelect, which is local
-        // midnight, not UTC midnight — reading getUTCDay() on it directly
+        // midnight, not UTC midnight – reading getUTCDay() on it directly
         // shifts the weekday back a day in any timezone ahead of UTC
         // (Czech local time included). Normalize first.
-        const dayOfWeek = toUtcMidnight(d).getUTCDay();
+        const dayOfWeek = localDateToUtcMidnight(d).getUTCDay();
         return recurring
             .filter((r) => r.dayOfWeek === dayOfWeek)
             .map((r) => ({ start: r.startTime, end: r.endTime }));
@@ -122,7 +122,7 @@ export function ExceptionForm({
         }
 
         const existing =
-            exceptionsByDate.get(toUtcMidnight(d).getTime()) ?? [];
+            exceptionsByDate.get(localDateToUtcMidnight(d).getTime()) ?? [];
         const resolved = resolveDayTimeSlots(
             recurringFor(d),
             existing.map((e) => ({
@@ -201,19 +201,27 @@ export function ExceptionForm({
     function typeStart(block: Block, value: string) {
         if (!value) return;
         const start = parseTime(roundToQuarterHour(value));
-        updateBlock(block.id, Math.min(start, block.end - SLIDER_STEP), block.end);
+        updateBlock(
+            block.id,
+            Math.min(start, block.end - SLIDER_STEP),
+            block.end
+        );
     }
 
     function typeEnd(block: Block, value: string) {
         if (!value) return;
         const end = parseTime(roundToQuarterHour(value));
-        updateBlock(block.id, block.start, Math.max(end, block.start + SLIDER_STEP));
+        updateBlock(
+            block.id,
+            block.start,
+            Math.max(end, block.start + SLIDER_STEP)
+        );
     }
 
     function addBlock() {
         setConflicts(null);
         if (blocks.length === 0) {
-            // Nothing open yet on this day — the recurring schedule (if
+            // Nothing open yet on this day – the recurring schedule (if
             // any) is the most useful starting point, otherwise fall back
             // to the default track's own span.
             const base = date ? recurringFor(date)[0] : undefined;
@@ -261,10 +269,7 @@ export function ExceptionForm({
             if (conflicts === null) {
                 const { blocked } = diffDayBlocks(recurringFor(date), target);
 
-                const found = await checkDayOverrideConflicts(
-                    dateStr,
-                    blocked
-                );
+                const found = await checkDayOverrideConflicts(dateStr, blocked);
                 if (found.length > 0) {
                     setConflicts(found);
                     return;
@@ -294,7 +299,8 @@ export function ExceptionForm({
                         selected={range}
                         onSelect={updateRange}
                         disabled={(day) =>
-                            toUtcMidnight(day).getTime() < minDate.getTime()
+                            localDateToUtcMidnight(day).getTime() <
+                            minDate.getTime()
                         }
                         modifiers={modifiers}
                         components={{ DayButton: ExceptionDayButton }}
@@ -308,7 +314,8 @@ export function ExceptionForm({
                         selected={date}
                         onSelect={updateDate}
                         disabled={(day) =>
-                            toUtcMidnight(day).getTime() < minDate.getTime()
+                            localDateToUtcMidnight(day).getTime() <
+                            minDate.getTime()
                         }
                         modifiers={modifiers}
                         components={{ DayButton: ExceptionDayButton }}
@@ -317,7 +324,7 @@ export function ExceptionForm({
                     />
                 )}
 
-                <div className="flex flex-col gap-3 h-full">
+                <div className="flex h-full flex-col gap-3">
                     {(rangeMode ? !range?.from || !range?.to : !date) && (
                         <p className="text-sm text-muted-foreground max-lg:text-center">
                             {rangeMode
@@ -397,14 +404,8 @@ export function ExceptionForm({
                                     >
                                         <div className="flex-1">
                                             <Slider
-                                                value={[
-                                                    block.start,
-                                                    block.end,
-                                                ]}
-                                                onValueChange={([
-                                                    start,
-                                                    end,
-                                                ]) =>
+                                                value={[block.start, block.end]}
+                                                onValueChange={([start, end]) =>
                                                     updateBlock(
                                                         block.id,
                                                         start,
@@ -422,17 +423,13 @@ export function ExceptionForm({
                                                     icon={null}
                                                     variant="ghost"
                                                     max={formatTime(
-                                                        block.end -
-                                                            SLIDER_STEP
+                                                        block.end - SLIDER_STEP
                                                     )}
                                                     value={formatTime(
                                                         block.start
                                                     )}
                                                     onChange={(value) =>
-                                                        typeStart(
-                                                            block,
-                                                            value
-                                                        )
+                                                        typeStart(block, value)
                                                     }
                                                 />
                                                 <TimePicker
@@ -448,10 +445,7 @@ export function ExceptionForm({
                                                         block.end
                                                     )}
                                                     onChange={(value) =>
-                                                        typeEnd(
-                                                            block,
-                                                            value
-                                                        )
+                                                        typeEnd(block, value)
                                                     }
                                                 />
                                             </div>
@@ -491,9 +485,7 @@ export function ExceptionForm({
                                     <AlertCircle />
                                     <AlertTitle>
                                         V tomto termínu{" "}
-                                        {conflicts.length > 1
-                                            ? "jsou"
-                                            : "je"}{" "}
+                                        {conflicts.length > 1 ? "jsou" : "je"}{" "}
                                         rezervace
                                     </AlertTitle>
                                     <AlertDescription>

@@ -24,12 +24,12 @@ import {
 export async function saveRecurringAvailability(data: AvailabilityFormData) {
     await requireAdmin();
     // The form validates with the same schema (zodResolver), so a failure
-    // here is tampered input — nothing to show, just don't save it.
+    // here is tampered input – nothing to show, just don't save it.
     const result = availabilitySchema.safeParse(data);
     if (!result.success) return;
     const parsed = result.data;
 
-    // Touching blocks get merged into one row — see toRecurringRows.
+    // Touching blocks get merged into one row – see toRecurringRows.
     const rows = toRecurringRows(
         parsed.days.map((day) => ({
             dayOfWeek: day.dayOfWeek,
@@ -54,7 +54,7 @@ export type ExceptionConflict = {
     endTime: number;
 };
 
-// Bookings that would be orphaned by blocking the given ranges — checked
+// Bookings that would be orphaned by blocking the given ranges – checked
 // before saving so the admin gets a chance to cancel/move them first
 // instead of the exception silently leaving them scheduled outside the
 // (new) available hours.
@@ -94,7 +94,7 @@ export async function checkDayOverrideConflicts(
 }
 
 // Replaces every exception on this date with whatever it takes to make the
-// day's resolved hours match `blocks` exactly — the admin edits the target
+// day's resolved hours match `blocks` exactly – the admin edits the target
 // hours directly, not "block"/"extra open" deltas.
 export async function saveDayOverride(
     data: DayOverrideFormData
@@ -130,7 +130,7 @@ export async function saveDayOverride(
         await tx.availabilityException.deleteMany({ where: { date } });
 
         if (target.length === 0) {
-            // Nothing left open — if the day wasn't already closed by the
+            // Nothing left open – if the day wasn't already closed by the
             // recurring schedule, that's a single whole-day block, same as
             // the old "BLOCKED_ALL_DAY" case.
             if (recurring.length > 0) {
@@ -181,16 +181,19 @@ function datesInRange(startDateStr: string, endDateStr: string): Date[] {
 }
 
 // Closing a range is always a full day block, so any CONFIRMED booking
-// anywhere in the range is a conflict — no per-time-range overlap math
+// anywhere in the range is a conflict – no per-time-range overlap math
 // needed like checkDayOverrideConflicts does for partial blocks.
 export async function checkRangeConflicts(
     startDateStr: string,
     endDateStr: string
 ): Promise<ExceptionConflict[]> {
     await requireAdmin();
-    // Same rules (incl. the max length) as saveCloseRange — an invalid
+    // Same rules (incl. the max length) as saveCloseRange – an invalid
     // range shows no conflicts and then fails there with the message.
-    const result = closeRangeSchema.safeParse({ startDate: startDateStr, endDate: endDateStr });
+    const result = closeRangeSchema.safeParse({
+        startDate: startDateStr,
+        endDate: endDateStr,
+    });
     if (!result.success) return [];
     const dates = datesInRange(result.data.startDate, result.data.endDate);
 
@@ -208,7 +211,7 @@ export async function checkRangeConflicts(
 }
 
 // Full-day BLOCKED exception on every date in the range, replacing whatever
-// exceptions (if any) were already there — same "target state, not delta"
+// exceptions (if any) were already there – same "target state, not delta"
 // convention as saveDayOverride, just for many days at once.
 export async function saveCloseRange(
     data: CloseRangeFormData

@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { soloDataSchema } from "@/app/rezervace/schema.ts";
-import { getExtraMinutesAction } from "@/app/rezervace/actions.ts";
 import {
     Field,
     FieldGroup,
@@ -16,17 +14,11 @@ import { Input } from "@/components/ui/input.tsx";
 import { PhoneInput } from "@/components/phone-input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert.tsx";
-import {
-    Check,
-    ChevronLeft,
-    Info,
-    Mail,
-    Phone,
-    UserRound,
-} from "lucide-react";
+import { Check, ChevronLeft, Info, Mail, Phone, UserRound } from "lucide-react";
 import Link from "next/link";
 import { PrivacyNotice } from "@/components/rezervace/privacy-notice.tsx";
 import { useTurnstile } from "@/components/rezervace/use-turnstile.tsx";
+import { useClientExtraMinutes } from "@/components/rezervace/use-client-extra-minutes.ts";
 import { formatTime } from "@/lib/utils.ts";
 
 type SoloFormData = z.infer<typeof soloDataSchema>;
@@ -38,7 +30,10 @@ export function SoloBookingForm({
     durationMinutes,
     initialExtraMinutes = 0,
 }: {
-    boundSubmitAction: (data: SoloFormData, turnstileToken: string | null) => Promise<void>;
+    boundSubmitAction: (
+        data: SoloFormData,
+        turnstileToken: string | null
+    ) => Promise<void>;
     backHref: string;
     startTime: number;
     durationMinutes: number;
@@ -65,35 +60,18 @@ export function SoloBookingForm({
 
     const name = useWatch({ control, name: "name" });
     const phone = useWatch({ control, name: "phone" });
-    const [extraMinutes, setExtraMinutes] = useState(initialExtraMinutes);
-
-    // Extra time is tied to an existing client match (same rule as on
-    // submit — by phone), which is only known once both fields are filled
-    // in — so we look it up as the user types, instead of surprising them
-    // with a longer slot only after they submit.
-    useEffect(() => {
-        let cancelled = false;
-        const timeout = setTimeout(() => {
-            if (!name?.trim() || !phone?.trim()) {
-                if (!cancelled) setExtraMinutes(0);
-                return;
-            }
-            getExtraMinutesAction({ name, phone }).then((minutes) => {
-                if (!cancelled) setExtraMinutes(minutes);
-            });
-        }, 400);
-        return () => {
-            cancelled = true;
-            clearTimeout(timeout);
-        };
-    }, [name, phone]);
+    const extraMinutes = useClientExtraMinutes(
+        name,
+        phone,
+        initialExtraMinutes
+    );
 
     return (
         <>
             {extraMinutes > 0 && extraMinutes !== initialExtraMinutes && (
                 <Alert
                     variant="info"
-                    className="mb-4 -mt-4"
+                    className="-mt-4 mb-4"
                 >
                     <Info />
                     <AlertTitle>Delší rezervace</AlertTitle>

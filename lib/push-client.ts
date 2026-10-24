@@ -12,7 +12,9 @@ function urlBase64ToUint8Array(base64String: Base64URLString) {
 // Shared by the manual toggle in /nastaveni and the silent re-subscribe on
 // app open, so both always subscribe with the same VAPID key and persist
 // the same fields.
-export async function subscribeAndSave(registration: ServiceWorkerRegistration) {
+export async function subscribeAndSave(
+    registration: ServiceWorkerRegistration
+) {
     const applicationServerKey = urlBase64ToUint8Array(
         process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""
     );

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/field.tsx";
 import { setKeepAwakeEnabled, useKeepAwakeEnabled } from "@/lib/keep-awake.ts";
 
-// Browser support never changes at runtime — nothing to subscribe to.
+// Browser support never changes at runtime – nothing to subscribe to.
 function subscribeToNothing() {
     return () => {};
 }

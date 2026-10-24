@@ -43,7 +43,11 @@ describe("sendBookingConfirmationEmail", () => {
     it("lists every group member under their own name, greeting the main contact", async () => {
         await sendBookingConfirmationEmail([
             booking({ guestName: null, startTime: 540, serviceName: "Klasik" }),
-            booking({ guestName: "Eva Beránková", startTime: 570, serviceName: "Komplet" }),
+            booking({
+                guestName: "Eva Beránková",
+                startTime: 570,
+                serviceName: "Komplet",
+            }),
         ]);
 
         expect(send).toHaveBeenCalledOnce();
@@ -61,7 +65,13 @@ describe("sendBookingConfirmationEmail", () => {
 
     it("sends the 'moved' variant with its own subject and the new link", async () => {
         await sendBookingConfirmationEmail(
-            [booking({ guestName: null, startTime: 600, serviceName: "Klasik" })],
+            [
+                booking({
+                    guestName: null,
+                    startTime: 600,
+                    serviceName: "Klasik",
+                }),
+            ],
             "moved"
         );
 
@@ -69,7 +79,8 @@ describe("sendBookingConfirmationEmail", () => {
         expect(BookingConfirmationEmail).toHaveBeenCalledWith(
             expect.objectContaining({
                 variant: "moved",
-                manageUrl: "https://www.pedikurakralovice.cz/rezervace/sprava/token-600",
+                manageUrl:
+                    "https://www.pedikurakralovice.cz/rezervace/sprava/token-600",
             })
         );
     });

@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { groupDataSchema } from "@/app/rezervace/schema.ts";
-import { getExtraMinutesAction } from "@/app/rezervace/actions.ts";
 import {
     Field,
     FieldLabel,
@@ -31,6 +29,7 @@ import {
 import Link from "next/link";
 import { PrivacyNotice } from "@/components/rezervace/privacy-notice.tsx";
 import { useTurnstile } from "@/components/rezervace/use-turnstile.tsx";
+import { useClientExtraMinutes } from "@/components/rezervace/use-client-extra-minutes.ts";
 import { formatTime } from "@/lib/utils.ts";
 
 type GroupFormData = z.infer<typeof groupDataSchema>;
@@ -43,7 +42,10 @@ export function GroupBookingForm({
     durationMinutes,
     initialExtraMinutes = 0,
 }: {
-    boundSubmitAction: (data: GroupFormData, turnstileToken: string | null) => Promise<void>;
+    boundSubmitAction: (
+        data: GroupFormData,
+        turnstileToken: string | null
+    ) => Promise<void>;
     serviceNames: string[];
     backHref: string;
     startTime: number;
@@ -71,29 +73,13 @@ export function GroupBookingForm({
 
     const names = useWatch({ control, name: "names" });
     const phone = useWatch({ control, name: "phone" });
-    const [extraMinutes, setExtraMinutes] = useState(initialExtraMinutes);
-
     // Only the main contact is a Client with its own extra time (guests get
-    // 0, same as on submit), only knowable once their name + phone are
-    // filled in — look it up as the user types instead of surprising them
-    // after submit.
-    const mainName = names?.[0];
-    useEffect(() => {
-        let cancelled = false;
-        const timeout = setTimeout(() => {
-            if (!mainName?.trim() || !phone?.trim()) {
-                if (!cancelled) setExtraMinutes(0);
-                return;
-            }
-            getExtraMinutesAction({ name: mainName, phone }).then((minutes) => {
-                if (!cancelled) setExtraMinutes(minutes);
-            });
-        }, 400);
-        return () => {
-            cancelled = true;
-            clearTimeout(timeout);
-        };
-    }, [mainName, phone]);
+    // 0, same as on submit).
+    const extraMinutes = useClientExtraMinutes(
+        names?.[0],
+        phone,
+        initialExtraMinutes
+    );
 
     return (
         <form onSubmit={handleSubmit(submit)}>
@@ -183,7 +169,7 @@ export function GroupBookingForm({
                     <Info />
                     <AlertTitle>Delší rezervace</AlertTitle>
                     <AlertDescription>
-                        Podle předchozích návštěv počítáme s časem navíc —
+                        Podle předchozích návštěv počítáme s časem navíc –
                         rezervace bude do{" "}
                         {formatTime(startTime + durationMinutes + extraMinutes)}{" "}
                         (místo {formatTime(startTime + durationMinutes)}).

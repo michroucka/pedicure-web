@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { getResendClient } from "@/lib/resend-client.ts";
 import { BUSINESS_INFO, EMAIL_FROM } from "@/lib/business-info.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
@@ -9,8 +9,11 @@ import {
 import { formatTime } from "@/lib/utils.ts";
 import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { prisma } from "@/lib/prisma.ts";
-import type { Booking, Client, Service } from "@/lib/generated/prisma/client.ts";
-
+import type {
+    Booking,
+    Client,
+    Service,
+} from "@/lib/generated/prisma/client.ts";
 
 const SUBJECTS: Record<BookingEmailVariant, string> = {
     created: "Potvrzení rezervace",
@@ -19,12 +22,12 @@ const SUBJECTS: Record<BookingEmailVariant, string> = {
 
 type BookingForEmail = Booking & { client: Client; service: Service };
 
-// One email per booking action, covering every person in it — a group
+// One email per booking action, covering every person in it – a group
 // booking shares one contact (and so one email), so all people/services are
 // listed together rather than sending one email per person. The magic link
 // always uses the first booking's cancelToken; on the manage page, a
 // grouped booking is looked up and acted on as a whole via its groupId.
-// `variant: "moved"` is sent after a reschedule with the new bookings — the
+// `variant: "moved"` is sent after a reschedule with the new bookings – the
 // only way the client gets a working link again (see the template).
 export async function sendBookingConfirmationEmail(
     bookings: BookingForEmail[],
@@ -33,8 +36,8 @@ export async function sendBookingConfirmationEmail(
     const email = bookings[0].client.email;
     if (!email) return;
 
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
+    const resend = getResendClient();
+    if (!resend) {
         console.error(
             "RESEND_API_KEY není nastaven, potvrzovací e-mail nebyl odeslán."
         );
@@ -46,7 +49,6 @@ export async function sendBookingConfirmationEmail(
     const manageUrl = `${BUSINESS_INFO.siteUrl}/rezervace/sprava/${bookings[0].cancelToken}`;
 
     try {
-        const resend = new Resend(apiKey);
         await resend.emails.send({
             from: EMAIL_FROM,
             to: email,
@@ -64,7 +66,7 @@ export async function sendBookingConfirmationEmail(
             }),
         });
     } catch (error) {
-        // The booking itself is already committed to the DB — a failed or
+        // The booking itself is already committed to the DB – a failed or
         // not-yet-configured email send (missing/invalid RESEND_API_KEY,
         // unverified domain) must not undo it or break the confirmation
         // redirect.
@@ -72,9 +74,11 @@ export async function sendBookingConfirmationEmail(
     }
 }
 
-// After a move (magic link or admin) — takes the ids of the newly created
+// After a move (magic link or admin) – takes the ids of the newly created
 // bookings, since the move functions return them without relations.
-export async function sendBookingMovedEmail(bookingIds: string[]): Promise<void> {
+export async function sendBookingMovedEmail(
+    bookingIds: string[]
+): Promise<void> {
     const bookings = await prisma.booking.findMany({
         where: { id: { in: bookingIds } },
         include: { client: true, service: true },

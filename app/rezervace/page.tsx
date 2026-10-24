@@ -10,7 +10,7 @@ export default async function ReservationPage() {
     });
 
     return (
-        <div className="max-w-md mx-auto">
+        <div className="mx-auto max-w-md">
             <Suspense>
                 <ReservationWizard services={availableServices} />
             </Suspense>

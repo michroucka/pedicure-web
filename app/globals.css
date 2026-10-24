@@ -107,9 +107,10 @@
     --sidebar-accent-foreground: oklch(0 0 0);
     --sidebar-border: oklch(0.9401 0 0);
     --sidebar-ring: oklch(0 0 0);
-    --font-sans: Montserrat, ui-sans-serif, sans-serif, system-ui;
-    --font-serif: Playfair Display, ui-serif, serif;
-    --font-display: Fraunces, ui-serif, serif;
+    /* --font-sans/serif/display come from next/font (app/layout.tsx,
+       lib/fonts.ts) - redefining them here would override its variables
+       and drop the size-adjusted fallback fonts that prevent layout shift
+       while the real fonts load. */
     --font-mono: JetBrains Mono, ui-monospace, monospace;
     --radius: 1.4rem;
     --shadow-color: #000000;
@@ -126,7 +127,7 @@
 }
 
 /*
- * Storefront palette (marketing + booking) — one fixed identity (no
+ * Storefront palette (marketing + booking) – one fixed identity (no
  * light/dark switching), scoped so shadcn components (Button, Card, ...)
  * pick it up automatically without touching the admin app's tokens.
  * Background/neutrals are derived from the app's --primary hue (2.79) so

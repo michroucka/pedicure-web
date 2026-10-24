@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
@@ -12,17 +12,22 @@ import {
     startOfDay,
 } from "date-fns";
 import { cs } from "date-fns/locale";
-import { cn, toUtcMidnight } from "@/lib/utils";
+import { cn, localDateToUtcMidnight } from "@/lib/utils";
 import { getAvailableDaysAction } from "@/app/rezervace/actions.ts";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 // The next HORIZON_DAYS are fetched once per service selection instead of
-// once per visible month — browsing a few months back/forth then costs
-// zero extra round-trips. Only a month outside this window (rare — see the
+// once per visible month – browsing a few months back/forth then costs
+// zero extra round-trips. Only a month outside this window (rare – see the
 // second effect below) needs its own fetch.
 
-export function DateStep({ onContinueAction }: { onContinueAction: () => void }) {
+export function DateStep({
+    onContinueAction,
+}: {
+    onContinueAction: () => void;
+}) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -40,16 +45,19 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
     const [isLoading, startTransition] = useTransition();
     const hasAutoJumped = useRef(false);
 
-    const tomorrow = toUtcMidnight(addDays(startOfDay(new Date()), 1));
+    const tomorrow = localDateToUtcMidnight(addDays(startOfDay(new Date()), 1));
     const horizonEnd = addDays(tomorrow, HORIZON_DAYS);
 
-    const gridStart = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
-    const gridEnd = toUtcMidnight(addDays(gridStart, 41));
-    const rangeFrom = toUtcMidnight(maxDate([gridStart, tomorrow]));
+    const gridStart = startOfWeek(startOfMonth(currentMonth), {
+        weekStartsOn: 1,
+    });
+    const gridEnd = localDateToUtcMidnight(addDays(gridStart, 41));
+    const rangeFrom = localDateToUtcMidnight(maxDate([gridStart, tomorrow]));
 
-    const currentServices: number[] =
-        searchParams.get("services")?.split(",").filter(Boolean).map(Number) ?? [];
-    // Set after an extra_time_conflict redirect — same value the time step
+    const currentServices: number[] = parseServiceIdsParam(
+        searchParams.get("services")
+    );
+    // Set after an extra_time_conflict redirect – same value the time step
     // uses, so the calendar only offers days this client actually fits.
     const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
 
@@ -67,12 +75,14 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
             setHorizon({ from: tomorrow.getTime(), to: horizonEnd.getTime() });
 
             // If the month we're showing has nothing free, jump straight to
-            // the month of the first free day in the horizon — otherwise the
+            // the month of the first free day in the horizon – otherwise the
             // calendar just looks fully booked. Skipped once a date's already
             // picked (e.g. coming back from a later step), so it doesn't yank
             // the user away from their selection.
             if (!dateParam && days.length > 0) {
-                const firstAvailable = days.reduce((min, d) => (d < min ? d : min));
+                const firstAvailable = days.reduce((min, d) =>
+                    d < min ? d : min
+                );
                 const firstMonth = startOfMonth(firstAvailable).getTime();
                 if (firstMonth !== startOfMonth(currentMonth).getTime()) {
                     hasAutoJumped.current = true;
@@ -83,12 +93,15 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams.get("services"), searchParams.get("extraMinutes")]);
 
-    // Fallback for browsing past the pre-fetched horizon (rare) — fetch
+    // Fallback for browsing past the pre-fetched horizon (rare) – fetch
     // just that month and merge it in, keeping the horizon data we already
     // have instead of throwing it away.
     useEffect(() => {
         if (!horizon) return;
-        if (gridStart.getTime() >= horizon.from && gridEnd.getTime() <= horizon.to) {
+        if (
+            gridStart.getTime() >= horizon.from &&
+            gridEnd.getTime() <= horizon.to
+        ) {
             return;
         }
 
@@ -133,7 +146,9 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
                     updateParam("date", format(d, "yyyy-MM-dd"));
                     onContinueAction();
                 }}
-                disabled={(day) => !availableSet.has(toUtcMidnight(day).getTime())}
+                disabled={(day) =>
+                    !availableSet.has(localDateToUtcMidnight(day).getTime())
+                }
                 month={currentMonth}
                 onMonthChange={setCurrentMonth}
                 fixedWeeks

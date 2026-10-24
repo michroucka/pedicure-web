@@ -1,6 +1,6 @@
 "use client";
 
-// Self-contained on purpose — only depends on other shadcn/ui primitives
+// Self-contained on purpose – only depends on other shadcn/ui primitives
 // (Button, Popover) + lucide-react + `cn`, no project-specific types
 // or logic. Drop the file into another shadcn project as-is.
 //
@@ -10,9 +10,9 @@
 // - the picker is a two-column hour/minute wheel (like iOS), not the
 //   OS-native widget, so it looks/behaves the same everywhere and needs
 //   fewer swipes than one long flat list of times
-// - picking on the wheel only commits when you tap the checkmark —
+// - picking on the wheel only commits when you tap the checkmark –
 //   scrolling it around is just "dialing in" a value, same as iOS
-// - the trigger is a button, not a text field — no free typing. On mobile
+// - the trigger is a button, not a text field – no free typing. On mobile
 //   a text field pops the on-screen keyboard, which then covers the
 //   popover it's supposed to open. Arrow up/down still nudge by one step.
 
@@ -29,28 +29,29 @@ import {
 } from "@/components/ui/popover";
 
 const MINUTES_PER_DAY = 24 * 60;
-const ITEM_HEIGHT = 36; // px — must match the row height class below
+const ITEM_HEIGHT = 36; // px – must match the row height class below
 const VISIBLE_ROWS = 5;
 
-// Two looks the trigger ships with out of the box — `className` is for a
+// Two looks the trigger ships with out of the box – `className` is for a
 // one-off tweak on top (e.g. `text-right`), not for rebuilding a whole
 // style from scratch at every call site.
 const timePickerTriggerVariants = cva(
     "inline-block cursor-pointer text-left whitespace-nowrap tabular-nums outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-invalid:ring-3 data-invalid:ring-destructive/20 dark:data-invalid:ring-destructive/40",
     {
-    variants: {
-        variant: {
-            // Same box as the shadcn Input, so it sits naturally next to
-            // regular form fields.
-            default: "h-8 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 focus-visible:border-ring data-invalid:border-destructive md:text-sm dark:data-invalid:border-destructive/50",
-            // Compact, borderless, muted — a small inline time label (e.g.
-            // sitting right under a Slider) rather than a standalone field.
-            ghost: "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent",
+        variants: {
+            variant: {
+                // Same box as the shadcn Input, so it sits naturally next to
+                // regular form fields.
+                default:
+                    "h-8 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 focus-visible:border-ring data-invalid:border-destructive md:text-sm dark:data-invalid:border-destructive/50",
+                // Compact, borderless, muted – a small inline time label (e.g.
+                // sitting right under a Slider) rather than a standalone field.
+                ghost: "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent",
+            },
         },
-    },
-    defaultVariants: {
-        variant: "default",
-    },
+        defaultVariants: {
+            variant: "default",
+        },
     }
 );
 
@@ -74,7 +75,7 @@ function parseHHMM(value: string): number | null {
 }
 
 // Snaps to the nearest step mark (remainder in the lower half rounds down,
-// upper half rounds up) — generalized version of the project's
+// upper half rounds up) – generalized version of the project's
 // roundToQuarterHour, parameterized by step instead of a hardcoded 15.
 function roundToStep(total: number, step: number) {
     const remainder = ((total % step) + step) % step;
@@ -106,7 +107,7 @@ function nearestIndex(values: number[], target: number) {
 }
 
 // One scrollable, snap-to-row wheel (hours or minutes). The selection slot
-// is a fixed highlight band at vertical center — the content scrolls
+// is a fixed highlight band at vertical center – the content scrolls
 // underneath it, same mechanic as iOS's UIPickerView.
 function WheelColumn({
     values,
@@ -122,7 +123,7 @@ function WheelColumn({
     "aria-label": string;
 }) {
     const containerRef = React.useRef<HTMLDivElement>(null);
-    // Real rendered positions, not an assumed ITEM_HEIGHT*index — CSS
+    // Real rendered positions, not an assumed ITEM_HEIGHT*index – CSS
     // scroll-snap resolves its own "nearest snap point" after a scroll/
     // scrollTo settles, and that doesn't always match a hand-computed
     // offset (padding + snap interact in browser-specific ways). Measuring
@@ -186,7 +187,7 @@ function WheelColumn({
     // Scroll the column ourselves instead of relying on the browser's
     // native wheel/touch scroll gesture. Inside a Dialog, Radix's scroll
     // lock (react-remove-scroll) only whitelists DialogContent's own DOM
-    // subtree — our popover is portaled elsewhere, so native scroll
+    // subtree – our popover is portaled elsewhere, so native scroll
     // gestures on it get preventDefault()'d. Setting scrollTop ourselves
     // sidesteps that entirely (still fires the normal "scroll" event
     // above, so snapping/selection keeps working the same).
@@ -222,7 +223,10 @@ function WheelColumn({
 
     function endDrag(e: React.PointerEvent) {
         const drag = dragRef.current;
-        if (drag?.dragging && containerRef.current?.hasPointerCapture(e.pointerId)) {
+        if (
+            drag?.dragging &&
+            containerRef.current?.hasPointerCapture(e.pointerId)
+        ) {
             containerRef.current.releasePointerCapture(e.pointerId);
         }
         dragRef.current = null;
@@ -233,12 +237,12 @@ function WheelColumn({
             ref={containerRef}
             role="listbox"
             aria-label={ariaLabel}
-            // No CSS scroll-snap here on purpose — it was fighting our own
+            // No CSS scroll-snap here on purpose – it was fighting our own
             // scrollTop writes below (the browser kept "correcting" mid-
             // gesture to its own snap point, causing jumps/jitter).
             // Snapping to the nearest item is done entirely in JS instead:
             // handleScroll's debounce + the scrollToIndex effect above.
-            className="touch-none overflow-y-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="touch-none [scrollbar-width:none] overflow-y-scroll [&::-webkit-scrollbar]:hidden"
             style={{
                 height: ITEM_HEIGHT * VISIBLE_ROWS,
                 paddingBlock: ITEM_HEIGHT * Math.floor(VISIBLE_ROWS / 2),
@@ -279,7 +283,7 @@ export interface TimePickerProps {
     /** Latest selectable time, "HH:mm". Default "23:45". */
     max?: string;
     /**
-     * Where the wheel opens/nudges from while `value` is still empty —
+     * Where the wheel opens/nudges from while `value` is still empty –
      * doesn't touch the displayed value or fire `onChange` by itself.
      * Default is `min` (e.g. midnight).
      */
@@ -291,7 +295,7 @@ export interface TimePickerProps {
      * `null` to render no icon at all.
      */
     icon?: React.ReactNode | null;
-    /** Built-in look — see timePickerTriggerVariants. Default "default". */
+    /** Built-in look – see timePickerTriggerVariants. Default "default". */
     variant?: VariantProps<typeof timePickerTriggerVariants>["variant"];
     /** A one-off tweak on top of `variant` (e.g. `"text-right"`). */
     className?: string;
@@ -329,7 +333,7 @@ function TimePicker({
     );
 
     // Auto-size the trigger to its actual rendered content instead of a
-    // guessed width class — callers vary padding/font-size (compact inline
+    // guessed width class – callers vary padding/font-size (compact inline
     // labels vs. a roomy standalone field) enough that one hardcoded width
     // never fit all of them evenly on both sides. The sizer span mirrors
     // the trigger's real computed font so the measurement matches exactly;
@@ -355,12 +359,12 @@ function TimePicker({
     }, [icon, variant, className]);
 
     // Radix's own outside-click dismissal (DismissableLayer) shares one
-    // layer stack across the whole app — stacked with a Dialog's own
+    // layer stack across the whole app – stacked with a Dialog's own
     // layer, that bookkeeping can misfire and close this popover right
     // after it opens. We disable Radix's version entirely (see
     // onPointerDownOutside below) and do the "did you click outside"
     // check ourselves, directly against the two nodes we actually care
-    // about — simple enough that Dialog nesting can't confuse it.
+    // about – simple enough that Dialog nesting can't confuse it.
     React.useEffect(() => {
         if (!open) return;
         function handlePointerDown(e: PointerEvent) {
@@ -376,7 +380,7 @@ function TimePicker({
 
     const minMinutes = parseHHMM(min) ?? 0;
     const maxMinutes = parseHHMM(max) ?? MINUTES_PER_DAY - 1;
-    // Where to seed the wheel / nudge from once there's no real value yet —
+    // Where to seed the wheel / nudge from once there's no real value yet –
     // falls back to minMinutes (e.g. midnight) when defaultValue isn't set
     // or doesn't parse.
     const fallbackMinutes = parseHHMM(defaultValue ?? "") ?? minMinutes;
@@ -387,26 +391,28 @@ function TimePicker({
         () => buildRange(minHour, maxHour, 1),
         [minHour, maxHour]
     );
-    // Clipped to whatever's still valid in the currently-dialed hour — on
+    // Clipped to whatever's still valid in the currently-dialed hour – on
     // the boundary hour(s) that's a sub-range of the step grid (e.g. max
     // "19:00" only offers :00 once the hour wheel is on 19), everywhere
     // else it's the full grid.
     const minuteValues = React.useMemo(() => {
         let lo = 0;
         let hi = 59 - (59 % step);
-        if (pendingHour === minHour) lo = Math.max(lo, minMinutes - minHour * 60);
-        if (pendingHour === maxHour) hi = Math.min(hi, maxMinutes - maxHour * 60);
+        if (pendingHour === minHour)
+            lo = Math.max(lo, minMinutes - minHour * 60);
+        if (pendingHour === maxHour)
+            hi = Math.min(hi, maxMinutes - maxHour * 60);
         lo = alignUp(lo, step);
         hi = alignDown(hi, step);
         if (lo > hi) return [alignDown(hi, step)];
         return buildRange(lo, hi, step);
     }, [step, pendingHour, minHour, maxHour, minMinutes, maxMinutes]);
 
-    // The minute list above depends on which hour is dialed in — if
+    // The minute list above depends on which hour is dialed in – if
     // switching hours makes the stored pendingMinute fall outside the new
     // range, derive the nearest one still valid instead of storing a
     // correction (nothing user-driven changed, so there's nothing to set
-    // state for — this just keeps what's centered on the wheel in sync
+    // state for – this just keeps what's centered on the wheel in sync
     // with what confirming would actually commit).
     const effectivePendingMinute = minuteValues.includes(pendingMinute)
         ? pendingMinute
@@ -458,7 +464,7 @@ function TimePicker({
                             {icon}
                         </span>
                     )}
-                    {/* Invisible, out-of-flow — exists only so its
+                    {/* Invisible, out-of-flow – exists only so its
                         offsetWidth tells us how wide "00:00" actually
                         renders in the trigger's real font. */}
                     <span
@@ -503,7 +509,13 @@ function TimePicker({
                     >
                         {value || placeholder}
                     </button>
-                    {name && <input type="hidden" name={name} value={value} />}
+                    {name && (
+                        <input
+                            type="hidden"
+                            name={name}
+                            value={value}
+                        />
+                    )}
                 </div>
             </PopoverAnchor>
             <PopoverContent
@@ -513,7 +525,7 @@ function TimePicker({
                 onOpenAutoFocus={(e) => e.preventDefault()}
                 onCloseAutoFocus={(e) => e.preventDefault()}
                 // We handle outside-click dismissal ourselves (see the
-                // effect above) — always prevent Radix's own version so
+                // effect above) – always prevent Radix's own version so
                 // its cross-layer bookkeeping (shared with any ancestor
                 // Dialog) can't close this out from under us.
                 onPointerDownOutside={(e) => e.preventDefault()}

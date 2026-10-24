@@ -131,7 +131,7 @@ export function computeGaps(
     return gaps;
 }
 
-// Same categorization as the /dostupnost calendar dot (see ExceptionDot) —
+// Same categorization as the /dostupnost calendar dot (see ExceptionDot) –
 // a full-day block is a BLOCKED exception with no times set, everything
 // else BLOCKED is partial.
 export function categorizeExceptions(
@@ -148,7 +148,7 @@ export function categorizeExceptions(
     };
 }
 
-// The complement of `windows` within [gridStart, gridEnd] — the closed
+// The complement of `windows` within [gridStart, gridEnd] – the closed
 // stretches a timeline should shade (before opening, between two windows,
 // after closing), including the whole grid when the day has no windows
 // at all.
@@ -183,7 +183,7 @@ export function computeClosedRanges(
 // deltas. Saving needs to translate that target back into the exceptions
 // that would resolve to it: whatever's in `recurring` but not covered by
 // `target` becomes a BLOCKED range, and whatever's in `target` but not
-// covered by `recurring` becomes an EXTRA_OPEN range. Order-independent —
+// covered by `recurring` becomes an EXTRA_OPEN range. Order-independent –
 // each side is just "these minus the union of those".
 export function diffDayBlocks(
     recurring: TimeSlot[],
@@ -247,7 +247,10 @@ export function toRecurringRows(
 ): { dayOfWeek: number; startTime: number; endTime: number }[] {
     const slotsByDay = new Map<number, TimeSlot[]>();
     for (const day of days) {
-        slotsByDay.set(day.dayOfWeek, [...(slotsByDay.get(day.dayOfWeek) ?? []), ...day.blocks]);
+        slotsByDay.set(day.dayOfWeek, [
+            ...(slotsByDay.get(day.dayOfWeek) ?? []),
+            ...day.blocks,
+        ]);
     }
     return [...slotsByDay].flatMap(([dayOfWeek, slots]) =>
         mergeSubsequentSlots(slots).map((slot) => ({

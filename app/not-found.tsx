@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 // and the catch-all for URLs that don't match any route. It used to
 // redirect("/") here, which meant every broken link returned a 307 instead
 // of a 404. Google's own guidance specifically advises against redirecting
-// dead links to the homepage — it's a confusing dead end for users (they
+// dead links to the homepage – it's a confusing dead end for users (they
 // don't get what they were looking for, or a signal that the link is
 // gone) and a weak signal for search engines. Rendering real content (no
 // redirect() call) lets Next.js return an actual 404 status.
@@ -33,7 +33,7 @@ export default function NotFound() {
                             <SearchX className="size-7 text-primary" />
                         </div>
                         <h1 className="mt-6 italic">Stránka nenalezena</h1>
-                        <p className="mt-4 max-w-prose text-pretty text-base leading-relaxed text-muted-foreground">
+                        <p className="mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
                             Stránka, kterou hledáte, tu není – možná byl odkaz
                             přesunutý nebo už neplatí.
                         </p>

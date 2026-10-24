@@ -7,26 +7,26 @@ import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 // Domain-based routing: the admin routes (kalendar/dostupnost/klienti/login)
 // have no shared URL prefix, so they only make sense reachable through
 // admin.pedikurakralovice.cz. This has to happen before Next.js resolves a
-// route at all, based on the Host header — a layout can't do that (it runs
+// route at all, based on the Host header – a layout can't do that (it runs
 // after routing).
 //
 // The auth gate lives here too, not just in the dashboard layout. Next.js
 // caches shared layouts across client-side navigation (clicking between
 // /kalendar, /dostupnost, /klienti doesn't re-run the layout, only the page
 // segment), so a layout-only check misses a session that was invalidated
-// (account deleted/edited) after the layout last rendered — it only catches
+// (account deleted/edited) after the layout last rendered – it only catches
 // up on a hard reload. Proxy runs on every request, including soft
 // navigation, so it doesn't have that gap. (Next.js 16 always runs proxy on
-// the Node.js runtime, not Edge, so calling the full auth() — Prisma and
-// all — here is fine; no edge-safe config split needed.)
+// the Node.js runtime, not Edge, so calling the full auth() – Prisma and
+// all – here is fine; no edge-safe config split needed.)
 //
 // auth() has to be called through its own auth(request => ...) wrapper, not
-// as a bare `await auth()` — only the wrapper can attach the refreshed
+// as a bare `await auth()` – only the wrapper can attach the refreshed
 // session cookie to the response it returns. A bare call can read the
 // session fine, but any Set-Cookie it would have issued (e.g. the jwt
 // callback's rolling re-validation) is silently dropped when returned
 // inside a NextResponse we built ourselves, so the token never actually
-// updates — every request looks like the very first one after sign-in.
+// updates – every request looks like the very first one after sign-in.
 const MAIN_HOST = "pedikurakralovice.cz";
 const ADMIN_HOST = "admin.pedikurakralovice.cz";
 

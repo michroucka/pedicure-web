@@ -33,9 +33,9 @@ export default async function AdminHomePage({
     if ([6, 0].includes(today.getUTCDay())) {
         const weekend = [
             today,
-            today.getUTCDay() === 0 ?
-                addUtcDays(today, -1) :
-                addUtcDays(today, 1)
+            today.getUTCDay() === 0
+                ? addUtcDays(today, -1)
+                : addUtcDays(today, 1),
         ];
         const weekendBookings = await prisma.booking.count({
             where: {
@@ -61,44 +61,45 @@ export default async function AdminHomePage({
     );
     const weekEnd = weekDays[6];
 
-    // Both timelines render on every request — which one is visible is a
-    // pure CSS decision (see DayNav/the lg:hidden wrappers below) — so
+    // Both timelines render on every request – which one is visible is a
+    // pure CSS decision (see DayNav/the lg:hidden wrappers below) – so
     // fetch once for the whole week and derive the single day's data from
     // it instead of querying twice.
-    const [services, clients, bookings, recurring, exceptions] = await Promise.all([
-        prisma.service.findMany({ orderBy: { id: "asc" } }),
-        prisma.client.findMany({
-            select: {
-                id: true,
-                name: true,
-                phone: true,
-                email: true,
-                extraTimeMinutes: true,
-                // hidden ("deleted") clients are left out of the autocomplete
-                // but still matched for the extra time prefill - the server
-                // matches them too (see AddBookingDialog)
-                active: true,
-            },
-            orderBy: { name: "asc" },
-        }),
-        prisma.booking.findMany({
-            where: { date: { in: weekDays }, status: "CONFIRMED" },
-            include: { client: true, service: true },
-            orderBy: { startTime: "asc" },
-        }),
-        prisma.recurringAvailability.findMany(),
-        // Scoped to "from the shown week (or today) on", not just this week
-        // - the date picker's Calendar shows open/closed dots across whole
-        // months, and this table is tiny for a single-provider business, so
-        // fetching further out than the visible week costs nothing. Starting
-        // at the week, not today, keeps a past week's blocked/extra-open
-        // days rendered correctly.
-        prisma.availabilityException.findMany({
-            where: {
-                date: { gte: weekStart < today ? weekStart : today },
-            },
-        }),
-    ]);
+    const [services, clients, bookings, recurring, exceptions] =
+        await Promise.all([
+            prisma.service.findMany({ orderBy: { id: "asc" } }),
+            prisma.client.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                    phone: true,
+                    email: true,
+                    extraTimeMinutes: true,
+                    // hidden ("deleted") clients are left out of the autocomplete
+                    // but still matched for the extra time prefill - the server
+                    // matches them too (see AddBookingDialog)
+                    active: true,
+                },
+                orderBy: { name: "asc" },
+            }),
+            prisma.booking.findMany({
+                where: { date: { in: weekDays }, status: "CONFIRMED" },
+                include: { client: true, service: true },
+                orderBy: { startTime: "asc" },
+            }),
+            prisma.recurringAvailability.findMany(),
+            // Scoped to "from the shown week (or today) on", not just this week
+            // - the date picker's Calendar shows open/closed dots across whole
+            // months, and this table is tiny for a single-provider business, so
+            // fetching further out than the visible week costs nothing. Starting
+            // at the week, not today, keeps a past week's blocked/extra-open
+            // days rendered correctly.
+            prisma.availabilityException.findMany({
+                where: {
+                    date: { gte: weekStart < today ? weekStart : today },
+                },
+            }),
+        ]);
 
     const windowsByDay = weekDays.map((d) =>
         resolveDayTimeSlots(
@@ -128,12 +129,12 @@ export default async function AdminHomePage({
     const dayBookings = bookingsByDay[dayIndex];
     const dayExceptions = exceptionsByDay[dayIndex];
 
-    // An empty weekend day just eats up column width for nothing — on a
+    // An empty weekend day just eats up column width for nothing – on a
     // tablet-width screen that's the difference between the week fitting
     // and needing a horizontal scroll. A weekday stays visible even when
     // empty (it's still where new bookings get added), and a weekend day
     // stays too if it has a booking or is open at all (e.g. an EXTRA_OPEN
-    // exception with nothing booked into it yet — it still needs to be
+    // exception with nothing booked into it yet – it still needs to be
     // clickable).
     const weekViewIndexes = weekDays
         .map((_, i) => i)

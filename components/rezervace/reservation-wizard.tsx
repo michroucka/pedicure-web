@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Service } from "@/lib/generated/prisma/client.ts";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Check, X } from "lucide-react";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 export function ReservationWizard({ services }: { services: Service[] }) {
     const router = useRouter();
@@ -25,17 +26,16 @@ export function ReservationWizard({ services }: { services: Service[] }) {
             hasServices && hasDate && hasSlot
                 ? 3
                 : hasServices && hasDate
-                ? 2
-                : hasServices
-                ? 1
-                : 0;
+                  ? 2
+                  : hasServices
+                    ? 1
+                    : 0;
         return { index, gen: 0 };
     });
     const advance = (index: number) =>
-        setStep((s) => ({ index, gen: s.gen + 1}));
+        setStep((s) => ({ index, gen: s.gen + 1 }));
 
-    const serviceIds =
-        searchParams.get("services")?.split(",").filter(Boolean).map(Number) ?? [];
+    const serviceIds = parseServiceIdsParam(searchParams.get("services"));
     const selectedServices = serviceIds
         .map((id) => services.find((s) => s.id === id))
         .filter((s): s is Service => !!s);

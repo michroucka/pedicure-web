@@ -26,7 +26,9 @@ describe("cancelBooking / cancelGroupBooking", () => {
     });
 
     afterEach(async () => {
-        await prisma.booking.deleteMany({ where: { clientId: { in: clientIds } } });
+        await prisma.booking.deleteMany({
+            where: { clientId: { in: clientIds } },
+        });
         await prisma.client.deleteMany({ where: { id: { in: clientIds } } });
         await prisma.service.delete({ where: { id: serviceId } });
     });
@@ -67,7 +69,9 @@ describe("cancelBooking / cancelGroupBooking", () => {
 
         await cancelGroupBooking(groupId);
 
-        const groupAfter = await prisma.booking.findMany({ where: { groupId } });
+        const groupAfter = await prisma.booking.findMany({
+            where: { groupId },
+        });
         expect(groupAfter.every((b) => b.status === "CANCELLED")).toBe(true);
 
         const outsiderAfter = await prisma.booking.findUniqueOrThrow({

@@ -5,7 +5,7 @@ import { cancelBooking } from "./cancel-booking.ts";
 import { isBookingSlotConflict } from "./booking-conflict-error.ts";
 
 // Runs against the isolated Neon "test" branch (see .env.test / package.json's
-// pretest + test scripts) — real rows get committed here, not rolled back,
+// pretest + test scripts) – real rows get committed here, not rolled back,
 // because cancelBooking/moveBooking manage their own internal transactions
 // against the shared `prisma` singleton rather than accepting an injectable
 // client, so a single outer rollback-transaction can't wrap a whole
@@ -63,20 +63,26 @@ describe("booking slot uniqueness", () => {
             source: "ONLINE",
         });
 
-        await expect(
-            createBooking({
-                clientId,
-                serviceId,
-                date: testDate,
-                startTime: 660,
-                source: "ONLINE",
-            })
-        ).rejects.toMatchObject({ code: "P2002" });
+        const error = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 660,
+            source: "ONLINE",
+        }).catch((e: unknown) => e);
+
+        expect(isBookingSlotConflict(error)).toBe(true);
     });
 
     // Booking_no_overlap – different start times, overlapping ranges.
     it("rejects a confirmed booking overlapping another one with a different start", async () => {
-        await createBooking({ clientId, serviceId, date: testDate, startTime: 720, source: "ONLINE" });
+        await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 720,
+            source: "ONLINE",
+        });
 
         const error = await createBooking({
             clientId,
@@ -90,13 +96,31 @@ describe("booking slot uniqueness", () => {
     });
 
     it("allows back-to-back bookings and overlap with a cancelled one", async () => {
-        const first = await createBooking({ clientId, serviceId, date: testDate, startTime: 780, source: "ONLINE" });
+        const first = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 780,
+            source: "ONLINE",
+        });
 
-        const adjacent = await createBooking({ clientId, serviceId, date: testDate, startTime: 810, source: "ONLINE" });
+        const adjacent = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 810,
+            source: "ONLINE",
+        });
         expect(adjacent.status).toBe("CONFIRMED");
 
         await cancelBooking(first.id);
-        const overCancelled = await createBooking({ clientId, serviceId, date: testDate, startTime: 765, source: "ONLINE" });
+        const overCancelled = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 765,
+            source: "ONLINE",
+        });
         expect(overCancelled.status).toBe("CONFIRMED");
     });
 });

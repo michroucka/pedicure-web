@@ -9,7 +9,7 @@ import {
     startTimeSchema,
 } from "@/lib/validation.ts";
 
-// Normalized by normalizeExtraMinutes in the actions — only the type and a
+// Normalized by normalizeExtraMinutes in the actions – only the type and a
 // sane upper bound are checked here.
 const extraMinutesSchema = z.number().max(600);
 

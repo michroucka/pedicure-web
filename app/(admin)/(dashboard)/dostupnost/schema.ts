@@ -42,7 +42,7 @@ export type AvailabilityFormData = z.infer<typeof availabilitySchema>;
 
 // The day-override editor works with the day's *target* open blocks
 // directly (see lib/availability.ts's diffDayBlocks for how that gets
-// translated into BLOCKED/EXTRA_OPEN exceptions on save) — same block
+// translated into BLOCKED/EXTRA_OPEN exceptions on save) – same block
 // shape as the recurring schedule, just for one specific date. An empty
 // `blocks` array means "closed all day".
 export const dayOverrideSchema = z
@@ -56,7 +56,7 @@ export type DayOverrideFormData = z.infer<typeof dayOverrideSchema>;
 
 const MAX_CLOSE_RANGE_DAYS = 366;
 
-// Bulk "close every day in this range" — always a full-day block, no time
+// Bulk "close every day in this range" – always a full-day block, no time
 // blocks to configure (unlike dayOverrideSchema's per-block editing).
 export const closeRangeSchema = z
     .object({
@@ -67,7 +67,7 @@ export const closeRangeSchema = z
         message: "Konec rozsahu musí být po jeho začátku.",
         path: ["endDate"],
     })
-    // One exception row per day gets written — keeps a mistyped year from
+    // One exception row per day gets written – keeps a mistyped year from
     // creating thousands of them (and checkRangeConflicts from loading
     // every booking in that span).
     .refine(
@@ -79,7 +79,7 @@ export const closeRangeSchema = z
 
 export type CloseRangeFormData = z.infer<typeof closeRangeSchema>;
 
-// Ranges diffDayBlocks computed in the browser — minutes since midnight.
+// Ranges diffDayBlocks computed in the browser – minutes since midnight.
 export const blockedRangesSchema = z
     .array(
         z.object({

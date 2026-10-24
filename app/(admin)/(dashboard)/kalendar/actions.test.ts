@@ -4,6 +4,7 @@ import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import {
+    cancelBookingAction,
     createManualBookingAction,
     getMoveSlotsAction,
     updateBookingAction,
@@ -13,20 +14,24 @@ import {
 // its callback right away so the moved email can be asserted.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 // Actions call requireAdmin() first; there is no session in tests.
-vi.mock("@/lib/require-admin.ts", () => ({ requireAdmin: vi.fn(async () => "admin") }));
-vi.mock("next/server", () => ({ after: vi.fn((callback: () => unknown) => callback()) }));
+vi.mock("@/lib/require-admin.ts", () => ({
+    requireAdmin: vi.fn(async () => "admin"),
+}));
+vi.mock("next/server", () => ({
+    after: vi.fn((callback: () => unknown) => callback()),
+}));
 vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
     sendBookingMovedEmail: vi.fn(),
 }));
 
-// outsideHours: true throughout — same reason as move-booking.test.ts: it
+// outsideHours: true throughout – same reason as move-booking.test.ts: it
 // only checks overlap with other bookings, not the RecurringAvailability
 // this branch inherited from production.
 const DATE_STR = "2099-11-02";
 const DATE = new Date(`${DATE_STR}T00:00:00.000Z`);
 
 // Already in the "XXX XXX XXX" shape the actions normalize to (see
-// adminPhoneSchema) — otherwise the stored phone wouldn't match `phone`.
+// adminPhoneSchema) – otherwise the stored phone wouldn't match `phone`.
 function uniquePhone(): string {
     const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
     return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
@@ -41,10 +46,18 @@ describe("kalendar actions", () => {
         vi.mocked(sendBookingMovedEmail).mockClear();
         const services = await Promise.all([
             prisma.service.create({
-                data: { name: "Test Service 30", durationMinutes: 30, price: 100 },
+                data: {
+                    name: "Test Service 30",
+                    durationMinutes: 30,
+                    price: 100,
+                },
             }),
             prisma.service.create({
-                data: { name: "Test Service 45", durationMinutes: 45, price: 150 },
+                data: {
+                    name: "Test Service 45",
+                    durationMinutes: 45,
+                    price: 150,
+                },
             }),
         ]);
         serviceIds = services.map((s) => s.id);
@@ -54,7 +67,12 @@ describe("kalendar actions", () => {
         const clients = await prisma.client.findMany({ where: { phone } });
         const clientIds = clients.map((c) => c.id);
         await prisma.booking.deleteMany({
-            where: { OR: [{ clientId: { in: clientIds } }, { serviceId: { in: serviceIds } }] },
+            where: {
+                OR: [
+                    { clientId: { in: clientIds } },
+                    { serviceId: { in: serviceIds } },
+                ],
+            },
         });
         await prisma.client.deleteMany({ where: { id: { in: clientIds } } });
         await prisma.service.deleteMany({ where: { id: { in: serviceIds } } });
@@ -73,9 +91,21 @@ describe("kalendar actions", () => {
             const result = await createManualBookingAction({
                 phone,
                 people: [
-                    { name: "Berankovi", serviceId: serviceIds[0], extraTimeMinutes: 0 },
-                    { name: "Berankovi", serviceId: serviceIds[0], extraTimeMinutes: 0 },
-                    { name: "Eva", serviceId: serviceIds[1], extraTimeMinutes: 0 },
+                    {
+                        name: "Berankovi",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        name: "Berankovi",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        name: "Eva",
+                        serviceId: serviceIds[1],
+                        extraTimeMinutes: 0,
+                    },
                 ],
                 dateStr: DATE_STR,
                 startTime: 540,
@@ -86,7 +116,11 @@ describe("kalendar actions", () => {
             expect(result).toEqual({ ok: true });
             expect(await prisma.client.count({ where: { phone } })).toBe(1);
             const bookings = await bookingsForPhone();
-            expect(bookings.map((b) => b.guestName)).toEqual([null, "Berankovi", "Eva"]);
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Berankovi",
+                "Eva",
+            ]);
             expect(new Set(bookings.map((b) => b.groupId)).size).toBe(1);
         });
 
@@ -94,8 +128,16 @@ describe("kalendar actions", () => {
             await createManualBookingAction({
                 phone,
                 people: [
-                    { name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: 15 },
-                    { name: "Eva Host", serviceId: serviceIds[0], extraTimeMinutes: 10 },
+                    {
+                        name: "Jana Testová",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 15,
+                    },
+                    {
+                        name: "Eva Host",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 10,
+                    },
                 ],
                 dateStr: DATE_STR,
                 startTime: 540,
@@ -109,7 +151,9 @@ describe("kalendar actions", () => {
                 [540, 585],
                 [585, 625],
             ]);
-            const client = await prisma.client.findFirstOrThrow({ where: { phone } });
+            const client = await prisma.client.findFirstOrThrow({
+                where: { phone },
+            });
             expect(client.extraTimeMinutes).toBe(15); // guest's 10 not written anywhere
         });
 
@@ -120,14 +164,22 @@ describe("kalendar actions", () => {
 
             await createManualBookingAction({
                 phone,
-                people: [{ name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: 30 }],
+                people: [
+                    {
+                        name: "Jana Testová",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 30,
+                    },
+                ],
                 dateStr: DATE_STR,
                 startTime: 540,
                 source: "PHONE",
                 outsideHours: true,
             });
 
-            const client = await prisma.client.findFirstOrThrow({ where: { phone } });
+            const client = await prisma.client.findFirstOrThrow({
+                where: { phone },
+            });
             expect(client.extraTimeMinutes).toBe(30);
         });
 
@@ -148,7 +200,13 @@ describe("kalendar actions", () => {
 
             const result = await createManualBookingAction({
                 phone,
-                people: [{ name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: 30 }],
+                people: [
+                    {
+                        name: "Jana Testová",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 30,
+                    },
+                ],
                 dateStr: DATE_STR,
                 startTime: 540,
                 source: "PHONE",
@@ -156,14 +214,16 @@ describe("kalendar actions", () => {
             });
 
             expect(result.ok).toBe(false);
-            const client = await prisma.client.findFirstOrThrow({ where: { phone } });
+            const client = await prisma.client.findFirstOrThrow({
+                where: { phone },
+            });
             expect(client.extraTimeMinutes).toBe(15);
             await prisma.booking.deleteMany({ where: { clientId: other.id } });
             await prisma.client.delete({ where: { id: other.id } });
         });
 
         it("counts a service once per person in the custom-time overlap check", async () => {
-            // 2x 30 min from 9:00 = until 10:00 — collides with a booking at
+            // 2x 30 min from 9:00 = until 10:00 – collides with a booking at
             // 9:45; counting the shared service only once (9:00-9:30)
             // would wrongly let it through
             const other = await prisma.client.create({
@@ -180,8 +240,16 @@ describe("kalendar actions", () => {
             const result = await createManualBookingAction({
                 phone,
                 people: [
-                    { name: "A", serviceId: serviceIds[0], extraTimeMinutes: 0 },
-                    { name: "B", serviceId: serviceIds[0], extraTimeMinutes: 0 },
+                    {
+                        name: "A",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        name: "B",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
                 ],
                 dateStr: DATE_STR,
                 startTime: 540,
@@ -198,8 +266,16 @@ describe("kalendar actions", () => {
             await createManualBookingAction({
                 phone,
                 people: [
-                    { name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: 7 },
-                    { name: "Eva Host", serviceId: serviceIds[0], extraTimeMinutes: 13 },
+                    {
+                        name: "Jana Testová",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 7,
+                    },
+                    {
+                        name: "Eva Host",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 13,
+                    },
                 ],
                 dateStr: DATE_STR,
                 startTime: 540,
@@ -213,30 +289,47 @@ describe("kalendar actions", () => {
                 [540, 575],
                 [575, 620],
             ]);
-            const client = await prisma.client.findFirstOrThrow({ where: { phone } });
+            const client = await prisma.client.findFirstOrThrow({
+                where: { phone },
+            });
             expect(client.extraTimeMinutes).toBe(5);
         });
 
         it("rejects a custom time that would run past midnight and creates nothing", async () => {
             const result = await createManualBookingAction({
                 phone,
-                people: [{ name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                people: [
+                    {
+                        name: "Jana Testová",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
                 dateStr: DATE_STR,
                 startTime: 23 * 60 + 50,
                 source: "PHONE",
                 outsideHours: true,
             });
 
-            expect(result).toEqual({ ok: false, error: "Rezervace by přesáhla půlnoc." });
+            expect(result).toEqual({
+                ok: false,
+                error: "Rezervace by přesáhla půlnoc.",
+            });
             expect(await bookingsForPhone()).toHaveLength(0);
-            // rejected before findOrCreateClient — no orphan client either
+            // rejected before findOrCreateClient – no orphan client either
             expect(await prisma.client.count({ where: { phone } })).toBe(0);
         });
 
         it("sanitizes a nonsensical extra time from the form", async () => {
             await createManualBookingAction({
                 phone,
-                people: [{ name: "Jana Testová", serviceId: serviceIds[0], extraTimeMinutes: -20 }],
+                people: [
+                    {
+                        name: "Jana Testová",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: -20,
+                    },
+                ],
                 dateStr: DATE_STR,
                 startTime: 540,
                 source: "PHONE",
@@ -256,9 +349,23 @@ describe("kalendar actions", () => {
             });
             const group = await createGroupBooking(
                 [
-                    { clientId: client.id, extraTimeMinutes: 0, serviceId: serviceIds[0] },
-                    { clientId: client.id, guestName: "Eva", extraTimeMinutes: 0, serviceId: serviceIds[0] },
-                    { clientId: client.id, guestName: "Petr", extraTimeMinutes: 0, serviceId: serviceIds[0] },
+                    {
+                        clientId: client.id,
+                        extraTimeMinutes: 0,
+                        serviceId: serviceIds[0],
+                    },
+                    {
+                        clientId: client.id,
+                        guestName: "Eva",
+                        extraTimeMinutes: 0,
+                        serviceId: serviceIds[0],
+                    },
+                    {
+                        clientId: client.id,
+                        guestName: "Petr",
+                        extraTimeMinutes: 0,
+                        serviceId: serviceIds[0],
+                    },
                 ],
                 DATE,
                 540,
@@ -274,9 +381,24 @@ describe("kalendar actions", () => {
             const result = await updateBookingAction({
                 groupId: group[0].groupId,
                 people: [
-                    { bookingId: group[0].id, name: "Jana Beránková", serviceId: serviceIds[0], extraTimeMinutes: 0 },
-                    { bookingId: group[1].id, name: "Eva Beránková", serviceId: serviceIds[0], extraTimeMinutes: 0 },
-                    { bookingId: group[2].id, name: "Petr Beránek", serviceId: serviceIds[0], extraTimeMinutes: 0 },
+                    {
+                        bookingId: group[0].id,
+                        name: "Jana Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[2].id,
+                        name: "Petr Beránek",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
                 ],
                 phone,
                 note: "",
@@ -285,12 +407,201 @@ describe("kalendar actions", () => {
             });
 
             expect(result).toEqual({ ok: true });
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: client.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
             expect(after.name).toBe("Jana Beránková");
             const bookings = await bookingsForPhone();
-            expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva Beránková", "Petr Beránek"]);
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva Beránková",
+                "Petr Beránek",
+            ]);
             // a name fix alone doesn't move the bookings
             expect(bookings.map((b) => b.cancelToken)).toEqual(tokensBefore);
+        });
+
+        it("matches people to bookings by id, not by their order in the dialog", async () => {
+            const { client, group } = await createGroup();
+
+            const result = await updateBookingAction({
+                groupId: group[0].groupId,
+                people: [
+                    {
+                        bookingId: group[2].id,
+                        name: "Petr Beránek",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[0].id,
+                        name: "Jana Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 540,
+            });
+
+            expect(result).toEqual({ ok: true });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
+            expect(after.name).toBe("Jana Beránková");
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva Beránková",
+                "Petr Beránek",
+            ]);
+        });
+
+        it("refuses to save a dialog that no longer matches the group", async () => {
+            const { group } = await createGroup();
+
+            const result = await updateBookingAction({
+                groupId: group[0].groupId,
+                people: [
+                    {
+                        bookingId: group[0].id,
+                        name: "Jana Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: "uz-neexistuje",
+                        name: "Petr",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 540,
+            });
+
+            expect(result.ok).toBe(false);
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva",
+                "Petr",
+            ]);
+        });
+
+        it("never renames the main contact after their own booking was cancelled (regression)", async () => {
+            const { client, group } = await createGroup();
+            await cancelBookingAction(group[0].id);
+
+            // the dialog now shows only the guests, Eva first
+            const result = await updateBookingAction({
+                groupId: group[0].groupId,
+                people: [
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[2].id,
+                        name: "Petr",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
+                phone,
+                note: "nova poznamka",
+                dateStr: DATE_STR,
+                startTime: 570,
+            });
+
+            expect(result).toEqual({ ok: true });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
+            expect(after.name).toBe("Jana Beránková");
+            // contact details still reach the group's client
+            expect(after.note).toBe("nova poznamka");
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                "Eva Beránková",
+                "Petr",
+            ]);
+        });
+
+        it("repairs a pre-2026-10 group whose people all share the main client without guestName", async () => {
+            // the shared phone matched everyone onto one client, which got
+            // renamed to the last person
+            const client = await prisma.client.create({
+                data: { name: "Petr Beránek", phone },
+            });
+            const group = await createGroupBooking(
+                [0, 1, 2].map(() => ({
+                    clientId: client.id,
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                })),
+                DATE,
+                540,
+                "PHONE"
+            );
+
+            const result = await updateBookingAction({
+                groupId: group[0].groupId,
+                people: [
+                    {
+                        bookingId: group[0].id,
+                        name: "Jana Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[2].id,
+                        name: "Petr Beránek",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 540,
+            });
+
+            expect(result).toEqual({ ok: true });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
+            expect(after.name).toBe("Jana Beránková");
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva Beránková",
+                "Petr Beránek",
+            ]);
         });
 
         it("renames the main contact on the client", async () => {
@@ -299,9 +610,24 @@ describe("kalendar actions", () => {
             await updateBookingAction({
                 groupId: group[0].groupId,
                 people: [
-                    { bookingId: group[0].id, name: "Jana Nová", serviceId: serviceIds[0], extraTimeMinutes: 0 },
-                    { bookingId: group[1].id, name: "Eva", serviceId: serviceIds[0], extraTimeMinutes: 0 },
-                    { bookingId: group[2].id, name: "Petr", serviceId: serviceIds[0], extraTimeMinutes: 0 },
+                    {
+                        bookingId: group[0].id,
+                        name: "Jana Nová",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[2].id,
+                        name: "Petr",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
                 ],
                 phone,
                 note: "",
@@ -309,7 +635,9 @@ describe("kalendar actions", () => {
                 startTime: 540,
             });
 
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: client.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
             expect(after.name).toBe("Jana Nová");
         });
 
@@ -319,9 +647,24 @@ describe("kalendar actions", () => {
             const result = await updateBookingAction({
                 groupId: group[0].groupId,
                 people: [
-                    { bookingId: group[0].id, name: "Jana Beránková", serviceId: serviceIds[0], extraTimeMinutes: 0 },
-                    { bookingId: group[1].id, name: "Eva", serviceId: serviceIds[0], extraTimeMinutes: 15 },
-                    { bookingId: group[2].id, name: "Petr", serviceId: serviceIds[0], extraTimeMinutes: 0 },
+                    {
+                        bookingId: group[0].id,
+                        name: "Jana Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 15,
+                    },
+                    {
+                        bookingId: group[2].id,
+                        name: "Petr",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
                 ],
                 phone,
                 note: "",
@@ -332,7 +675,11 @@ describe("kalendar actions", () => {
 
             expect(result).toEqual({ ok: true });
             const bookings = await bookingsForPhone();
-            expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva", "Petr"]);
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva",
+                "Petr",
+            ]);
             expect(bookings.map((b) => b.extraTimeMinutes)).toEqual([0, 15, 0]);
             expect(bookings.map((b) => [b.startTime, b.endTime])).toEqual([
                 [540, 570],
@@ -342,7 +689,9 @@ describe("kalendar actions", () => {
         });
 
         it("changes a solo booking's extra time", async () => {
-            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const client = await prisma.client.create({
+                data: { name: "Jana", phone },
+            });
             const booking = await createBooking({
                 clientId: client.id,
                 serviceId: serviceIds[0],
@@ -353,7 +702,14 @@ describe("kalendar actions", () => {
 
             await updateBookingAction({
                 groupId: null,
-                people: [{ bookingId: booking.id, name: "Jana", serviceId: serviceIds[0], extraTimeMinutes: 20 }],
+                people: [
+                    {
+                        bookingId: booking.id,
+                        name: "Jana",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 20,
+                    },
+                ],
                 phone,
                 note: "",
                 dateStr: DATE_STR,
@@ -367,7 +723,9 @@ describe("kalendar actions", () => {
         });
 
         it("emails an online booking's client the new link after a move", async () => {
-            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const client = await prisma.client.create({
+                data: { name: "Jana", phone },
+            });
             const booking = await createBooking({
                 clientId: client.id,
                 serviceId: serviceIds[0],
@@ -378,7 +736,14 @@ describe("kalendar actions", () => {
 
             await updateBookingAction({
                 groupId: null,
-                people: [{ bookingId: booking.id, name: "Jana", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                people: [
+                    {
+                        bookingId: booking.id,
+                        name: "Jana",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
                 phone,
                 note: "",
                 dateStr: DATE_STR,
@@ -391,7 +756,9 @@ describe("kalendar actions", () => {
         });
 
         it("sends no email for a phone booking or a plain name fix", async () => {
-            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const client = await prisma.client.create({
+                data: { name: "Jana", phone },
+            });
             const phoneBooking = await createBooking({
                 clientId: client.id,
                 serviceId: serviceIds[0],
@@ -410,17 +777,31 @@ describe("kalendar actions", () => {
             // phone booking moved
             await updateBookingAction({
                 groupId: null,
-                people: [{ bookingId: phoneBooking.id, name: "Jana", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                people: [
+                    {
+                        bookingId: phoneBooking.id,
+                        name: "Jana",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
                 phone,
                 note: "",
                 dateStr: DATE_STR,
                 startTime: 600,
                 outsideHours: true,
             });
-            // online booking, only renamed — not moved, link stays valid
+            // online booking, only renamed – not moved, link stays valid
             await updateBookingAction({
                 groupId: null,
-                people: [{ bookingId: onlineBooking.id, name: "Jana Nová", serviceId: serviceIds[0], extraTimeMinutes: 0 }],
+                people: [
+                    {
+                        bookingId: onlineBooking.id,
+                        name: "Jana Nová",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
                 phone,
                 note: "",
                 dateStr: DATE_STR,
@@ -431,9 +812,37 @@ describe("kalendar actions", () => {
         });
     });
 
+    describe("cancelBookingAction", () => {
+        it("is a no-op for an unknown or already cancelled booking", async () => {
+            await expect(
+                cancelBookingAction("neexistujici-id")
+            ).resolves.toBeUndefined();
+
+            const client = await prisma.client.create({
+                data: { name: "Jana", phone },
+            });
+            const booking = await createBooking({
+                clientId: client.id,
+                serviceId: serviceIds[0],
+                date: DATE,
+                startTime: 900,
+                source: "PHONE",
+            });
+            await cancelBookingAction(booking.id);
+            await cancelBookingAction(booking.id);
+
+            const after = await prisma.booking.findUniqueOrThrow({
+                where: { id: booking.id },
+            });
+            expect(after.status).toBe("CANCELLED");
+        });
+    });
+
     describe("getMoveSlotsAction", () => {
         it("uses the unsaved extra time override when previewing slots", async () => {
-            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const client = await prisma.client.create({
+                data: { name: "Jana", phone },
+            });
             const booking = await createBooking({
                 clientId: client.id,
                 serviceId: serviceIds[0],
@@ -442,8 +851,12 @@ describe("kalendar actions", () => {
                 source: "PHONE",
             });
 
-            const withoutExtra = await getMoveSlotsAction(booking.id, null, DATE_STR);
-            // longer than any real opening window — nothing can fit
+            const withoutExtra = await getMoveSlotsAction(
+                booking.id,
+                null,
+                DATE_STR
+            );
+            // longer than any real opening window – nothing can fit
             const withHugeExtra = await getMoveSlotsAction(
                 booking.id,
                 null,
@@ -452,7 +865,7 @@ describe("kalendar actions", () => {
                 [24 * 60]
             );
 
-            // DATE is a Monday — the inherited RecurringAvailability covers
+            // DATE is a Monday – the inherited RecurringAvailability covers
             // every weekday (see sprava/[token]/actions.test.ts), so the
             // empty result really comes from the override
             expect(withoutExtra.length).toBeGreaterThan(0);

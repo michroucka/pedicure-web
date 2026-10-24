@@ -29,20 +29,17 @@ const SLOT_TAKEN_ERROR = "Zvolený termín už není volný.";
 
 function serviceContext(bookings: BookingWithRelations[]) {
     return {
-        // The bookings being rescheduled — left out of the occupied set so
+        // The bookings being rescheduled – left out of the occupied set so
         // their own current slot shows as available (same as the admin
         // edit dialog's getMoveSlotsAction).
         bookingIds: bookings.map((b) => b.id),
         serviceIds: bookings.map((b) => b.serviceId),
-        extraMinutes: bookings.reduce(
-            (sum, b) => sum + b.extraTimeMinutes,
-            0
-        ),
+        extraMinutes: bookings.reduce((sum, b) => sum + b.extraTimeMinutes, 0),
     };
 }
 
 // "Jana Nováková – 2 osoby" for a group, "Jana Nováková – Pedikúra klasik"
-// for a solo booking — same shorthand convention as the push sent on
+// for a solo booking – same shorthand convention as the push sent on
 // booking creation (app/rezervace/actions.ts).
 function pushSubjectLine(bookings: BookingWithRelations[]): string {
     return bookings.length > 1
@@ -96,7 +93,8 @@ export async function getRescheduleDaysAction(
     range: { from: Date; to: Date }
 ): Promise<Date[]> {
     const parsedRange = dateRangeSchema.safeParse(range);
-    if (!tokenSchema.safeParse(token).success || !parsedRange.success) return [];
+    if (!tokenSchema.safeParse(token).success || !parsedRange.success)
+        return [];
 
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") return [];
@@ -112,7 +110,8 @@ export async function getRescheduleSlotsAction(
     dateStr: string
 ): Promise<number[]> {
     const parsedDateStr = dateStrSchema.safeParse(dateStr);
-    if (!tokenSchema.safeParse(token).success || !parsedDateStr.success) return [];
+    if (!tokenSchema.safeParse(token).success || !parsedDateStr.success)
+        return [];
 
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") return [];
@@ -126,7 +125,7 @@ export async function getRescheduleSlotsAction(
 }
 
 // Move = cancel + recreate (see lib/move-booking.ts), which means the new
-// booking gets a brand new cancelToken — the client's old magic link stops
+// booking gets a brand new cancelToken – the client's old magic link stops
 // working the moment the move succeeds. The caller must redirect to
 // `/rezervace/sprava/${newToken}` on success so they keep a working link.
 export async function moveBookingByTokenAction(
@@ -137,10 +136,13 @@ export async function moveBookingByTokenAction(
     if (!tokenSchema.safeParse(token).success) {
         return { ok: false, error: NOT_FOUND_ERROR };
     }
-    // The picker only ever offers real slots — a malformed target is
+    // The picker only ever offers real slots – a malformed target is
     // tampering, answered the same as a slot that's no longer free.
     const parsedDateStr = dateStrSchema.safeParse(dateStr);
-    if (!parsedDateStr.success || !startTimeSchema.safeParse(startTime).success) {
+    if (
+        !parsedDateStr.success ||
+        !startTimeSchema.safeParse(startTime).success
+    ) {
         return { ok: false, error: SLOT_TAKEN_ERROR };
     }
 
@@ -155,7 +157,7 @@ export async function moveBookingByTokenAction(
     const date = toDateOnly(new Date(parsedDateStr.data));
 
     // moveBooking/moveGroupBooking validate the target slot with
-    // allowToday: true (admin is allowed to move bookings into today) — the
+    // allowToday: true (admin is allowed to move bookings into today) – the
     // client-facing flow isn't, so that has to be checked here first,
     // against the same public rule getRescheduleSlotsAction already used to
     // offer slots in the first place.
@@ -174,7 +176,7 @@ export async function moveBookingByTokenAction(
                 date,
                 startTime
             );
-            // The new bookings have new cancelTokens — the email is how the
+            // The new bookings have new cancelTokens – the email is how the
             // client gets a working link again outside this browser tab.
             after(() => sendBookingMovedEmail(moved.map((b) => b.id)));
             after(() =>

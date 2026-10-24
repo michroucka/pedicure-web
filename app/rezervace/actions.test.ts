@@ -13,7 +13,7 @@ import {
 } from "./actions.ts";
 
 // redirect() normally throws Next.js's own NEXT_REDIRECT error to stop the
-// action — mimic that with a recognisable error so tests can assert where
+// action – mimic that with a recognisable error so tests can assert where
 // the action wanted to go.
 class RedirectError extends Error {
     constructor(public url: string) {
@@ -38,7 +38,7 @@ vi.mock("@/lib/turnstile.ts", () => ({
     verifyTurnstileToken: vi.fn().mockResolvedValue(true),
 }));
 // Real availability on the test branch is inherited from production and
-// can change — these tests are about who gets which name/extra time, not
+// can change – these tests are about who gets which name/extra time, not
 // about slot computation (covered in get-available-slots.test.ts).
 vi.mock("@/lib/get-available-slots.ts", () => ({
     getAvailableSlots: vi.fn(),
@@ -50,7 +50,7 @@ vi.mock("@/lib/get-available-days-in-range.ts", () => ({
 const TEST_DATE = new Date("2099-10-01T00:00:00.000Z");
 const START = 540;
 
-// Formatted the way PhoneInput sends it ("XXX XXX XXX") — the booking
+// Formatted the way PhoneInput sends it ("XXX XXX XXX") – the booking
 // schemas reject anything else (see PHONE_RE).
 function uniquePhone(): string {
     const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
@@ -79,10 +79,18 @@ describe("rezervace actions", () => {
 
         const services = await Promise.all([
             prisma.service.create({
-                data: { name: "Test Service 30", durationMinutes: 30, price: 100 },
+                data: {
+                    name: "Test Service 30",
+                    durationMinutes: 30,
+                    price: 100,
+                },
             }),
             prisma.service.create({
-                data: { name: "Test Service 45", durationMinutes: 45, price: 150 },
+                data: {
+                    name: "Test Service 45",
+                    durationMinutes: 45,
+                    price: 150,
+                },
             }),
         ]);
         serviceIds = services.map((s) => s.id);
@@ -91,12 +99,17 @@ describe("rezervace actions", () => {
     afterEach(async () => {
         const clients = await prisma.client.findMany({ where: { phone } });
         const clientIds = clients.map((c) => c.id);
-        await prisma.booking.deleteMany({ where: { clientId: { in: clientIds } } });
+        await prisma.booking.deleteMany({
+            where: { clientId: { in: clientIds } },
+        });
         await prisma.client.deleteMany({ where: { id: { in: clientIds } } });
         await prisma.service.deleteMany({ where: { id: { in: serviceIds } } });
     });
 
-    async function submitGroup(names: string[], services = names.map(() => serviceIds[0])) {
+    async function submitGroup(
+        names: string[],
+        services = names.map(() => serviceIds[0])
+    ) {
         return expectRedirect(
             submitGroupBooking(
                 { date: TEST_DATE, serviceIds: services, startTime: START },
@@ -115,16 +128,26 @@ describe("rezervace actions", () => {
 
     describe("submitGroupBooking", () => {
         it("keeps every person's own name (regression: all got the last name)", async () => {
-            const url = await submitGroup(["Jana Beránková", "Eva Beránková", "Petr Beránek"]);
+            const url = await submitGroup([
+                "Jana Beránková",
+                "Eva Beránková",
+                "Petr Beránek",
+            ]);
             expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
             // lands on the manage page of this very group - the redirect is the
             // client's only confirmation besides the e-mail
             const token = url.split("/").at(-1)!.split("?")[0];
-            const owner = await prisma.booking.findUniqueOrThrow({ where: { cancelToken: token } });
+            const owner = await prisma.booking.findUniqueOrThrow({
+                where: { cancelToken: token },
+            });
 
             const bookings = await bookingsForPhone();
             expect(owner.groupId).toBe(bookings[0].groupId);
-            expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva Beránková", "Petr Beránek"]);
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva Beránková",
+                "Petr Beránek",
+            ]);
             expect(bookings.map((b) => b.client.name)).toEqual([
                 "Jana Beránková",
                 "Jana Beránková",
@@ -133,7 +156,12 @@ describe("rezervace actions", () => {
         });
 
         it("creates exactly one client (the main contact) for a new phone", async () => {
-            await submitGroup(["Jana Beránková", "Eva Beránková", "Petr Beránek", "Anna Beránková"]);
+            await submitGroup([
+                "Jana Beránková",
+                "Eva Beránková",
+                "Petr Beránek",
+                "Anna Beránková",
+            ]);
 
             const clients = await prisma.client.findMany({ where: { phone } });
             expect(clients).toHaveLength(1);
@@ -150,12 +178,14 @@ describe("rezervace actions", () => {
                 data: { name: "Jana Beránková", phone },
             });
 
-            // must actually complete — a validation redirect would leave the
+            // must actually complete – a validation redirect would leave the
             // client untouched too and pass the assertions below for nothing
             const url = await submitGroup(["Jana Beránková", "Eva Beránková"]);
             expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
 
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: existing.id },
+            });
             expect(after.name).toBe("Jana Beránková");
             expect(await prisma.client.count({ where: { phone } })).toBe(1);
         });
@@ -165,7 +195,10 @@ describe("rezervace actions", () => {
                 data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
             });
 
-            await submitGroup(["Jana Beránková", "Eva Beránková"], [serviceIds[0], serviceIds[1]]);
+            await submitGroup(
+                ["Jana Beránková", "Eva Beránková"],
+                [serviceIds[0], serviceIds[1]]
+            );
 
             const bookings = await bookingsForPhone();
             expect(bookings.map((b) => b.extraTimeMinutes)).toEqual([15, 0]);
@@ -186,7 +219,10 @@ describe("rezervace actions", () => {
 
             const bookings = await bookingsForPhone();
             expect(bookings[0].client.name).toBe("Jana Beránková");
-            expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva Beránková"]);
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva Beránková",
+            ]);
         });
 
         it("rejects a whitespace-only name and creates nothing", async () => {
@@ -210,7 +246,11 @@ describe("rezervace actions", () => {
         async function submitSolo(name: string, email: string) {
             return expectRedirect(
                 submitBooking(
-                    { date: TEST_DATE, serviceId: serviceIds[0], startTime: START },
+                    {
+                        date: TEST_DATE,
+                        serviceId: serviceIds[0],
+                        startTime: START,
+                    },
                     { name, phone, email }
                 )
             );
@@ -218,13 +258,19 @@ describe("rezervace actions", () => {
 
         it("updates an existing client's name and e-mail to the latest provided", async () => {
             const existing = await prisma.client.create({
-                data: { name: "Jana Beránková", phone, email: "stary@example.com" },
+                data: {
+                    name: "Jana Beránková",
+                    phone,
+                    email: "stary@example.com",
+                },
             });
 
             const url = await submitSolo("Jana Nováková", "novy@example.com");
             expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);
 
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: existing.id },
+            });
             expect(after.name).toBe("Jana Nováková");
             expect(after.email).toBe("novy@example.com");
             const [booking] = await bookingsForPhone();
@@ -241,7 +287,7 @@ describe("rezervace actions", () => {
             expect(await prisma.client.count({ where: { phone } })).toBe(0);
         });
 
-        it("keeps the client's known extra time in the URL when sending them back", async () => {
+        it("reveals nothing about the phone when the bot check fails", async () => {
             await prisma.client.create({
                 data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
             });
@@ -250,16 +296,26 @@ describe("rezervace actions", () => {
             const url = await submitSolo("Jana Beránková", "jana@example.com");
 
             expect(url).toContain("error=verification");
-            expect(url).toContain("extraMinutes=15");
+            expect(url).not.toContain("extraMinutes");
         });
 
         it("rejects another booking once the contact holds the maximum of upcoming ones", async () => {
             for (let i = 0; i < MAX_UPCOMING_ONLINE_BOOKINGS; i++) {
-                vi.mocked(getAvailableSlots).mockResolvedValueOnce([START + i * 60]);
+                vi.mocked(getAvailableSlots).mockResolvedValueOnce([
+                    START + i * 60,
+                ]);
                 await expectRedirect(
                     submitBooking(
-                        { date: TEST_DATE, serviceId: serviceIds[0], startTime: START + i * 60 },
-                        { name: "Jana Beránková", phone, email: "jana@example.com" }
+                        {
+                            date: TEST_DATE,
+                            serviceId: serviceIds[0],
+                            startTime: START + i * 60,
+                        },
+                        {
+                            name: "Jana Beránková",
+                            phone,
+                            email: "jana@example.com",
+                        }
                     )
                 );
             }
@@ -267,13 +323,23 @@ describe("rezervace actions", () => {
             // Same e-mail, different phone – still the same person's limit.
             const url = await expectRedirect(
                 submitBooking(
-                    { date: TEST_DATE, serviceId: serviceIds[0], startTime: 900 },
-                    { name: "Jana Beránková", phone: uniquePhone(), email: "JANA@example.com" }
+                    {
+                        date: TEST_DATE,
+                        serviceId: serviceIds[0],
+                        startTime: 900,
+                    },
+                    {
+                        name: "Jana Beránková",
+                        phone: uniquePhone(),
+                        email: "JANA@example.com",
+                    }
                 )
             );
 
             expect(url).toContain("error=booking_limit");
-            expect(await bookingsForPhone()).toHaveLength(MAX_UPCOMING_ONLINE_BOOKINGS);
+            expect(await bookingsForPhone()).toHaveLength(
+                MAX_UPCOMING_ONLINE_BOOKINGS
+            );
         });
 
         it("creates or changes no client when the slot is gone", async () => {
@@ -285,7 +351,9 @@ describe("rezervace actions", () => {
             const url = await submitSolo("Jana Beránková", "jana@example.com");
 
             expect(url).toContain("error=slot_taken");
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: existing.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: existing.id },
+            });
             expect(after.email).toBeNull();
             expect(await prisma.client.count({ where: { phone } })).toBe(1);
         });
@@ -297,8 +365,15 @@ describe("rezervace actions", () => {
                 data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
             });
 
-            expect(await getExtraMinutesAction({ name: "jana  berankova", phone })).toBe(15);
-            expect(await getExtraMinutesAction({ name: "Jana Beránková", phone: `+420 ${phone}` })).toBe(15);
+            expect(
+                await getExtraMinutesAction({ name: "jana  berankova", phone })
+            ).toBe(15);
+            expect(
+                await getExtraMinutesAction({
+                    name: "Jana Beránková",
+                    phone: `+420 ${phone}`,
+                })
+            ).toBe(15);
         });
 
         it("reveals nothing when only the phone matches", async () => {
@@ -306,7 +381,9 @@ describe("rezervace actions", () => {
                 data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
             });
 
-            expect(await getExtraMinutesAction({ name: "Někdo Jiný", phone })).toBe(0);
+            expect(
+                await getExtraMinutesAction({ name: "Někdo Jiný", phone })
+            ).toBe(0);
         });
 
         it("reveals nothing for a name alone, without a phone", async () => {
@@ -314,27 +391,44 @@ describe("rezervace actions", () => {
                 data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
             });
 
-            expect(await getExtraMinutesAction({ name: "Jana Beránková", phone: "" })).toBe(0);
+            expect(
+                await getExtraMinutesAction({
+                    name: "Jana Beránková",
+                    phone: "",
+                })
+            ).toBe(0);
         });
 
         it("returns 0 for an unknown phone", async () => {
-            expect(await getExtraMinutesAction({ name: "Nikdo", phone })).toBe(0);
+            expect(await getExtraMinutesAction({ name: "Nikdo", phone })).toBe(
+                0
+            );
         });
 
         it("returns 0 for empty input", async () => {
-            expect(await getExtraMinutesAction({ name: "  ", phone: "  " })).toBe(0);
+            expect(
+                await getExtraMinutesAction({ name: "  ", phone: "  " })
+            ).toBe(0);
         });
 
         it("returns 0 for oversized input without looking anyone up", async () => {
-            expect(await getExtraMinutesAction({ name: "x".repeat(1000), phone })).toBe(0);
+            expect(
+                await getExtraMinutesAction({ name: "x".repeat(1000), phone })
+            ).toBe(0);
         });
     });
 
     describe("getAvailableSlotsAction", () => {
         it("returns no slots for invalid input without computing availability", async () => {
             expect(await getAvailableSlotsAction(TEST_DATE, [])).toEqual([]);
-            expect(await getAvailableSlotsAction(TEST_DATE, [1, 2, 3, 4, 5])).toEqual([]);
-            expect(await getAvailableSlotsAction(new Date("nesmysl"), [serviceIds[0]])).toEqual([]);
+            expect(
+                await getAvailableSlotsAction(TEST_DATE, [1, 2, 3, 4, 5])
+            ).toEqual([]);
+            expect(
+                await getAvailableSlotsAction(new Date("nesmysl"), [
+                    serviceIds[0],
+                ])
+            ).toEqual([]);
             expect(getAvailableSlots).not.toHaveBeenCalled();
         });
     });
@@ -345,7 +439,11 @@ describe("rezervace actions", () => {
 
             await getAvailableDaysAction(range, [serviceIds[0]], 15);
 
-            expect(getAvailableDaysInRange).toHaveBeenCalledWith(range, [serviceIds[0]], 15);
+            expect(getAvailableDaysInRange).toHaveBeenCalledWith(
+                range,
+                [serviceIds[0]],
+                15
+            );
         });
 
         it("normalizes a tampered extra time from the URL", async () => {
@@ -353,15 +451,29 @@ describe("rezervace actions", () => {
 
             await getAvailableDaysAction(range, [serviceIds[0]], -30);
 
-            expect(getAvailableDaysInRange).toHaveBeenCalledWith(range, [serviceIds[0]], 0);
+            expect(getAvailableDaysInRange).toHaveBeenCalledWith(
+                range,
+                [serviceIds[0]],
+                0
+            );
         });
 
         it("rejects a reversed or overlong range without computing availability", async () => {
-            const reversed = { from: TEST_DATE, to: new Date("2099-09-01T00:00:00.000Z") };
-            const tenYears = { from: TEST_DATE, to: new Date("2109-10-01T00:00:00.000Z") };
+            const reversed = {
+                from: TEST_DATE,
+                to: new Date("2099-09-01T00:00:00.000Z"),
+            };
+            const tenYears = {
+                from: TEST_DATE,
+                to: new Date("2109-10-01T00:00:00.000Z"),
+            };
 
-            expect(await getAvailableDaysAction(reversed, [serviceIds[0]])).toEqual([]);
-            expect(await getAvailableDaysAction(tenYears, [serviceIds[0]])).toEqual([]);
+            expect(
+                await getAvailableDaysAction(reversed, [serviceIds[0]])
+            ).toEqual([]);
+            expect(
+                await getAvailableDaysAction(tenYears, [serviceIds[0]])
+            ).toEqual([]);
             expect(getAvailableDaysInRange).not.toHaveBeenCalled();
         });
     });

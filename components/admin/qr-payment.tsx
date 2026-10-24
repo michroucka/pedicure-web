@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/input-group.tsx";
 
 // Shared by BookingDetailDialog (amount prefilled from a booking's service
-// price) and QuickQrDialog (amount always starts empty, entered by hand) —
+// price) and QuickQrDialog (amount always starts empty, entered by hand) –
 // both just own the amount as state and hand it down here.
 export function QrPayment({
     amount,

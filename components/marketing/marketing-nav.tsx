@@ -39,7 +39,7 @@ export function MarketingNav() {
                             alt="Nohy v cajku"
                             width={241}
                             height={60}
-                            className="-my-1 h-12 md:h-14 w-auto"
+                            className="-my-1 h-12 w-auto md:h-14"
                             priority
                             draggable={false}
                         />
@@ -56,7 +56,7 @@ export function MarketingNav() {
                     )}
                 </div>
 
-                <nav className="flex items-center justify-center border-t border-border/60 gap-8 py-2 -mx-4 text-muted-foreground md:hidden">
+                <nav className="-mx-4 flex items-center justify-center gap-8 border-t border-border/60 py-2 text-muted-foreground md:hidden">
                     <NavLinks />
                 </nav>
             </div>

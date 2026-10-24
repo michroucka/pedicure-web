@@ -7,15 +7,17 @@ import { subscribeAndSave } from "@/lib/push-client.ts";
 // stays granted, and Safari doesn't fire `pushsubscriptionchange`, so the
 // app never finds out. On every app open, if permission is granted but the
 // subscription is gone, quietly subscribe again. Never asks for permission
-// here — that would pop a dialog without a user gesture.
+// here – that would pop a dialog without a user gesture.
 export function PushResubscribe() {
     useEffect(() => {
-        if (!("serviceWorker" in navigator) || !("Notification" in window)) return;
+        if (!("serviceWorker" in navigator) || !("Notification" in window))
+            return;
         if (Notification.permission !== "granted") return;
 
         navigator.serviceWorker.ready
             .then(async (registration) => {
-                const subscription = await registration.pushManager.getSubscription();
+                const subscription =
+                    await registration.pushManager.getSubscription();
                 if (subscription) return;
                 await subscribeAndSave(registration);
             })

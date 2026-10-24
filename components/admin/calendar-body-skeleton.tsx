@@ -12,7 +12,7 @@ const HOUR_PX = 60 * PX_PER_MIN;
 const GRID_PX = HOURS * HOUR_PX;
 
 // Start/length in minutes from the top of the grid. Deliberately uneven
-// lengths with gaps between them — a real day is never a solid block.
+// lengths with gaps between them – a real day is never a solid block.
 const DAY_CARDS = [
     { top: 30, height: 45 },
     { top: 90, height: 60 },

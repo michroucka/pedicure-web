@@ -10,9 +10,7 @@ import {
     isBookingPast,
     type BookingItem,
 } from "@/components/admin/booking-card.tsx";
-import type {
-    Service,
-} from "@/lib/generated/prisma/client.ts";
+import type { Service } from "@/lib/generated/prisma/client.ts";
 
 const PX_PER_MIN = 2.25;
 
@@ -20,7 +18,7 @@ export function DayTimeline({
     windows,
     bookings,
     services,
-    date
+    date,
 }: {
     windows: { start: number; end: number }[];
     bookings: BookingItem[];
@@ -47,7 +45,7 @@ export function DayTimeline({
     }
 
     // Bounds normally follow the availability windows, but a booking made
-    // outside opening hours (admin "vlastní čas") can fall outside them —
+    // outside opening hours (admin "vlastní čas") can fall outside them –
     // stretch the grid to still fit it.
     const boundPoints = [
         ...windows.map((w) => w.start),

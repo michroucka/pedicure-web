@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Switch } from "@/components/ui/switch.tsx"
+import { Switch } from "@/components/ui/switch.tsx";
 import {
     Field,
     FieldContent,
@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/field.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { deletePushSubscriptionAction } from "@/app/(admin)/(dashboard)/nastaveni/actions.ts"
-import { subscribeAndSave } from "@/lib/push-client.ts"
+import { deletePushSubscriptionAction } from "@/app/(admin)/(dashboard)/nastaveni/actions.ts";
+import { subscribeAndSave } from "@/lib/push-client.ts";
 
 function requestNotificationPermission() {
     return new Promise((resolve, reject) => {
@@ -33,7 +33,7 @@ function getStandaloneSnapshot() {
     return window.matchMedia(STANDALONE_QUERY).matches;
 }
 
-// No `window` on the server — render as "not standalone" there; React
+// No `window` on the server – render as "not standalone" there; React
 // swaps in the real value during hydration without a mismatch.
 function getStandaloneServerSnapshot() {
     return false;
@@ -71,7 +71,9 @@ export function PushSubscribeFlow() {
             setIsSubscribed(true);
         } catch (error) {
             console.error("Push subscribe failed:", error);
-            setError("Zapnutí notifikací se nepovedlo. Zkuste to prosím znovu.");
+            setError(
+                "Zapnutí notifikací se nepovedlo. Zkuste to prosím znovu."
+            );
         } finally {
             setIsPending(false);
         }
@@ -82,7 +84,8 @@ export function PushSubscribeFlow() {
         setIsPending(true);
         try {
             const registration = await navigator.serviceWorker.ready;
-            const subscription = await registration.pushManager.getSubscription();
+            const subscription =
+                await registration.pushManager.getSubscription();
             if (subscription) {
                 const { endpoint } = subscription;
                 await subscription.unsubscribe();
@@ -91,7 +94,9 @@ export function PushSubscribeFlow() {
             setIsSubscribed(false);
         } catch (error) {
             console.error("Push unsubscribe failed:", error);
-            setError("Vypnutí notifikací se nepovedlo. Zkuste to prosím znovu.");
+            setError(
+                "Vypnutí notifikací se nepovedlo. Zkuste to prosím znovu."
+            );
         } finally {
             setIsPending(false);
         }

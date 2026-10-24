@@ -89,7 +89,10 @@ export default function OchranaOsobnichUdajuPage() {
                     Jaké údaje se zpracovávají, proč a jak dlouho
                 </h2>
                 {PURPOSES.map((item) => (
-                    <div key={item.purpose} className="mt-6">
+                    <div
+                        key={item.purpose}
+                        className="mt-6"
+                    >
                         <h3 className="text-base">{item.purpose}</h3>
                         <p className={`mt-1 ${PROSE}`}>
                             {item.data && (

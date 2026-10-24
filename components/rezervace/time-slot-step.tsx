@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -8,8 +8,13 @@ import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { AlertCircle, CalendarX } from "lucide-react";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
-export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void }) {
+export function TimeSlotStep({
+    onSelectAction,
+}: {
+    onSelectAction: () => void;
+}) {
     const [availableSlots, setAvailableSlots] = useState<number[]>();
     const [isLoading, startTransition] = useTransition();
 
@@ -18,34 +23,34 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
     const searchParams = useSearchParams();
 
     const dateParam = searchParams.get("date");
-    const date = dateParam ? new Date(dateParam) : undefined;
-
-    const currentServices: number[] =
-        searchParams.get("services")?.split(",").filter(Boolean).map(Number) ??
-        [];
+    const servicesParam = searchParams.get("services");
+    const extraMinutesParam = searchParams.get("extraMinutes");
 
     const slotParam = searchParams.get("slot");
     const selectedSlot = slotParam ? Number(slotParam) : undefined;
     const error = searchParams.get("error");
-    const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
+    const extraMinutes = Number(extraMinutesParam ?? 0);
 
+    // Keyed on the raw URL params (strings) and the extraMinutes number,
+    // not on the parsed Date/array - those are new objects every render and
+    // would refetch in a loop. `cancelled`: switching dates quickly must not
+    // let the older, slower response overwrite the newer one.
     useEffect(() => {
-        if (!date) return;
-        const selectedDate = date;
+        if (!dateParam) return;
+        let cancelled = false;
 
         startTransition(async () => {
             const slots = await getAvailableSlotsAction(
-                selectedDate,
-                currentServices,
+                new Date(dateParam),
+                parseServiceIdsParam(servicesParam),
                 extraMinutes
             );
-            setAvailableSlots(slots);
+            if (!cancelled) setAvailableSlots(slots);
         });
-    }, [
-        searchParams.get("services"),
-        searchParams.get("date"),
-        searchParams.get("extraMinutes"),
-    ]);
+        return () => {
+            cancelled = true;
+        };
+    }, [dateParam, servicesParam, extraMinutes]);
 
     function selectSlot(s: number) {
         const params = new URLSearchParams(searchParams);
@@ -96,7 +101,7 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                     Vyberte prosím jiné datum.
                 </div>
             ) : (
-                <div className="grid grid-cols-4 lg:grid-cols-5 gap-2">
+                <div className="grid grid-cols-4 gap-2 lg:grid-cols-5">
                     {availableSlots?.map((s) => (
                         <Button
                             key={s}
@@ -111,5 +116,5 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                 </div>
             )}
         </div>
-    )
+    );
 }

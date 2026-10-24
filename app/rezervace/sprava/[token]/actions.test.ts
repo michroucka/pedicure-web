@@ -11,12 +11,14 @@ import {
 } from "./actions.ts";
 
 // revalidatePath and after() both need an active Next.js request context,
-// which a plain vitest run doesn't have — mock them out like any other
+// which a plain vitest run doesn't have – mock them out like any other
 // Next.js server action test.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 // after() runs its callback right away here so the post-move side effects
 // can be asserted; the email/push senders themselves are mocked.
-vi.mock("next/server", () => ({ after: vi.fn((callback: () => unknown) => callback()) }));
+vi.mock("next/server", () => ({
+    after: vi.fn((callback: () => unknown) => callback()),
+}));
 vi.mock("@/lib/send-push.ts", () => ({ sendPushNotification: vi.fn() }));
 vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
     sendBookingMovedEmail: vi.fn(),
@@ -27,12 +29,12 @@ vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
 // need their own RecurringAvailability row since moveBookingByTokenAction
 // validates the target against real availability, no admin-style bypass.
 const NOW = new Date("2026-06-15T08:00:00.000Z");
-const TOO_SOON_DATE = new Date(Date.UTC(2026, 5, 15)); // today — under 24h away
+const TOO_SOON_DATE = new Date(Date.UTC(2026, 5, 15)); // today – under 24h away
 const ORIGINAL_DATE = new Date(Date.UTC(2026, 5, 20)); // Saturday, dayOfWeek 6
 const TARGET_DATE = new Date(Date.UTC(2026, 5, 21)); // Sunday, dayOfWeek 0
 // Production's inherited RecurringAvailability already covers every weekday
 // (Mon-Fri), so "a day with zero availability anywhere" doesn't exist on
-// this branch — instead, target a time outside the 540-600 window this
+// this branch – instead, target a time outside the 540-600 window this
 // file sets up on TARGET_DATE itself.
 const OUT_OF_WINDOW_START_TIME = 900;
 
@@ -69,7 +71,9 @@ describe("rezervace/sprava/[token] actions", () => {
 
     afterEach(async () => {
         vi.useRealTimers();
-        await prisma.booking.deleteMany({ where: { clientId: { in: clientIds } } });
+        await prisma.booking.deleteMany({
+            where: { clientId: { in: clientIds } },
+        });
         await prisma.client.deleteMany({ where: { id: { in: clientIds } } });
         await prisma.service.delete({ where: { id: serviceId } });
         await prisma.recurringAvailability.deleteMany({
@@ -84,9 +88,13 @@ describe("rezervace/sprava/[token] actions", () => {
         });
 
         it("answers a well-formed but unknown token and a non-string token the same way", async () => {
-            const unknown = await cancelBookingByTokenAction(crypto.randomUUID());
+            const unknown = await cancelBookingByTokenAction(
+                crypto.randomUUID()
+            );
             // server actions take whatever the client sends, types or not
-            const tampered = await cancelBookingByTokenAction(42 as unknown as string);
+            const tampered = await cancelBookingByTokenAction(
+                42 as unknown as string
+            );
 
             expect(unknown).toEqual({ ok: false, error: expect.any(String) });
             expect(tampered).toEqual(unknown);
@@ -101,7 +109,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 source: "ONLINE",
             });
 
-            const result = await cancelBookingByTokenAction(booking.cancelToken);
+            const result = await cancelBookingByTokenAction(
+                booking.cancelToken
+            );
 
             expect(result).toEqual({ ok: true });
             const after = await prisma.booking.findUniqueOrThrow({
@@ -115,11 +125,13 @@ describe("rezervace/sprava/[token] actions", () => {
                 clientId: clientIds[0],
                 serviceId,
                 date: TOO_SOON_DATE,
-                startTime: 600, // later today — well under 24h from 08:00 "now"
+                startTime: 600, // later today – well under 24h from 08:00 "now"
                 source: "ONLINE",
             });
 
-            const result = await cancelBookingByTokenAction(booking.cancelToken);
+            const result = await cancelBookingByTokenAction(
+                booking.cancelToken
+            );
 
             expect(result.ok).toBe(false);
             const after = await prisma.booking.findUniqueOrThrow({
@@ -139,7 +151,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 "ONLINE"
             );
 
-            const result = await cancelBookingByTokenAction(group[1].cancelToken);
+            const result = await cancelBookingByTokenAction(
+                group[1].cancelToken
+            );
 
             expect(result).toEqual({ ok: true });
             const after = await prisma.booking.findMany({
@@ -168,10 +182,16 @@ describe("rezervace/sprava/[token] actions", () => {
                 source: "ONLINE",
             });
 
-            const result = await moveBookingByTokenAction(booking.cancelToken, "2026-02-30", 540);
+            const result = await moveBookingByTokenAction(
+                booking.cancelToken,
+                "2026-02-30",
+                540
+            );
 
             expect(result.ok).toBe(false);
-            const after = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
+            const after = await prisma.booking.findUniqueOrThrow({
+                where: { id: booking.id },
+            });
             expect(after.status).toBe("CONFIRMED");
             expect(sendBookingMovedEmail).not.toHaveBeenCalled();
         });
@@ -242,7 +262,12 @@ describe("rezervace/sprava/[token] actions", () => {
             const group = await createGroupBooking(
                 [
                     { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
-                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                    {
+                        clientId: clientIds[0],
+                        guestName: "Eva Host",
+                        extraTimeMinutes: 0,
+                        serviceId,
+                    },
                 ],
                 ORIGINAL_DATE,
                 555, // 9:15-10:15 sticks out of the 9:00-10:00 window
@@ -288,7 +313,7 @@ describe("rezervace/sprava/[token] actions", () => {
             expect(moved.status).toBe("CONFIRMED");
             expect(moved.date.getTime()).toBe(TARGET_DATE.getTime());
             expect(moved.startTime).toBe(570);
-            // the old link from the confirmation email is dead now — the
+            // the old link from the confirmation email is dead now – the
             // client gets the new one by email
             expect(sendBookingMovedEmail).toHaveBeenCalledWith([moved.id]);
         });
@@ -322,9 +347,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 where: { groupId, status: "CONFIRMED" },
             });
             expect(newRows).toHaveLength(2);
-            expect(newRows.every((b) => b.date.getTime() === TARGET_DATE.getTime())).toBe(
-                true
-            );
+            expect(
+                newRows.every((b) => b.date.getTime() === TARGET_DATE.getTime())
+            ).toBe(true);
             // one email for the whole group, with all its new bookings
             expect(sendBookingMovedEmail).toHaveBeenCalledOnce();
             expect(
@@ -335,7 +360,9 @@ describe("rezervace/sprava/[token] actions", () => {
 
     describe("getRescheduleSlotsAction / getRescheduleDaysAction", () => {
         it("returns no slots/days for an unknown token", async () => {
-            expect(await getRescheduleSlotsAction("nope", "2026-06-21")).toEqual([]);
+            expect(
+                await getRescheduleSlotsAction("nope", "2026-06-21")
+            ).toEqual([]);
             expect(
                 await getRescheduleDaysAction("nope", {
                     from: TARGET_DATE,
@@ -357,7 +384,7 @@ describe("rezervace/sprava/[token] actions", () => {
                 booking.cancelToken,
                 "2026-06-21"
             );
-            // 540-600 is a 60 min window with a 30 min service — 540 and 570
+            // 540-600 is a 60 min window with a 30 min service – 540 and 570
             // are always valid (0 leftover on one side); a middle candidate
             // (555) depends on the DB's global min active service duration,
             // which this test doesn't control.
@@ -367,7 +394,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 from: TARGET_DATE,
                 to: TARGET_DATE,
             });
-            expect(days.map((d) => d.getTime())).toEqual([TARGET_DATE.getTime()]);
+            expect(days.map((d) => d.getTime())).toEqual([
+                TARGET_DATE.getTime(),
+            ]);
         });
 
         it("returns nothing for a malformed date or an overlong range, even with a valid token", async () => {
@@ -379,7 +408,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 source: "ONLINE",
             });
 
-            expect(await getRescheduleSlotsAction(booking.cancelToken, "nesmysl")).toEqual([]);
+            expect(
+                await getRescheduleSlotsAction(booking.cancelToken, "nesmysl")
+            ).toEqual([]);
             expect(
                 await getRescheduleDaysAction(booking.cancelToken, {
                     from: TARGET_DATE,
@@ -390,7 +421,7 @@ describe("rezervace/sprava/[token] actions", () => {
 
         it("sizes a group with guests by the bookings' extra time, not the main client's", async () => {
             // the client's own setting would make each of the 2 bookings
-            // 60 min (120 total) — never fits the 60 min window; the
+            // 60 min (120 total) – never fits the 60 min window; the
             // snapshots say 0, so the group really needs just 60 min
             await prisma.client.update({
                 where: { id: clientIds[0] },
@@ -399,7 +430,12 @@ describe("rezervace/sprava/[token] actions", () => {
             const group = await createGroupBooking(
                 [
                     { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
-                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                    {
+                        clientId: clientIds[0],
+                        guestName: "Eva Host",
+                        extraTimeMinutes: 0,
+                        serviceId,
+                    },
                 ],
                 ORIGINAL_DATE,
                 540,
@@ -415,13 +451,18 @@ describe("rezervace/sprava/[token] actions", () => {
         });
 
         it("offers times overlapping the group's own current slot on the same day", async () => {
-            // the group fills the whole 9:00-10:00 Saturday window itself —
+            // the group fills the whole 9:00-10:00 Saturday window itself –
             // its own bookings must not count as taken (regression: the
             // picker offered nothing before the group's current end)
             const group = await createGroupBooking(
                 [
                     { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
-                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                    {
+                        clientId: clientIds[0],
+                        guestName: "Eva Host",
+                        extraTimeMinutes: 0,
+                        serviceId,
+                    },
                 ],
                 ORIGINAL_DATE,
                 540,
@@ -438,7 +479,9 @@ describe("rezervace/sprava/[token] actions", () => {
             });
 
             expect(slots).toEqual([540]);
-            expect(days.map((d) => d.getTime())).toEqual([ORIGINAL_DATE.getTime()]);
+            expect(days.map((d) => d.getTime())).toEqual([
+                ORIGINAL_DATE.getTime(),
+            ]);
         });
 
         it("offers a same-day time overlapping a solo booking's own slot", async () => {
@@ -446,7 +489,7 @@ describe("rezervace/sprava/[token] actions", () => {
                 clientId: clientIds[0],
                 serviceId,
                 date: ORIGINAL_DATE,
-                startTime: 555, // 9:15-9:45 — counted as taken, nothing else fits
+                startTime: 555, // 9:15-9:45 – counted as taken, nothing else fits
                 source: "ONLINE",
             });
 

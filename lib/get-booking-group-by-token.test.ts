@@ -6,7 +6,7 @@ import { moveGroupBooking } from "./move-booking.ts";
 import { cancelBooking } from "./cancel-booking.ts";
 import { getBookingGroupByToken } from "./get-booking-group-by-token.ts";
 
-// outsideHours: true for moves — same reason as move-booking.test.ts: these
+// outsideHours: true for moves – same reason as move-booking.test.ts: these
 // tests are about which rows the token resolves to, not availability.
 describe("getBookingGroupByToken", () => {
     let clientId: string;
@@ -34,7 +34,12 @@ describe("getBookingGroupByToken", () => {
         return createGroupBooking(
             [
                 { clientId, extraTimeMinutes: 0, serviceId },
-                { clientId, guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                {
+                    clientId,
+                    guestName: "Eva Host",
+                    extraTimeMinutes: 0,
+                    serviceId,
+                },
             ],
             testDate,
             540,
@@ -61,7 +66,7 @@ describe("getBookingGroupByToken", () => {
     });
 
     it("returns only the current members after the group was moved later (regression)", async () => {
-        // moved to a later time, the cancelled originals sort first — the
+        // moved to a later time, the cancelled originals sort first – the
         // manage page then showed "Rezervace zrušena" for a live booking
         const group = await createGroup();
         const moved = await moveGroupBooking(group[0].groupId!, testDate, 660, {
@@ -79,9 +84,14 @@ describe("getBookingGroupByToken", () => {
         const first = await moveGroupBooking(group[0].groupId!, testDate, 660, {
             outsideHours: true,
         });
-        const second = await moveGroupBooking(group[0].groupId!, testDate, 600, {
-            outsideHours: true,
-        });
+        const second = await moveGroupBooking(
+            group[0].groupId!,
+            testDate,
+            600,
+            {
+                outsideHours: true,
+            }
+        );
 
         const viaGuest = await getBookingGroupByToken(second[1].cancelToken);
 

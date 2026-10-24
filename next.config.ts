@@ -5,7 +5,8 @@ const isDev = process.env.NODE_ENV !== "production";
 // vercel.live. Preview builds run with NODE_ENV=production, so they're told
 // apart by VERCEL_ENV, which is set at build time when the headers below
 // are baked in. Production never allows it.
-const vercelToolbar = process.env.VERCEL_ENV === "preview" ? " https://vercel.live" : "";
+const vercelToolbar =
+    process.env.VERCEL_ENV === "preview" ? " https://vercel.live" : "";
 
 // Every third-party origin the pages load something from. Adding a new embed
 // or script means adding its origin here, or the browser silently blocks it.
@@ -22,8 +23,10 @@ const CONTENT_SECURITY_POLICY = [
     `img-src 'self' data: blob: https://api.paylibo.com${vercelToolbar}${vercelToolbar && " https://vercel.com"}`,
     `font-src 'self' data:${vercelToolbar}${vercelToolbar && " https://assets.vercel.com"}`,
     `connect-src 'self' https://challenges.cloudflare.com https://va.vercel-scripts.com${vercelToolbar}${vercelToolbar && " wss://ws-us3.pusher.com"}`,
-    // Map on the contact page (loaded on click), Turnstile challenge
-    `frame-src https://mapy.com https://*.mapy.com https://mapy.cz https://*.mapy.cz https://challenges.cloudflare.com${vercelToolbar}`,
+    // Map on the contact page (loaded on click) - frame-src also covers
+    // redirects inside the iframe, and mapy.com bounces through
+    // login.seznam.cz to check for a Seznam login first. Turnstile challenge.
+    `frame-src https://mapy.com https://*.mapy.com https://mapy.cz https://*.mapy.cz https://*.seznam.cz https://challenges.cloudflare.com${vercelToolbar}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "object-src 'none'",

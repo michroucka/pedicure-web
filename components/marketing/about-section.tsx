@@ -14,7 +14,7 @@ export function AboutSection() {
             id="o-mne"
             className="relative scroll-mt-20 bg-card"
         >
-            <div className="mx-auto max-w-3xl px-4 pt-8 pb-24 md:pb-30 sm:px-6">
+            <div className="mx-auto max-w-3xl px-4 pt-8 pb-24 sm:px-6 md:pb-30">
                 <Image
                     src="/logo-light.svg"
                     alt="Nohy v cajku"

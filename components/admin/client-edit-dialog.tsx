@@ -23,7 +23,15 @@ import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
-import { AlertCircle, Check, Mail, Phone, StickyNote, Trash2, UserRound } from "lucide-react";
+import {
+    AlertCircle,
+    Check,
+    Mail,
+    Phone,
+    StickyNote,
+    Trash2,
+    UserRound,
+} from "lucide-react";
 import { formatPhoneNumber } from "@/lib/utils.ts";
 import {
     deleteClientAction,
@@ -57,7 +65,7 @@ export function ClientEditDialog({
     const [isPending, startTransition] = useTransition();
 
     // Reset form fields whenever a different client is opened (React's
-    // documented "adjusting state during render" pattern — avoids an
+    // documented "adjusting state during render" pattern – avoids an
     // effect + extra render round-trip).
     if (client && client.id !== lastLoadedId) {
         setLastLoadedId(client.id);
@@ -210,8 +218,8 @@ export function ClientEditDialog({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Smazat klienta?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {client.name} zmizí ze seznamu klientů a z
-                            nabídky jmen při přidávání rezervace.
+                            {client.name} zmizí ze seznamu klientů a z nabídky
+                            jmen při přidávání rezervace.
                             {client.upcomingBookings > 0 &&
                                 ` Má ${upcomingLabel(client.upcomingBookings)} – ${client.upcomingBookings === 1 ? "ta zůstane" : "ty zůstanou"} v kalendáři.`}
                         </AlertDialogDescription>
@@ -238,7 +246,7 @@ export function ClientEditDialog({
 }
 
 // "1 naplánovanou rezervaci", "2 naplánované rezervace", "5 naplánovaných
-// rezervací" — Czech needs three forms.
+// rezervací" – Czech needs three forms.
 function upcomingLabel(count: number): string {
     if (count === 1) return "1 naplánovanou rezervaci";
     if (count >= 2 && count <= 4) return `${count} naplánované rezervace`;

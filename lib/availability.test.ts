@@ -117,7 +117,7 @@ describe("resolveDayTimeSlots", () => {
             { type: "EXTRA_OPEN", start: 1020, end: 1080 }, // extra hour 17:00-18:00
         ]);
 
-        // 9-17 + 17-18 touch, so mergeSubsequentSlots joins them — keeping
+        // 9-17 + 17-18 touch, so mergeSubsequentSlots joins them – keeping
         // them split would make a booking spanning 17:00 look unbookable.
         expect(result).toEqual([{ start: 540, end: 1080 }]);
     });
@@ -276,7 +276,13 @@ describe("toRecurringRows", () => {
     it("merges blocks that touch into one row", () => {
         expect(
             toRecurringRows([
-                { dayOfWeek: 1, blocks: [{ start: 720, end: 840 }, { start: 540, end: 720 }] },
+                {
+                    dayOfWeek: 1,
+                    blocks: [
+                        { start: 720, end: 840 },
+                        { start: 540, end: 720 },
+                    ],
+                },
             ])
         ).toEqual([{ dayOfWeek: 1, startTime: 540, endTime: 840 }]);
     });
@@ -284,7 +290,13 @@ describe("toRecurringRows", () => {
     it("keeps blocks with a gap (lunch break) separate", () => {
         expect(
             toRecurringRows([
-                { dayOfWeek: 1, blocks: [{ start: 540, end: 720 }, { start: 840, end: 1020 }] },
+                {
+                    dayOfWeek: 1,
+                    blocks: [
+                        { start: 540, end: 720 },
+                        { start: 840, end: 1020 },
+                    ],
+                },
             ])
         ).toEqual([
             { dayOfWeek: 1, startTime: 540, endTime: 720 },
@@ -302,4 +314,3 @@ describe("toRecurringRows", () => {
         ).toEqual([{ dayOfWeek: 2, startTime: 540, endTime: 660 }]);
     });
 });
-

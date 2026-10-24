@@ -6,7 +6,7 @@ export function MarketingFooter() {
     return (
         // On pages that end with a SectionWave (marked `data-wave-end`), the
         // wave already provides the gap above the footer in the footer's own
-        // color — drop the top padding and border there so it isn't doubled.
+        // color – drop the top padding and border there so it isn't doubled.
         <footer className="border-t border-border/60 bg-card pt-4 [main:has([data-wave-end])+&]:border-t-0 [main:has([data-wave-end])+&]:pt-0">
             <div className="mx-auto flex max-w-5xl flex-row justify-between gap-6 px-4 pb-4 sm:px-6">
                 <div className="flex cursor-default items-center select-none">

@@ -17,7 +17,7 @@ export function generateIcsFeed(bookings: BookingWithRelations[]): string {
             booking.date.getUTCMonth() + 1,
             booking.date.getUTCDate(),
             Math.floor(booking.startTime / 60),
-            booking.startTime % 60
+            booking.startTime % 60,
         ];
         const end: DateArray = [
             booking.date.getUTCFullYear(),

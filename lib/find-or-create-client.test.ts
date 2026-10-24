@@ -1,10 +1,14 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { prisma } from "./prisma.ts";
 import { findClient } from "./find-client.ts";
-import { findOrCreateClient } from "./find-or-create-client.ts";
+import {
+    findOrCreateClient,
+    reloadClient,
+    upsertMatchedClient,
+} from "./find-or-create-client.ts";
 
 // findClient matches by phone across the whole shared test branch, so
-// each test uses its own random number — a fixed one (e.g. "999999999",
+// each test uses its own random number – a fixed one (e.g. "999999999",
 // used elsewhere) could match leftovers from other test files.
 function uniquePhone(): string {
     return `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
@@ -13,7 +17,12 @@ function uniquePhone(): string {
 describe("findClient / findOrCreateClient", () => {
     const createdIds: string[] = [];
 
-    async function createClient(data: { name: string; phone?: string; extraTimeMinutes?: number }) {
+    async function createClient(data: {
+        name: string;
+        phone?: string;
+        extraTimeMinutes?: number;
+        active?: boolean;
+    }) {
         const client = await prisma.client.create({ data });
         createdIds.push(client.id);
         return client;
@@ -39,18 +48,32 @@ describe("findClient / findOrCreateClient", () => {
             const phone = uniquePhone();
             const client = await createClient({ name: "Jana Testová", phone });
 
-            // e.g. typed without diacritics — the phone is the identity
+            // e.g. typed without diacritics – the phone is the identity
             const found = await findClient(phone, "Jana Testova");
 
             expect(found?.id).toBe(client.id);
         });
 
         it("does not fall back to the name when a phone is given but unknown", async () => {
-            await createClient({ name: "Jana Unikátní Testová", phone: uniquePhone() });
+            await createClient({
+                name: "Jana Unikátní Testová",
+                phone: uniquePhone(),
+            });
 
-            const found = await findClient(uniquePhone(), "Jana Unikátní Testová");
+            const found = await findClient(
+                uniquePhone(),
+                "Jana Unikátní Testová"
+            );
 
             expect(found).toBeUndefined();
+        });
+
+        it("prefers an active client over a hidden duplicate with the same phone", async () => {
+            const phone = uniquePhone();
+            await createClient({ name: "Starý Skrytý", phone, active: false });
+            const active = await createClient({ name: "Aktivní", phone });
+
+            expect((await findClient(phone, "Kdokoli"))?.id).toBe(active.id);
         });
 
         it("matches by exact name when there is no phone", async () => {
@@ -62,11 +85,53 @@ describe("findClient / findOrCreateClient", () => {
         });
     });
 
+    describe("reloadClient + upsertMatchedClient", () => {
+        it("creates a new client when the matched one was deleted meanwhile", async () => {
+            const phone = uniquePhone();
+            const stale = await createClient({ name: "Smazaná", phone });
+            await prisma.client.delete({ where: { id: stale.id } });
+
+            const client = await upsertMatchedClient(
+                await reloadClient(stale),
+                phone,
+                "Smazaná",
+                "s@example.com"
+            );
+            createdIds.push(client.id);
+
+            expect(client.id).not.toBe(stale.id);
+            expect(client.email).toBe("s@example.com");
+        });
+
+        it("compares against the current record, not the stale one", async () => {
+            const phone = uniquePhone();
+            const stale = await createClient({ name: "Původní", phone });
+            await prisma.client.update({
+                where: { id: stale.id },
+                data: { email: "nova@example.com" },
+            });
+
+            const client = await upsertMatchedClient(
+                await reloadClient(stale),
+                phone,
+                "Původní",
+                "nova@example.com"
+            );
+
+            expect(client.id).toBe(stale.id);
+            expect(client.email).toBe("nova@example.com");
+        });
+    });
+
     describe("findOrCreateClient", () => {
         it("creates a new client when nothing matches", async () => {
             const phone = uniquePhone();
 
-            const client = await findOrCreateClient(phone, "Nová Klientka", "nova@example.com");
+            const client = await findOrCreateClient(
+                phone,
+                "Nová Klientka",
+                "nova@example.com"
+            );
             createdIds.push(client.id);
 
             expect(client.name).toBe("Nová Klientka");
@@ -76,7 +141,10 @@ describe("findClient / findOrCreateClient", () => {
 
         it("reuses the client matched by phone instead of creating a duplicate", async () => {
             const phone = uniquePhone();
-            const existing = await createClient({ name: "Jana Testová", phone });
+            const existing = await createClient({
+                name: "Jana Testová",
+                phone,
+            });
 
             const client = await findOrCreateClient(phone, "Jana Testová");
 
@@ -86,7 +154,10 @@ describe("findClient / findOrCreateClient", () => {
 
         it("renames a phone-matched client to the latest provided name", async () => {
             const phone = uniquePhone();
-            const existing = await createClient({ name: "Jana Testová", phone });
+            const existing = await createClient({
+                name: "Jana Testová",
+                phone,
+            });
 
             const client = await findOrCreateClient(phone, "Jana Nová-Testová");
 
@@ -96,7 +167,11 @@ describe("findClient / findOrCreateClient", () => {
 
         it("keeps the client's extraTimeMinutes when reusing it", async () => {
             const phone = uniquePhone();
-            await createClient({ name: "Jana Testová", phone, extraTimeMinutes: 15 });
+            await createClient({
+                name: "Jana Testová",
+                phone,
+                extraTimeMinutes: 15,
+            });
 
             const client = await findOrCreateClient(phone, "Jana Testová");
 

@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { AlertCircle, ArrowRightLeft, Check, X } from "lucide-react";
-import { formatTime, toUtcMidnight } from "@/lib/utils.ts";
+import { formatTime, localDateToUtcMidnight } from "@/lib/utils.ts";
 import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
 import {
     cancelBookingByTokenAction,
@@ -54,7 +54,9 @@ export function ManageBooking({
     function openMove() {
         setMode("move");
         if (availableDays !== undefined) return;
-        const tomorrow = toUtcMidnight(addDays(startOfDay(new Date()), 1));
+        const tomorrow = localDateToUtcMidnight(
+            addDays(startOfDay(new Date()), 1)
+        );
         const horizonEnd = addDays(tomorrow, HORIZON_DAYS);
         startDaysTransition(async () => {
             const days = await getRescheduleDaysAction(token, {
@@ -128,7 +130,9 @@ export function ManageBooking({
                     onSelect={pickMoveDate}
                     disabled={(day) =>
                         availableDays === undefined ||
-                        !availableDaySet.has(toUtcMidnight(day).getTime())
+                        !availableDaySet.has(
+                            localDateToUtcMidnight(day).getTime()
+                        )
                     }
                     className="w-full bg-transparent"
                 />
@@ -238,8 +242,8 @@ export function ManageBooking({
                         <AlertDialogTitle>Zrušit rezervaci?</AlertDialogTitle>
                         <AlertDialogDescription>
                             {serviceLabel} • {formatTime(startTime)} –{" "}
-                            {formatTime(startTime + durationMinutes)}. Tuto
-                            akci nelze vzít zpět.
+                            {formatTime(startTime + durationMinutes)}. Tuto akci
+                            nelze vzít zpět.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

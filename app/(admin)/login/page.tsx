@@ -1,4 +1,4 @@
- import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { auth, signIn } from "@/auth.ts";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage({
     searchParams,
 }: {
-    searchParams: Promise<{ error?: string; passwordChanged?: boolean }>;
+    searchParams: Promise<{ error?: string; passwordChanged?: string }>;
 }) {
     const { error, passwordChanged } = await searchParams;
 

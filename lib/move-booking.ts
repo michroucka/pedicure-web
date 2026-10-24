@@ -5,6 +5,7 @@ import { getAvailableSlots } from "./get-available-slots.ts";
 import { hasOverlappingBooking } from "./check-booking-overlap.ts";
 import { endsAfterMidnight, getCzechToday } from "./utils.ts";
 import { isBookingSlotConflict } from "./booking-conflict-error.ts";
+import { sumServiceDurations } from "./service-duration.ts";
 
 export const PAST_MIDNIGHT_ERROR = "Rezervace by přesáhla půlnoc.";
 export const ALREADY_CANCELLED_ERROR = "Rezervace už byla zrušena.";
@@ -37,89 +38,90 @@ export async function moveBooking(
         allowUnfillableGaps?: boolean;
     } = {}
 ): Promise<Booking> {
-    return prisma.$transaction(async (tx) => {
-        const booking = await tx.booking.findUniqueOrThrow({
-            where: { id: bookingId },
-        });
-
-        if (booking.groupId) {
-            throw new Error(
-                "Skupinovou rezervaci přesuň přes moveGroupBooking."
-            );
-        }
-        // A stale edit dialog (booking cancelled meanwhile on another device)
-        // must not bring it back by "moving" it.
-        if (booking.status !== "CONFIRMED") {
-            throw new SlotUnavailableError(ALREADY_CANCELLED_ERROR);
-        }
-
-        await tx.booking.update({
-            where: { id: bookingId },
-            data: { status: "CANCELLED" },
-        });
-
-        const serviceId = options.serviceId ?? booking.serviceId;
-        const extraTimeMinutes =
-            options.extraTimeMinutes ?? booking.extraTimeMinutes;
-
-        // Checked after cancelling (inside the same transaction) so the
-        // booking being moved never collides with its own old slot.
-        if (options.outsideHours) {
-            if (newDate.getTime() < getCzechToday().getTime()) {
-                throw new SlotUnavailableError();
-            }
-            const service = await tx.service.findUniqueOrThrow({
-                where: { id: serviceId },
+    return prisma
+        .$transaction(async (tx) => {
+            const booking = await tx.booking.findUniqueOrThrow({
+                where: { id: bookingId },
             });
-            const duration =
-                service.durationMinutes + extraTimeMinutes;
-            // A custom time skips the availability windows, which are what
-            // normally keeps a booking inside the day.
-            if (endsAfterMidnight(newStartTime, duration)) {
-                throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
-            }
-            const overlaps = await hasOverlappingBooking(
-                newDate,
-                newStartTime,
-                newStartTime + duration,
-                { db: tx }
-            );
-            if (overlaps) {
-                throw new SlotUnavailableError();
-            }
-        } else {
-            const validSlots = await getAvailableSlots(
-                newDate,
-                [serviceId],
-                extraTimeMinutes,
-                {
-                    allowToday: true,
-                    db: tx,
-                    allowUnfillableGaps: options.allowUnfillableGaps,
-                }
-            );
-            if (!validSlots.includes(newStartTime)) {
-                throw new SlotUnavailableError();
-            }
-        }
 
-        return createBooking(
-            {
-                clientId: booking.clientId,
-                guestName: booking.guestName,
-                serviceId,
-                date: newDate,
-                startTime: newStartTime,
-                source: booking.source,
-                extraTimeMinutes,
-            },
-            tx
-        );
-    }).catch(rethrowSlotConflict);
+            if (booking.groupId) {
+                throw new Error(
+                    "Skupinovou rezervaci přesuň přes moveGroupBooking."
+                );
+            }
+            // A stale edit dialog (booking cancelled meanwhile on another device)
+            // must not bring it back by "moving" it.
+            if (booking.status !== "CONFIRMED") {
+                throw new SlotUnavailableError(ALREADY_CANCELLED_ERROR);
+            }
+
+            await tx.booking.update({
+                where: { id: bookingId },
+                data: { status: "CANCELLED" },
+            });
+
+            const serviceId = options.serviceId ?? booking.serviceId;
+            const extraTimeMinutes =
+                options.extraTimeMinutes ?? booking.extraTimeMinutes;
+
+            // Checked after cancelling (inside the same transaction) so the
+            // booking being moved never collides with its own old slot.
+            if (options.outsideHours) {
+                if (newDate.getTime() < getCzechToday().getTime()) {
+                    throw new SlotUnavailableError();
+                }
+                const service = await tx.service.findUniqueOrThrow({
+                    where: { id: serviceId },
+                });
+                const duration = service.durationMinutes + extraTimeMinutes;
+                // A custom time skips the availability windows, which are what
+                // normally keeps a booking inside the day.
+                if (endsAfterMidnight(newStartTime, duration)) {
+                    throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
+                }
+                const overlaps = await hasOverlappingBooking(
+                    newDate,
+                    newStartTime,
+                    newStartTime + duration,
+                    { db: tx }
+                );
+                if (overlaps) {
+                    throw new SlotUnavailableError();
+                }
+            } else {
+                const validSlots = await getAvailableSlots(
+                    newDate,
+                    [serviceId],
+                    extraTimeMinutes,
+                    {
+                        allowToday: true,
+                        db: tx,
+                        allowUnfillableGaps: options.allowUnfillableGaps,
+                    }
+                );
+                if (!validSlots.includes(newStartTime)) {
+                    throw new SlotUnavailableError();
+                }
+            }
+
+            return createBooking(
+                {
+                    clientId: booking.clientId,
+                    guestName: booking.guestName,
+                    serviceId,
+                    date: newDate,
+                    startTime: newStartTime,
+                    source: booking.source,
+                    extraTimeMinutes,
+                },
+                tx
+            );
+        })
+        .catch(rethrowSlotConflict);
 }
 
 // Moves every booking in the group together, preserving each person's own
-// extraTimeMinutes and re-laying them out sequentially from the new start —
+// extraTimeMinutes and re-laying them out sequentially from the new start –
 // same allocation as createGroupBooking. `serviceOverrides` /
 // `extraTimeOverrides` (bookingId -> new value) let the edit dialog change a
 // person's service or extra time in the same step, since both change the
@@ -135,91 +137,91 @@ export async function moveGroupBooking(
         allowUnfillableGaps?: boolean;
     } = {}
 ): Promise<Booking[]> {
-    return prisma.$transaction(async (tx) => {
-        const bookings = await tx.booking.findMany({
-            where: { groupId, status: "CONFIRMED" },
-            orderBy: { startTime: "asc" },
-        });
-
-        if (bookings.length === 0) {
-            throw new Error("Skupinová rezervace nenalezena.");
-        }
-
-        await tx.booking.updateMany({
-            where: { groupId, status: "CONFIRMED" },
-            data: { status: "CANCELLED" },
-        });
-
-        const serviceIds = bookings.map(
-            (b) => options.serviceOverrides?.[b.id] ?? b.serviceId
-        );
-        const extraTimes = bookings.map(
-            (b) => options.extraTimeOverrides?.[b.id] ?? b.extraTimeMinutes
-        );
-        const totalExtraMinutes = extraTimes.reduce((sum, m) => sum + m, 0);
-
-        if (options.outsideHours) {
-            if (newDate.getTime() < getCzechToday().getTime()) {
-                throw new SlotUnavailableError();
-            }
-            const services = await tx.service.findMany({
-                where: { id: { in: serviceIds } },
+    return prisma
+        .$transaction(async (tx) => {
+            const bookings = await tx.booking.findMany({
+                where: { groupId, status: "CONFIRMED" },
+                orderBy: { startTime: "asc" },
             });
-            const groupDuration =
-                serviceIds.reduce((sum, id) => {
-                    const service = services.find((s) => s.id === id);
-                    return sum + (service?.durationMinutes ?? 0);
-                }, 0) + totalExtraMinutes;
-            if (endsAfterMidnight(newGroupStart, groupDuration)) {
-                throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
+
+            if (bookings.length === 0) {
+                throw new Error("Skupinová rezervace nenalezena.");
             }
-            const overlaps = await hasOverlappingBooking(
-                newDate,
-                newGroupStart,
-                newGroupStart + groupDuration,
-                { db: tx }
+
+            await tx.booking.updateMany({
+                where: { groupId, status: "CONFIRMED" },
+                data: { status: "CANCELLED" },
+            });
+
+            const serviceIds = bookings.map(
+                (b) => options.serviceOverrides?.[b.id] ?? b.serviceId
             );
-            if (overlaps) {
-                throw new SlotUnavailableError();
-            }
-        } else {
-            const validSlots = await getAvailableSlots(
-                newDate,
-                serviceIds,
-                totalExtraMinutes,
-                {
-                    allowToday: true,
-                    db: tx,
-                    allowUnfillableGaps: options.allowUnfillableGaps,
+            const extraTimes = bookings.map(
+                (b) => options.extraTimeOverrides?.[b.id] ?? b.extraTimeMinutes
+            );
+            const totalExtraMinutes = extraTimes.reduce((sum, m) => sum + m, 0);
+
+            if (options.outsideHours) {
+                if (newDate.getTime() < getCzechToday().getTime()) {
+                    throw new SlotUnavailableError();
                 }
-            );
-            if (!validSlots.includes(newGroupStart)) {
-                throw new SlotUnavailableError();
+                const services = await tx.service.findMany({
+                    where: { id: { in: serviceIds } },
+                });
+                const groupDuration =
+                    sumServiceDurations(serviceIds, services) +
+                    totalExtraMinutes;
+                if (endsAfterMidnight(newGroupStart, groupDuration)) {
+                    throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
+                }
+                const overlaps = await hasOverlappingBooking(
+                    newDate,
+                    newGroupStart,
+                    newGroupStart + groupDuration,
+                    { db: tx }
+                );
+                if (overlaps) {
+                    throw new SlotUnavailableError();
+                }
+            } else {
+                const validSlots = await getAvailableSlots(
+                    newDate,
+                    serviceIds,
+                    totalExtraMinutes,
+                    {
+                        allowToday: true,
+                        db: tx,
+                        allowUnfillableGaps: options.allowUnfillableGaps,
+                    }
+                );
+                if (!validSlots.includes(newGroupStart)) {
+                    throw new SlotUnavailableError();
+                }
             }
-        }
 
-        const created: Booking[] = [];
-        let startTime = newGroupStart;
+            const created: Booking[] = [];
+            let startTime = newGroupStart;
 
-        for (let i = 0; i < bookings.length; i++) {
-            const booking = bookings[i];
-            const newBooking = await createBooking(
-                {
-                    clientId: booking.clientId,
-                    guestName: booking.guestName,
-                    serviceId: serviceIds[i],
-                    date: newDate,
-                    startTime,
-                    source: booking.source,
-                    groupId,
-                    extraTimeMinutes: extraTimes[i],
-                },
-                tx
-            );
-            startTime = newBooking.endTime;
-            created.push(newBooking);
-        }
+            for (let i = 0; i < bookings.length; i++) {
+                const booking = bookings[i];
+                const newBooking = await createBooking(
+                    {
+                        clientId: booking.clientId,
+                        guestName: booking.guestName,
+                        serviceId: serviceIds[i],
+                        date: newDate,
+                        startTime,
+                        source: booking.source,
+                        groupId,
+                        extraTimeMinutes: extraTimes[i],
+                    },
+                    tx
+                );
+                startTime = newBooking.endTime;
+                created.push(newBooking);
+            }
 
-        return created;
-    }).catch(rethrowSlotConflict);
+            return created;
+        })
+        .catch(rethrowSlotConflict);
 }

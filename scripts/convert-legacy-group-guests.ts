@@ -40,15 +40,21 @@ async function main() {
     let converted = 0;
 
     for (const [groupId, group] of byGroup) {
-        const main =
-            group.find((b) => b.status === "CONFIRMED") ?? group[0];
+        const main = group.find((b) => b.status === "CONFIRMED") ?? group[0];
         const guests = group.filter((b) => b.clientId !== main.clientId);
         if (guests.length === 0) continue;
 
-        console.log(`\nSkupina ${groupId} (${main.date.toISOString().slice(0, 10)}), hlavní kontakt: "${main.client.name}"`);
+        console.log(
+            `\nSkupina ${groupId} (${main.date.toISOString().slice(0, 10)}), hlavní kontakt: "${main.client.name}"`
+        );
         for (const b of guests) {
-            console.log(`  ${b.status.padEnd(9)} "${b.client.name}" -> guestName, klient ${b.clientId} -> ${main.clientId}`);
-            movedPerClient.set(b.clientId, (movedPerClient.get(b.clientId) ?? 0) + 1);
+            console.log(
+                `  ${b.status.padEnd(9)} "${b.client.name}" -> guestName, klient ${b.clientId} -> ${main.clientId}`
+            );
+            movedPerClient.set(
+                b.clientId,
+                (movedPerClient.get(b.clientId) ?? 0) + 1
+            );
             converted++;
         }
 
@@ -57,7 +63,10 @@ async function main() {
                 guests.map((b) =>
                     prisma.booking.update({
                         where: { id: b.id },
-                        data: { clientId: main.clientId, guestName: b.client.name },
+                        data: {
+                            clientId: main.clientId,
+                            guestName: b.client.name,
+                        },
                     })
                 )
             );
@@ -80,19 +89,29 @@ async function main() {
         const count = await prisma.booking.count({ where: { clientId } });
         const remaining = DRY_RUN ? count - moved : count;
         if (remaining === 0) {
-            console.log(`  "${client.name}" (${clientId}) – žádné další rezervace, smazat`);
-            if (!DRY_RUN) await prisma.client.delete({ where: { id: clientId } });
+            console.log(
+                `  "${client.name}" (${clientId}) – žádné další rezervace, smazat`
+            );
+            if (!DRY_RUN)
+                await prisma.client.delete({ where: { id: clientId } });
         } else {
-            console.log(`  "${client.name}" (${clientId}) – ${remaining} vlastních rezervací, ponechat`);
+            console.log(
+                `  "${client.name}" (${clientId}) – ${remaining} vlastních rezervací, ponechat`
+            );
         }
     }
 
     console.log(`\nPřevedeno rezervací: ${converted}`);
     if (DRY_RUN) {
-        console.log("[DRY RUN] Nic nebylo zapsáno. Spusť bez --dry-run pro skutečný převod.");
+        console.log(
+            "[DRY RUN] Nic nebylo zapsáno. Spusť bez --dry-run pro skutečný převod."
+        );
     }
 }
 
 main()
-    .catch((e) => { console.error(e); process.exit(1); })
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
     .finally(() => prisma.$disconnect());

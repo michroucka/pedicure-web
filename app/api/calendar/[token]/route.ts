@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { addUtcDays, getCzechToday } from "@/lib/utils.ts";
 import { prisma } from "@/lib/prisma.ts";
 import { generateIcsFeed } from "@/lib/generate-ics-feed.ts";
+import { secretEquals } from "@/lib/secret-equals.ts";
 
 export async function GET(
     request: NextRequest,
@@ -10,7 +11,10 @@ export async function GET(
     const { token: rawToken } = await params;
     const token = rawToken.replace(/\.ics$/, "");
 
-    if (!process.env.ICS_FEED_TOKEN || token !== process.env.ICS_FEED_TOKEN) {
+    if (
+        !process.env.ICS_FEED_TOKEN ||
+        !secretEquals(token, process.env.ICS_FEED_TOKEN)
+    ) {
         return NextResponse.json({ error: "Not Found" }, { status: 404 });
     }
 
@@ -30,6 +34,8 @@ export async function GET(
         headers: {
             "Content-Type": "text/calendar; charset=utf-8",
             "Content-Disposition": 'attachment; filename="rezervace.ics"',
+            // Client names - never to be kept by a shared cache/CDN.
+            "Cache-Control": "private, no-store",
         },
     });
 }

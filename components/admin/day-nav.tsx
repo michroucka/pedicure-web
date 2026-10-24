@@ -15,7 +15,7 @@ import { ExceptionDayButton } from "@/components/admin/exception-day-button.tsx"
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
     cn,
-    toUtcMidnight,
+    localDateToUtcMidnight,
     startOfWeekUtc,
     addUtcDays,
 } from "@/lib/utils.ts";
@@ -24,7 +24,7 @@ import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
 import { useCalendarNavigation } from "@/components/admin/calendar-navigation.tsx";
 import type { AvailabilityException } from "@/lib/generated/prisma/client.ts";
 
-// No more Den/Týden toggle — which one is visible is decided purely by the
+// No more Den/Týden toggle – which one is visible is decided purely by the
 // lg breakpoint (className below), same as everywhere else this app splits
 // mobile/tablet-portrait from tablet-landscape/desktop. Both nav bars (and
 // both timelines in kalendar/page.tsx) render every time; CSS just hides
@@ -129,7 +129,7 @@ export function DayNav({
     weekStart: Date;
     weekEnd: Date;
     exceptions?: AvailabilityException[];
-    // Broader than `exceptions` (current day only) — feeds the date picker's
+    // Broader than `exceptions` (current day only) – feeds the date picker's
     // open/closed dots across whole months, same convention as dostupnost.
     allExceptions?: AvailabilityException[];
 }) {
@@ -139,13 +139,13 @@ export function DayNav({
     const { date, isNavigating } = useCalendarNavigation();
 
     const shownWeekStart = isNavigating
-        ? startOfWeekUtc(toUtcMidnight(date))
+        ? startOfWeekUtc(localDateToUtcMidnight(date))
         : weekStart;
-    const shownWeekEnd = isNavigating
-        ? addUtcDays(shownWeekStart, 6)
-        : weekEnd;
+    const shownWeekEnd = isNavigating ? addUtcDays(shownWeekStart, 6) : weekEnd;
 
-    const isToday = toUtcMidnight(date).getTime() === toUtcMidnight(new Date()).getTime();
+    const isToday =
+        localDateToUtcMidnight(date).getTime() ===
+        localDateToUtcMidnight(new Date()).getTime();
     const { blockedFull, blockedPartial, extraOpen } =
         categorizeExceptions(exceptions);
     const hasException =
@@ -203,10 +203,15 @@ export function DayNav({
                             {getISOWeek(shownWeekStart)}. týden
                         </span>
                         <span className="font-semibold">
-                            {format(shownWeekStart,
-                                shownWeekStart.getUTCMonth() === shownWeekEnd.getUTCMonth()
-                                    ? "d." : "d. MMMM", { locale: cs }
-                            )} –{" "}
+                            {format(
+                                shownWeekStart,
+                                shownWeekStart.getUTCMonth() ===
+                                    shownWeekEnd.getUTCMonth()
+                                    ? "d."
+                                    : "d. MMMM",
+                                { locale: cs }
+                            )}{" "}
+                            –{" "}
                             {format(shownWeekEnd, "d. MMMM yyyy", {
                                 locale: cs,
                             })}

@@ -15,6 +15,7 @@ import {
     SelectGroup,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 export function PersonsStep({
     services,
@@ -29,17 +30,22 @@ export function PersonsStep({
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const currentServices =
-        searchParams.get("services")?.split(",").filter(Boolean) ?? [];
+    // Strings, because that's what the service <Select> values are.
+    const currentServices = parseServiceIdsParam(
+        searchParams.get("services")
+    ).map(String);
     const [personCount, setPersonCount] = useState(() =>
         Math.max(currentServices.length, 1)
     );
+    // Rows shown: the URL's services, plus any empty rows added with
+    // "Přidat osobu". Never fewer than the URL holds - personCount is only
+    // set once, so after browser back/forward the URL can have more people
+    // than the state, which would hide some of them from the form.
+    const shownPersonCount = Math.max(personCount, currentServices.length);
 
     function updateService(index: number, value: string) {
         onChangeAction?.();
-        const current =
-            searchParams.get("services")?.split(",").filter(Boolean) ?? [];
-        const next = [...current];
+        const next = [...currentServices];
 
         if (value === "none") {
             next.splice(index, 1);
@@ -62,7 +68,7 @@ export function PersonsStep({
     function removePerson(index: number) {
         onChangeAction?.();
         updateService(index, "none");
-        setPersonCount((c) => Math.max(c - 1, 1));
+        setPersonCount(Math.max(shownPersonCount - 1, 1));
     }
 
     function addPerson() {
@@ -72,12 +78,12 @@ export function PersonsStep({
         params.delete("slot");
         params.delete("error");
         router.push(`${pathname}?${params.toString()}`);
-        setPersonCount((c) => c + 1);
+        setPersonCount(shownPersonCount + 1);
     }
 
     return (
         <div>
-            {Array.from({ length: personCount }).map((_, i) => {
+            {Array.from({ length: shownPersonCount }).map((_, i) => {
                 const selectedService = services.find(
                     (s) => String(s.id) === currentServices[i]
                 );
@@ -89,9 +95,13 @@ export function PersonsStep({
                     >
                         <div className="flex items-center gap-2">
                             <span className="w-16">{`Osoba ${i + 1}`}</span>
+                            {/* The URL can't hold an empty spot ("1,,3" parses
+                                as [1, 3]), so a person can only be picked once
+                                everyone before them has a service. */}
                             <Select
                                 onValueChange={(v) => v && updateService(i, v)}
                                 value={currentServices[i] ?? ""}
+                                disabled={i > currentServices.length}
                             >
                                 <SelectTrigger className="w-full max-w-48">
                                     <SelectValue placeholder="Vyberte službu" />
@@ -117,7 +127,10 @@ export function PersonsStep({
                                     variant="ghost"
                                     onClick={() => removePerson(i)}
                                 >
-                                    <Trash2 data-icon="inline-start" className="text-destructive" />
+                                    <Trash2
+                                        data-icon="inline-start"
+                                        className="text-destructive"
+                                    />
                                 </Button>
                             )}
                         </div>
@@ -130,7 +143,7 @@ export function PersonsStep({
                 );
             })}
             <div className="mt-2 flex">
-                {personCount < 4 && (
+                {shownPersonCount < 4 && (
                     <Button
                         type="button"
                         variant="outline"
@@ -143,7 +156,7 @@ export function PersonsStep({
                 <Button
                     type="button"
                     className="ms-auto"
-                    disabled={currentServices.length < personCount}
+                    disabled={currentServices.length < shownPersonCount}
                     onClick={onContinueAction}
                 >
                     <ChevronDown className="size-4" />

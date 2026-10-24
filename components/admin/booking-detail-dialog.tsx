@@ -48,9 +48,15 @@ import {
     Pencil,
     Sparkles,
     StickyNote,
-    QrCode, ChevronDownIcon,
+    QrCode,
+    ChevronDownIcon,
 } from "lucide-react";
-import { formatPhoneNumber, formatTime, toUtcMidnight, toTelHref } from "@/lib/utils.ts";
+import {
+    formatPhoneNumber,
+    formatTime,
+    localDateToUtcMidnight,
+    toTelHref,
+} from "@/lib/utils.ts";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
@@ -155,7 +161,7 @@ export function BookingDetailDialog({
               .sort((a, b) => a.startTime - b.startTime)
         : [booking];
     // Editing always acts on the whole group, so its schedule is anchored to
-    // the group's first booking — not to whichever member was clicked
+    // the group's first booking – not to whichever member was clicked
     // (clicking the 2nd person must still preselect/compare the group's
     // start, or saving would shift the whole group to that person's time).
     // Same for contact details: they belong to the main contact.
@@ -435,7 +441,9 @@ export function BookingDetailDialog({
                                     placeholder="+420 123 456 789"
                                     value={editPhone}
                                     onChange={(e) =>
-                                        setEditPhone(formatPhoneNumber(e.target.value))
+                                        setEditPhone(
+                                            formatPhoneNumber(e.target.value)
+                                        )
                                     }
                                 />
                                 <span className="flex items-center gap-1 text-sm font-medium">
@@ -472,7 +480,10 @@ export function BookingDetailDialog({
                                 </Select>
 
                                 <ExtraTimeField
-                                    value={editPeople[0]?.extraTime ?? extraTimeFromMinutes(0)}
+                                    value={
+                                        editPeople[0]?.extraTime ??
+                                        extraTimeFromMinutes(0)
+                                    }
                                     onChange={(v) =>
                                         updateEditPersonExtraTime(0, v)
                                     }
@@ -571,8 +582,8 @@ export function BookingDetailDialog({
                                 selected={editDate}
                                 onSelect={pickEditDate}
                                 disabled={(day) =>
-                                    toUtcMidnight(day).getTime() <
-                                    toUtcMidnight(new Date()).getTime()
+                                    localDateToUtcMidnight(day).getTime() <
+                                    localDateToUtcMidnight(new Date()).getTime()
                                 }
                                 className="w-full bg-transparent"
                             />
@@ -787,11 +798,11 @@ export function BookingDetailDialog({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Uložit změny?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {/* Only online bookings get the "moved" email —
+                            {/* Only online bookings get the "moved" email –
                             mirrors updateBookingAction. */}
                             {groupStart.source === "ONLINE"
-                                ? "Měníš termín, službu nebo délku rezervace. Klientovi přijde e-mail s novým termínem a novým odkazem pro správu rezervace (SMS ani push se neposílá)."
-                                : "Měníš termín, službu nebo délku rezervace. Klient se o téhle změně automaticky nedozví – nepošle se mu žádný email, SMS ani push. Pokud potřebuje vědět, dej mu vědět sama."}
+                                ? "Měníš termín, službu nebo délku rezervace. Klientovi přijde e-mail s novým termínem a novým odkazem pro správu rezervace."
+                                : "Měníš termín, službu nebo délku rezervace. Klient se o téhle změně automaticky nedozví."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

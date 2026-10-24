@@ -7,8 +7,16 @@ import type { Client } from "@/lib/generated/prisma/client.ts";
 // a first step, by the booking form's extra-time preview - which on top of
 // that requires the name to match too (getExtraMinutesAction), so a phone
 // number alone doesn't reveal anything about a client.
-// Deliberately includes inactive ("deleted" in admin) clients — skipping
+// Deliberately includes inactive ("deleted" in admin) clients – skipping
 // them would bring back the same-phone/same-name duplicates.
+// When duplicates exist (same phone or name), an active client wins over a
+// hidden one, then the oldest - otherwise a booking could reactivate an old
+// hidden duplicate instead of landing on the client the admin actually sees.
+const PREFERRED_MATCH_FIRST = [
+    { active: "desc" as const },
+    { createdAt: "asc" as const },
+];
+
 export async function findClient(
     phone: string | undefined,
     name: string
@@ -17,9 +25,14 @@ export async function findClient(
         return (
             (await prisma.client.findFirst({
                 where: { phoneNormalized: normalizePhoneForMatch(phone) },
-                orderBy: { createdAt: "asc" },
+                orderBy: PREFERRED_MATCH_FIRST,
             })) ?? undefined
         );
     }
-    return (await prisma.client.findFirst({ where: { name } })) ?? undefined;
+    return (
+        (await prisma.client.findFirst({
+            where: { name },
+            orderBy: PREFERRED_MATCH_FIRST,
+        })) ?? undefined
+    );
 }

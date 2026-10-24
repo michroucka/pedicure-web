@@ -20,10 +20,14 @@ export async function updateClientAction(
     }
 ): Promise<{ ok: true } | { ok: false; error: string }> {
     await requireAdmin();
-    if (!idSchema.safeParse(id).success) return { ok: false, error: NOT_FOUND_ERROR };
+    if (!idSchema.safeParse(id).success)
+        return { ok: false, error: NOT_FOUND_ERROR };
     const parsed = updateClientInputSchema.safeParse(data);
     if (!parsed.success) {
-        return { ok: false, error: parsed.error.issues[0]?.message ?? "Neplatné údaje." };
+        return {
+            ok: false,
+            error: parsed.error.issues[0]?.message ?? "Neplatné údaje.",
+        };
     }
 
     // updateMany instead of update: an unknown id is a count of 0, not a
@@ -34,7 +38,9 @@ export async function updateClientAction(
             name: parsed.data.name,
             phone: parsed.data.phone || null,
             email: parsed.data.email || null,
-            extraTimeMinutes: normalizeExtraMinutes(parsed.data.extraTimeMinutes),
+            extraTimeMinutes: normalizeExtraMinutes(
+                parsed.data.extraTimeMinutes
+            ),
             note: parsed.data.note || null,
         },
     });
@@ -45,8 +51,8 @@ export async function updateClientAction(
 }
 
 // "Smazat" in the UI. A client without any booking is really deleted; one
-// with bookings (past or cancelled ones too) can't be — the bookings must
-// stay in the calendar and Booking.clientId is required — so it's only
+// with bookings (past or cancelled ones too) can't be – the bookings must
+// stay in the calendar and Booking.clientId is required – so it's only
 // hidden (active: false) from the client list and the name autocomplete.
 // A hidden client who books again gets matched and reactivated (see
 // findOrCreateClient).
@@ -57,13 +63,18 @@ export async function deleteClientAction(id: string): Promise<void> {
     await requireAdmin();
     if (!idSchema.safeParse(id).success) return;
     // deleteMany/updateMany: an already-deleted client is a no-op, not a
-    // thrown P2025 — the end state the admin wanted is reached either way.
+    // thrown P2025 – the end state the admin wanted is reached either way.
     await prisma.$transaction(async (tx) => {
-        const bookingCount = await tx.booking.count({ where: { clientId: id } });
+        const bookingCount = await tx.booking.count({
+            where: { clientId: id },
+        });
         if (bookingCount === 0) {
             await tx.client.deleteMany({ where: { id } });
         } else {
-            await tx.client.updateMany({ where: { id }, data: { active: false } });
+            await tx.client.updateMany({
+                where: { id },
+                data: { active: false },
+            });
         }
     });
 
