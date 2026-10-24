@@ -121,8 +121,7 @@ export async function cancelBookingAction(id: string) {
 
 export async function updateBookingAction(input: {
     groupId: string | null;
-    // In the same order as bookings sorted by startTime – matches how
-    // BookingDetailDialog builds groupBookings.
+    // Matched to the group's bookings by bookingId, in any order.
     people: {
         bookingId: string;
         name: string;
@@ -194,49 +193,61 @@ export async function updateBookingAction(input: {
 
     // Name/phone/note fixes are written in place regardless of whether the
     // slot itself changes – a typo fix shouldn't move the Booking (and so
-    // shouldn't invalidate its cancelToken). Where a name belongs is decided
-    // by the booking itself, not by its position: guestName set = a guest,
-    // the name lives on that booking; guestName empty = the name is the
-    // client's (the main contact, or a pre-2026-10 guest with an own
-    // Client). Writing a guest's name to the shared client would rename the
-    // main contact - which is exactly what "first booking = main contact"
-    // did once the main contact's own booking was cancelled. Phone and note
-    // are the group's contact details and go to the main contact's client
-    // even if their own booking is cancelled (all bookings share it).
-    // Must run before the move below, which copies guestName over to the
-    // new bookings.
+    // shouldn't invalidate its cancelToken). Must run before the move
+    // below, which copies guestName over to the new bookings.
+    //
+    // Where a person's name belongs is decided per booking, never by its
+    // position in the group (the main contact's own booking may be
+    // cancelled, so "first booking = main contact" would rename the client
+    // after a guest):
+    // - guestName set: a guest, the name lives on their booking
+    // - guestName empty and the first booking of its client in this group:
+    //   the name is that client's (the main contact, or a pre-2026-10 guest
+    //   who got an own Client)
+    // - guestName empty but the client already came up earlier: a
+    //   pre-2026-10 guest that was matched onto the main contact's Client
+    //   by the shared phone - the name goes to guestName, which also
+    //   repairs such a group on its first save
+    // Phone and note are the group's contact details and always go to the
+    // main contact's client, even when their own booking is cancelled.
+    const contactDetails = {
+        phone: input.phone || null,
+        note: input.note || null,
+    };
     const contactClientId = (
         existing.find((b) => b.guestName === null) ?? existing[0]
     ).clientId;
-    const clientUpdates = new Map<
-        string,
-        { name?: string; phone?: string | null; note?: string | null }
-    >([
-        [
-            contactClientId,
-            { phone: input.phone || null, note: input.note || null },
-        ],
-    ]);
-    for (const person of people) {
-        if (person.booking.guestName !== null) continue;
-        const update = clientUpdates.get(person.booking.clientId) ?? {};
-        clientUpdates.set(person.booking.clientId, {
-            ...update,
-            name: person.name,
+    const namedClientIds = new Set<string>();
+    const nameWrites = people.map(({ booking, name }) => {
+        const ownsClientName =
+            booking.guestName === null && !namedClientIds.has(booking.clientId);
+        if (!ownsClientName) {
+            return prisma.booking.update({
+                where: { id: booking.id },
+                data: { guestName: name },
+            });
+        }
+        namedClientIds.add(booking.clientId);
+        return prisma.client.update({
+            where: { id: booking.clientId },
+            data: {
+                name,
+                ...(booking.clientId === contactClientId && contactDetails),
+            },
         });
-    }
+    });
     await prisma.$transaction([
-        ...[...clientUpdates].map(([clientId, data]) =>
-            prisma.client.update({ where: { id: clientId }, data })
-        ),
-        ...people
-            .filter((person) => person.booking.guestName !== null)
-            .map((person) =>
-                prisma.booking.update({
-                    where: { id: person.booking.id },
-                    data: { guestName: person.name },
-                })
-            ),
+        ...nameWrites,
+        // Only guests left (the main contact's booking cancelled): the
+        // contact details still need to reach the client.
+        ...(namedClientIds.has(contactClientId)
+            ? []
+            : [
+                  prisma.client.update({
+                      where: { id: contactClientId },
+                      data: contactDetails,
+                  }),
+              ]),
     ]);
 
     const scheduleChanged =

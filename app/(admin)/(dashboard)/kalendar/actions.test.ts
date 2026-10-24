@@ -546,6 +546,64 @@ describe("kalendar actions", () => {
             ]);
         });
 
+        it("repairs a pre-2026-10 group whose people all share the main client without guestName", async () => {
+            // the shared phone matched everyone onto one client, which got
+            // renamed to the last person
+            const client = await prisma.client.create({
+                data: { name: "Petr Beránek", phone },
+            });
+            const group = await createGroupBooking(
+                [0, 1, 2].map(() => ({
+                    clientId: client.id,
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                })),
+                DATE,
+                540,
+                "PHONE"
+            );
+
+            const result = await updateBookingAction({
+                groupId: group[0].groupId,
+                people: [
+                    {
+                        bookingId: group[0].id,
+                        name: "Jana Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[2].id,
+                        name: "Petr Beránek",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 540,
+            });
+
+            expect(result).toEqual({ ok: true });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
+            expect(after.name).toBe("Jana Beránková");
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva Beránková",
+                "Petr Beránek",
+            ]);
+        });
+
         it("renames the main contact on the client", async () => {
             const { client, group } = await createGroup();
 
