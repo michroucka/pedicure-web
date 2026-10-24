@@ -37,6 +37,11 @@ export function PersonsStep({
     const [personCount, setPersonCount] = useState(() =>
         Math.max(currentServices.length, 1)
     );
+    // Rows shown: the URL's services, plus any empty rows added with
+    // "Přidat osobu". Never fewer than the URL holds - personCount is only
+    // set once, so after browser back/forward the URL can have more people
+    // than the state, which would hide some of them from the form.
+    const shownPersonCount = Math.max(personCount, currentServices.length);
 
     function updateService(index: number, value: string) {
         onChangeAction?.();
@@ -63,7 +68,7 @@ export function PersonsStep({
     function removePerson(index: number) {
         onChangeAction?.();
         updateService(index, "none");
-        setPersonCount((c) => Math.max(c - 1, 1));
+        setPersonCount(Math.max(shownPersonCount - 1, 1));
     }
 
     function addPerson() {
@@ -73,12 +78,12 @@ export function PersonsStep({
         params.delete("slot");
         params.delete("error");
         router.push(`${pathname}?${params.toString()}`);
-        setPersonCount((c) => c + 1);
+        setPersonCount(shownPersonCount + 1);
     }
 
     return (
         <div>
-            {Array.from({ length: personCount }).map((_, i) => {
+            {Array.from({ length: shownPersonCount }).map((_, i) => {
                 const selectedService = services.find(
                     (s) => String(s.id) === currentServices[i]
                 );
@@ -138,7 +143,7 @@ export function PersonsStep({
                 );
             })}
             <div className="mt-2 flex">
-                {personCount < 4 && (
+                {shownPersonCount < 4 && (
                     <Button
                         type="button"
                         variant="outline"
@@ -151,7 +156,7 @@ export function PersonsStep({
                 <Button
                     type="button"
                     className="ms-auto"
-                    disabled={currentServices.length < personCount}
+                    disabled={currentServices.length < shownPersonCount}
                     onClick={onContinueAction}
                 >
                     <ChevronDown className="size-4" />

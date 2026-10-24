@@ -347,14 +347,9 @@ export async function getAvailableDaysAction(
 }
 
 // Extra time of the (main) contact only – group guests aren't Clients and
-// always get 0, same as submitGroupBooking.
-//
-// Public and unauthenticated, so it only answers when both the phone and
-// the name match (ignoring case, diacritics and extra spaces) - knowing
-// someone's number alone mustn't reveal that they're a client, let alone
-// that their visits take longer. Submit itself still matches by phone only
-// (findOrCreateClient), so a differently written name just means the
-// longer slot shows up after submit instead of in this preview.
+// always get 0, same as submitGroupBooking. Stricter than submit, which
+// matches by phone only (see previewExtraMinutes): a differently written
+// name just means the longer slot shows up after submit instead of here.
 export async function getExtraMinutesAction(contact: {
     name: string;
     phone: string;
