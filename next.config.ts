@@ -23,8 +23,10 @@ const CONTENT_SECURITY_POLICY = [
     `img-src 'self' data: blob: https://api.paylibo.com${vercelToolbar}${vercelToolbar && " https://vercel.com"}`,
     `font-src 'self' data:${vercelToolbar}${vercelToolbar && " https://assets.vercel.com"}`,
     `connect-src 'self' https://challenges.cloudflare.com https://va.vercel-scripts.com${vercelToolbar}${vercelToolbar && " wss://ws-us3.pusher.com"}`,
-    // Map on the contact page (loaded on click), Turnstile challenge
-    `frame-src https://mapy.com https://*.mapy.com https://mapy.cz https://*.mapy.cz https://challenges.cloudflare.com${vercelToolbar}`,
+    // Map on the contact page (loaded on click) - frame-src also covers
+    // redirects inside the iframe, and mapy.com bounces through
+    // login.seznam.cz to check for a Seznam login first. Turnstile challenge.
+    `frame-src https://mapy.com https://*.mapy.com https://mapy.cz https://*.mapy.cz https://*.seznam.cz https://challenges.cloudflare.com${vercelToolbar}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "object-src 'none'",
