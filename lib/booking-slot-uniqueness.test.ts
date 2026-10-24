@@ -63,15 +63,15 @@ describe("booking slot uniqueness", () => {
             source: "ONLINE",
         });
 
-        await expect(
-            createBooking({
-                clientId,
-                serviceId,
-                date: testDate,
-                startTime: 660,
-                source: "ONLINE",
-            })
-        ).rejects.toMatchObject({ code: "P2002" });
+        const error = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 660,
+            source: "ONLINE",
+        }).catch((e: unknown) => e);
+
+        expect(isBookingSlotConflict(error)).toBe(true);
     });
 
     // Booking_no_overlap – different start times, overlapping ranges.
