@@ -287,7 +287,7 @@ describe("rezervace actions", () => {
             expect(await prisma.client.count({ where: { phone } })).toBe(0);
         });
 
-        it("keeps the client's known extra time in the URL when sending them back", async () => {
+        it("reveals nothing about the phone when the bot check fails", async () => {
             await prisma.client.create({
                 data: { name: "Jana Beránková", phone, extraTimeMinutes: 15 },
             });
@@ -296,7 +296,7 @@ describe("rezervace actions", () => {
             const url = await submitSolo("Jana Beránková", "jana@example.com");
 
             expect(url).toContain("error=verification");
-            expect(url).toContain("extraMinutes=15");
+            expect(url).not.toContain("extraMinutes");
         });
 
         it("rejects another booking once the contact holds the maximum of upcoming ones", async () => {

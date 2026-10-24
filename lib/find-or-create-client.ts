@@ -17,11 +17,22 @@ export async function findOrCreateClient(
     );
 }
 
+// Re-reads a client looked up earlier by its id (a cheap primary-key
+// lookup) - for callers with a gap between findClient and the write (the
+// online booking validates the slot in between), during which the admin
+// may have deleted or edited that client. Undefined if it's gone.
+export async function reloadClient(
+    client: Client | undefined
+): Promise<Client | undefined> {
+    if (!client) return undefined;
+    return (
+        (await prisma.client.findUnique({ where: { id: client.id } })) ??
+        undefined
+    );
+}
+
 // The write half of findOrCreateClient, for callers that already looked the
-// client up with findClient (online booking reads the extra time before
-// validating the slot) and shouldn't repeat the whole search. The match is
-// re-read by id (a cheap primary-key lookup) right before writing: the
-// admin may have deleted or edited that client in the meantime.
+// client up with findClient and shouldn't repeat the whole search.
 export async function upsertMatchedClient(
     matched: Client | undefined,
     phone: string | undefined,
@@ -29,10 +40,7 @@ export async function upsertMatchedClient(
     email?: string,
     note?: string
 ): Promise<Client> {
-    let client = matched
-        ? ((await prisma.client.findUnique({ where: { id: matched.id } })) ??
-          undefined)
-        : undefined;
+    let client = matched;
 
     if (!client) {
         client = await prisma.client.create({

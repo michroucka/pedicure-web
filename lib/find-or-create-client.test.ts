@@ -3,6 +3,7 @@ import { prisma } from "./prisma.ts";
 import { findClient } from "./find-client.ts";
 import {
     findOrCreateClient,
+    reloadClient,
     upsertMatchedClient,
 } from "./find-or-create-client.ts";
 
@@ -84,14 +85,14 @@ describe("findClient / findOrCreateClient", () => {
         });
     });
 
-    describe("upsertMatchedClient", () => {
+    describe("reloadClient + upsertMatchedClient", () => {
         it("creates a new client when the matched one was deleted meanwhile", async () => {
             const phone = uniquePhone();
             const stale = await createClient({ name: "Smazaná", phone });
             await prisma.client.delete({ where: { id: stale.id } });
 
             const client = await upsertMatchedClient(
-                stale,
+                await reloadClient(stale),
                 phone,
                 "Smazaná",
                 "s@example.com"
@@ -111,7 +112,7 @@ describe("findClient / findOrCreateClient", () => {
             });
 
             const client = await upsertMatchedClient(
-                stale,
+                await reloadClient(stale),
                 phone,
                 "Původní",
                 "nova@example.com"

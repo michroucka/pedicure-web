@@ -2,7 +2,10 @@
 
 import { prisma } from "@/lib/prisma.ts";
 import { formatTime, normalizeForSearch } from "@/lib/utils.ts";
-import { upsertMatchedClient } from "@/lib/find-or-create-client.ts";
+import {
+    reloadClient,
+    upsertMatchedClient,
+} from "@/lib/find-or-create-client.ts";
 import { findClient } from "@/lib/find-client.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { createBooking } from "@/lib/create-booking.ts";
@@ -85,24 +88,40 @@ async function notifyNewOnlineBooking(
     );
 }
 
+function comparableName(name: string): string {
+    return normalizeForSearch(name).trim().replace(/\s+/g, " ");
+}
+
+// The client's extra time as the public form may show it: only when both
+// the phone and the name match (ignoring case, diacritics and extra
+// spaces) - knowing someone's number alone mustn't reveal that they're a
+// client, let alone that their visits take longer.
+async function previewExtraMinutes(
+    phone: string,
+    name: string
+): Promise<number> {
+    const client = await findClient(phone, name);
+    if (!client || comparableName(client.name) !== comparableName(name))
+        return 0;
+    return client.extraTimeMinutes;
+}
+
 // Back to the contact form with an error that's about the submission, not
-// the slot (failed bot check, too many bookings on one contact). Carries the
-// matched client's extra time like the slot picker's link does, or the page
-// would show the end time without it and the form would flag a "longer
-// booking" that was already known.
-async function detailsErrorUrl(
-    contact: { phone: string; name: string },
+// the slot (failed bot check, too many bookings on one contact).
+// extraMinutes is what the form shows the person anyway (same phone+name
+// rule as the preview), carried over so the page doesn't show the end time
+// without it.
+function detailsErrorUrl(
     slot: { date: Date; serviceIds: number[]; startTime: number },
-    error: "verification" | "booking_limit"
-): Promise<string> {
+    error: "verification" | "booking_limit",
+    extraMinutes = 0
+): string {
     const params = new URLSearchParams({
         date: slot.date.toISOString().slice(0, 10),
         services: slot.serviceIds.join(","),
         slot: String(slot.startTime),
         error,
     });
-    const extraMinutes =
-        (await findClient(contact.phone, contact.name))?.extraTimeMinutes ?? 0;
     if (extraMinutes > 0) params.set("extraMinutes", String(extraMinutes));
     return `/rezervace/details?${params.toString()}`;
 }
@@ -113,13 +132,20 @@ async function rejectAbusiveSubmission(
     contact: { phone: string; email: string; name: string },
     slot: { date: Date; serviceIds: number[]; startTime: number }
 ): Promise<void> {
-    // One after the other on purpose: a request that fails the bot check
-    // must not get to run any DB query.
+    // A request that fails the bot check gets no DB query at all - no
+    // limit check, no client lookup for the redirect - so the check runs
+    // first and alone.
     if (!(await verifyTurnstileToken(turnstileToken))) {
-        redirect(await detailsErrorUrl(contact, slot, "verification"));
+        redirect(detailsErrorUrl(slot, "verification"));
     }
     if (await hasReachedOnlineBookingLimit(contact.phone, contact.email)) {
-        redirect(await detailsErrorUrl(contact, slot, "booking_limit"));
+        redirect(
+            detailsErrorUrl(
+                slot,
+                "booking_limit",
+                await previewExtraMinutes(contact.phone, contact.name)
+            )
+        );
     }
 }
 
@@ -170,7 +196,12 @@ export async function submitBooking(
         );
     }
 
-    const client = await upsertMatchedClient(matchedClient, phone, name, email);
+    const client = await upsertMatchedClient(
+        await reloadClient(matchedClient),
+        phone,
+        name,
+        email
+    );
 
     let booking: { id: string; cancelToken: string };
     try {
@@ -255,7 +286,7 @@ export async function submitGroupBooking(
     }
 
     const client = await upsertMatchedClient(
-        matchedClient,
+        await reloadClient(matchedClient),
         phone,
         names[0],
         email
@@ -324,10 +355,6 @@ export async function getAvailableDaysAction(
 // that their visits take longer. Submit itself still matches by phone only
 // (findOrCreateClient), so a differently written name just means the
 // longer slot shows up after submit instead of in this preview.
-function comparableName(name: string): string {
-    return normalizeForSearch(name).trim().replace(/\s+/g, " ");
-}
-
 export async function getExtraMinutesAction(contact: {
     name: string;
     phone: string;
@@ -338,10 +365,7 @@ export async function getExtraMinutesAction(contact: {
     const { name, phone } = parsed.data;
     if (!name || !phone) return 0;
 
-    const client = await findClient(phone, name);
-    if (!client || comparableName(client.name) !== comparableName(name))
-        return 0;
-    return client.extraTimeMinutes;
+    return previewExtraMinutes(phone, name);
 }
 
 export async function getAvailableSlotsAction(
