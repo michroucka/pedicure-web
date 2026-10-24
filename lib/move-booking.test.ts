@@ -10,7 +10,7 @@ import {
     SlotUnavailableError,
 } from "./move-booking.ts";
 
-// outsideHours: true throughout — the normal path validates the target slot
+// outsideHours: true throughout – the normal path validates the target slot
 // against RecurringAvailability, which this branch inherited from
 // production at fork time and could change independently of these tests.
 // outsideHours only checks direct overlap with other bookings, so these
@@ -166,7 +166,7 @@ describe("moveBooking / moveGroupBooking", () => {
             })
         ).rejects.toThrow(PAST_MIDNIGHT_ERROR);
 
-        // the transaction rolled back — nothing got cancelled
+        // the transaction rolled back – nothing got cancelled
         const stillConfirmed = await prisma.booking.count({
             where: {
                 id: { in: [solo.id, ...group.map((b) => b.id)] },
@@ -217,7 +217,7 @@ describe("moveBooking / moveGroupBooking", () => {
         });
 
         // moveGroupBooking keeps the same groupId for the new bookings too,
-        // so a query by groupId alone would now return old + new mixed —
+        // so a query by groupId alone would now return old + new mixed –
         // check the original rows by id instead.
         const originalsAfter = await prisma.booking.findMany({
             where: { id: { in: originalIds } },
@@ -341,7 +341,7 @@ describe("moveBooking / moveGroupBooking", () => {
             540,
             "ONLINE"
         );
-        // occupied from 11:00 — a 600 start fits only if the group is 60 min
+        // occupied from 11:00 – a 600 start fits only if the group is 60 min
         await createBooking({
             clientId: clientIds[1],
             serviceId: serviceIds[0],

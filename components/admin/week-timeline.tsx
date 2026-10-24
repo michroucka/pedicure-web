@@ -65,7 +65,7 @@ export function WeekTimeline({
     }
 
     // Bounds normally follow the availability windows, but a booking made
-    // outside opening hours (admin "vlastní čas") can fall outside them —
+    // outside opening hours (admin "vlastní čas") can fall outside them –
     // stretch the grid to still fit it.
     const boundPoints = [
         ...allWindows.map((w) => w.start),
@@ -91,15 +91,15 @@ export function WeekTimeline({
     const todayCzech = getCzechToday();
 
     // The header row (weekday labels) and the time-axis both need to stay
-    // in view while scrolling — the header pinned vertically, the axis
+    // in view while scrolling – the header pinned vertically, the axis
     // pinned horizontally. That only works if they and the grid share a
     // single scrolling ancestor: nesting a separate overflow-x-auto div
     // around just the columns (as before) implicitly forces that div's
-    // overflow-y to "auto" too (a CSS quirk — setting overflow-x alone
+    // overflow-y to "auto" too (a CSS quirk – setting overflow-x alone
     // promotes the other axis from visible to auto), which makes it the
     // nearest scroll container for position:sticky and swallows the
     // stickiness before it ever reaches the page's real scroll. So this
-    // whole grid — axis and columns together — is one overflow-auto box,
+    // whole grid – axis and columns together – is one overflow-auto box,
     // and the header/axis stick to that box directly.
     return (
         <div className="h-full overflow-auto">

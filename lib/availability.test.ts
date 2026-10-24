@@ -117,7 +117,7 @@ describe("resolveDayTimeSlots", () => {
             { type: "EXTRA_OPEN", start: 1020, end: 1080 }, // extra hour 17:00-18:00
         ]);
 
-        // 9-17 + 17-18 touch, so mergeSubsequentSlots joins them — keeping
+        // 9-17 + 17-18 touch, so mergeSubsequentSlots joins them – keeping
         // them split would make a booking spanning 17:00 look unbookable.
         expect(result).toEqual([{ start: 540, end: 1080 }]);
     });

@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma.ts";
 declare module "@auth/core/jwt" {
     interface JWT {
         // Fingerprint of the AdminUser's passwordHash at the time this
-        // token was issued/last confirmed — lets the jwt callback detect
+        // token was issued/last confirmed – lets the jwt callback detect
         // a password change without ever putting the real hash in the
         // token. Undefined only on the very first call, right after sign-in.
         pwFingerprint?: string;
@@ -43,12 +43,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     callbacks: {
         // With the jwt strategy, sessions aren't checked against the
-        // database by default — the signed cookie alone is trusted until
+        // database by default – the signed cookie alone is trusted until
         // it expires, so a deleted or edited AdminUser had no effect on
         // an already-issued session. This runs on every request and
         // re-validates against the DB: logged out (null) if the account
         // is gone, or if its username/email/password changed since this
-        // token was issued — an existing session shouldn't silently pick
+        // token was issued – an existing session shouldn't silently pick
         // up a changed account, it should have to log in again.
         async jwt({ token }) {
             if (!token.sub) return null;

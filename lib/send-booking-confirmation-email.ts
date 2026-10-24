@@ -22,12 +22,12 @@ const SUBJECTS: Record<BookingEmailVariant, string> = {
 
 type BookingForEmail = Booking & { client: Client; service: Service };
 
-// One email per booking action, covering every person in it — a group
+// One email per booking action, covering every person in it – a group
 // booking shares one contact (and so one email), so all people/services are
 // listed together rather than sending one email per person. The magic link
 // always uses the first booking's cancelToken; on the manage page, a
 // grouped booking is looked up and acted on as a whole via its groupId.
-// `variant: "moved"` is sent after a reschedule with the new bookings — the
+// `variant: "moved"` is sent after a reschedule with the new bookings – the
 // only way the client gets a working link again (see the template).
 export async function sendBookingConfirmationEmail(
     bookings: BookingForEmail[],
@@ -66,7 +66,7 @@ export async function sendBookingConfirmationEmail(
             }),
         });
     } catch (error) {
-        // The booking itself is already committed to the DB — a failed or
+        // The booking itself is already committed to the DB – a failed or
         // not-yet-configured email send (missing/invalid RESEND_API_KEY,
         // unverified domain) must not undo it or break the confirmation
         // redirect.
@@ -74,7 +74,7 @@ export async function sendBookingConfirmationEmail(
     }
 }
 
-// After a move (magic link or admin) — takes the ids of the newly created
+// After a move (magic link or admin) – takes the ids of the newly created
 // bookings, since the move functions return them without relations.
 export async function sendBookingMovedEmail(
     bookingIds: string[]

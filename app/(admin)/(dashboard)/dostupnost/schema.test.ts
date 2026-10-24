@@ -10,7 +10,7 @@ const touching = [
     { startTime: "09:00", endTime: "12:00" },
 ];
 
-describe("block overlap — same rule for the weekly schedule and a day override", () => {
+describe("block overlap – same rule for the weekly schedule and a day override", () => {
     it("rejects overlapping blocks", () => {
         const weekly = daySchema.safeParse({
             dayOfWeek: 1,

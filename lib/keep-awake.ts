@@ -18,7 +18,7 @@ function subscribe(onChange: () => void) {
     };
 }
 
-// localStorage can throw (private mode, blocked site data) — treat that as
+// localStorage can throw (private mode, blocked site data) – treat that as
 // "off" instead of crashing the admin.
 function getSnapshot() {
     try {
@@ -41,7 +41,7 @@ export function setKeepAwakeEnabled(enabled: boolean) {
         if (enabled) localStorage.setItem(STORAGE_KEY, "1");
         else localStorage.removeItem(STORAGE_KEY);
     } catch {
-        // Nothing stored — the snapshot stays unchanged, so the switch
+        // Nothing stored – the snapshot stays unchanged, so the switch
         // simply doesn't flip.
     }
     window.dispatchEvent(new Event(CHANGE_EVENT));

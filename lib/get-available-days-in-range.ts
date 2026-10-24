@@ -15,7 +15,7 @@ export async function getAvailableDaysInRange(
     serviceIds: number[],
     extraMinutes: number = 0,
     options: {
-        // Same as getAvailableSlots — a booking being rescheduled must not
+        // Same as getAvailableSlots – a booking being rescheduled must not
         // block its own current slot, or a day it alone fills looks closed.
         excludeBookingIds?: string[];
     } = {}

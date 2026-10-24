@@ -169,7 +169,7 @@ export function GroupBookingForm({
                     <Info />
                     <AlertTitle>Delší rezervace</AlertTitle>
                     <AlertDescription>
-                        Podle předchozích návštěv počítáme s časem navíc —
+                        Podle předchozích návštěv počítáme s časem navíc –
                         rezervace bude do{" "}
                         {formatTime(startTime + durationMinutes + extraMinutes)}{" "}
                         (místo {formatTime(startTime + durationMinutes)}).

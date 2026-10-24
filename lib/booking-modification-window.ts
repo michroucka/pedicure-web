@@ -3,7 +3,7 @@ import { getCzechNowMinutes, getCzechToday } from "./utils.ts";
 const ONE_DAY_MINUTES = 24 * 60;
 
 // How close to a booking's start a client (via magic link) may still cancel
-// or reschedule it. Admin isn't subject to this — the pedikérka cancels and
+// or reschedule it. Admin isn't subject to this – the pedikérka cancels and
 // moves bookings directly, with no time limit.
 export const CLIENT_MODIFICATION_WINDOW_HOURS = 24;
 

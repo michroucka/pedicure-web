@@ -19,7 +19,7 @@ export async function getAvailableSlots(
         // actions (manual add, move) may book/move into today.
         allowToday?: boolean;
         db?: Prisma.TransactionClient;
-        // Bookings to leave out of the "already occupied" set — the edit
+        // Bookings to leave out of the "already occupied" set – the edit
         // dialog's slot preview needs this so a booking's own current slot
         // doesn't show up as unavailable to itself. The real move/update
         // path doesn't need this: it cancels the booking first, inside the

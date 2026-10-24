@@ -10,7 +10,7 @@ import { BUSINESS_INFO } from "@/lib/business-info.ts";
 const DESCRIPTION = `Pedikúra v Kralovicích s dvacetiletou praxí. ${BUSINESS_INFO.practitioner} nabízí individuální a šetrnou péči o nohy – od pravidelné pedikúry po řešení problematických chodidel.`;
 
 export const metadata: Metadata = {
-    // Vercel 308-redirects the bare apex to www — metadataBase (and the
+    // Vercel 308-redirects the bare apex to www – metadataBase (and the
     // canonical/OG URLs resolved from it) must point straight at www, or
     // search engines see a redirect where they expect a page.
     metadataBase: new URL(BUSINESS_INFO.siteUrl),
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 // viewportFit "cover" lets the page paint under the iOS notch/dynamic
 // island and home indicator instead of Safari filling that strip with a
 // flat white bar; themeColor is what it fills it with. Defaults to the
-// admin app's (near-white) background — the storefront layouts override
+// admin app's (near-white) background – the storefront layouts override
 // this to their own dark plum.
 export const viewport: Viewport = {
     viewportFit: "cover",

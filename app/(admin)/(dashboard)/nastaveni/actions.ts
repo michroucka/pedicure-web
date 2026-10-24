@@ -21,7 +21,7 @@ const changePasswordSchema = z
         path: ["confirmPassword"],
     });
 
-// What PushSubscription.toJSON() gives the browser — endpoint is the push
+// What PushSubscription.toJSON() gives the browser – endpoint is the push
 // service URL web-push will POST to, so it has to be a real https URL.
 const pushSubscriptionSchema = z.object({
     endpoint: z.url({ protocol: /^https$/ }).max(2000),

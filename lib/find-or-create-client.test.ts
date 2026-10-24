@@ -4,7 +4,7 @@ import { findClient } from "./find-client.ts";
 import { findOrCreateClient } from "./find-or-create-client.ts";
 
 // findClient matches by phone across the whole shared test branch, so
-// each test uses its own random number — a fixed one (e.g. "999999999",
+// each test uses its own random number – a fixed one (e.g. "999999999",
 // used elsewhere) could match leftovers from other test files.
 function uniquePhone(): string {
     return `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
@@ -44,7 +44,7 @@ describe("findClient / findOrCreateClient", () => {
             const phone = uniquePhone();
             const client = await createClient({ name: "Jana Testová", phone });
 
-            // e.g. typed without diacritics — the phone is the identity
+            // e.g. typed without diacritics – the phone is the identity
             const found = await findClient(phone, "Jana Testova");
 
             expect(found?.id).toBe(client.id);

@@ -14,7 +14,7 @@ type CreditResponse = {
     credit: { credit_czk: string };
 };
 
-// Separate REST API (v1), not the JSON API (v2) used for sending — same
+// Separate REST API (v1), not the JSON API (v2) used for sending – same
 // x-api-key auth, different host. Returns null on any failure so a caller
 // (the morning cron) can just skip the low-credit check for that run
 // instead of blowing up the whole reminder send.
@@ -76,7 +76,7 @@ export async function sendSms(phone: string, body: string): Promise<boolean> {
         }
 
         // SMSManager can respond with HTTP 200 even when the recipient was
-        // rejected (e.g. insufficient credit, invalid number) — a non-empty
+        // rejected (e.g. insufficient credit, invalid number) – a non-empty
         // `rejected` array means the message was never actually sent, even
         // though the request itself was accepted.
         const result: MessageResponse = await response.json();

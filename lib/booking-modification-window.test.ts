@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { canClientModifyBooking } from "./booking-modification-window";
 
 // "Now" = 2026-06-15T08:00:00Z, which is 10:00 in Europe/Prague (CEST,
-// UTC+2 in June) — so getCzechToday() is 2026-06-15 and getCzechNowMinutes()
+// UTC+2 in June) – so getCzechToday() is 2026-06-15 and getCzechNowMinutes()
 // is 600 (10:00). Booking dates below use the same UTC-midnight convention
 // as toDateOnly()/Booking.date.
 describe("canClientModifyBooking", () => {

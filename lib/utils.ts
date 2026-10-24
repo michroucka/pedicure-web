@@ -37,7 +37,7 @@ export function localDateToUtcMidnight(d: Date): Date {
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-// Pure UTC day arithmetic — unlike date-fns's addDays/startOfWeek, this never
+// Pure UTC day arithmetic – unlike date-fns's addDays/startOfWeek, this never
 // touches the server's local timezone, so it's safe on already UTC-midnight
 // dates (toDateOnly/getCzechToday output).
 export function addUtcDays(date: Date, days: number): Date {
@@ -84,7 +84,7 @@ export function getCzechNowMinutes(): number {
     return hour * 60 + minute;
 }
 
-// Booking times are minutes since midnight within a single date — a
+// Booking times are minutes since midnight within a single date – a
 // booking may end exactly at 24:00 but not past it.
 export function endsAfterMidnight(
     startTime: number,
@@ -106,7 +106,7 @@ export function parseTime(time: string): number {
 }
 
 // Snaps a "HH:MM" value to the nearest 15-minute mark (remainder 0-7 rounds
-// down, 8-14 rounds up) — the time input's native `step` isn't honored
+// down, 8-14 rounds up) – the time input's native `step` isn't honored
 // consistently across browsers, so we enforce it ourselves on blur.
 export function roundToQuarterHour(time: string): string {
     if (!/^\d{2}:\d{2}$/.test(time)) return time;
@@ -133,7 +133,7 @@ export function formatPhoneNumber(value: string) {
     cleaned = cleaned.replace(/\+/g, "");
 
     if (hasPlus) {
-        // +XXX XXX XXX XXX — max 3 digits for country code + 9 for the local number
+        // +XXX XXX XXX XXX – max 3 digits for country code + 9 for the local number
         const limited = cleaned.slice(0, 12);
         if (limited.length <= 3) return `+${limited}`;
         if (limited.length <= 6)
@@ -142,7 +142,7 @@ export function formatPhoneNumber(value: string) {
             return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
         return `+${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6, 9)} ${limited.slice(9)}`;
     } else {
-        // XXX XXX XXX — max 9 digits
+        // XXX XXX XXX – max 9 digits
         const limited = cleaned.slice(0, 9);
         if (limited.length <= 3) return limited;
         if (limited.length <= 6)
@@ -162,7 +162,7 @@ export function normalizePhoneForMatch(value: string): string {
 }
 
 // Adds the Czech country code when the stored number doesn't already have
-// one — some client records have it, some don't — and strips everything
+// one – some client records have it, some don't – and strips everything
 // else down to bare digits. E.164 without the leading `+`, which is what
 // both `tel:` hrefs and the SMSManager API expect.
 export function toE164(value: string): string {
@@ -172,7 +172,7 @@ export function toE164(value: string): string {
         : `420${digits}`;
 }
 
-// Builds a `tel:` href from a stored phone number — see toE164.
+// Builds a `tel:` href from a stored phone number – see toE164.
 export function toTelHref(value: string): string {
     return `tel:+${toE164(value)}`;
 }

@@ -38,7 +38,7 @@ function invalidInput(error: { issues: { message: string }[] }) {
 }
 
 // Ids of services that don't exist (or, with activeOnly, are no longer
-// offered). Counted against the unique ids — `in` returns each service
+// offered). Counted against the unique ids – `in` returns each service
 // once even when two people picked the same one.
 async function hasUnknownService(serviceIds: number[], activeOnly: boolean) {
     const uniqueIds = [...new Set(serviceIds)];
@@ -53,7 +53,7 @@ export async function getMoveSlotsAction(
     groupId: string | null,
     dateStr: string,
     // Lets the edit dialog preview slots for services / extra time the
-    // person hasn't saved yet — same order as bookings sorted by startTime.
+    // person hasn't saved yet – same order as bookings sorted by startTime.
     overrideServiceIds?: number[],
     overrideExtraMinutes?: number[]
 ): Promise<number[]> {
@@ -121,7 +121,7 @@ export async function cancelBookingAction(id: string) {
 
 export async function updateBookingAction(input: {
     groupId: string | null;
-    // In the same order as bookings sorted by startTime — matches how
+    // In the same order as bookings sorted by startTime – matches how
     // BookingDetailDialog builds groupBookings.
     people: {
         bookingId: string;
@@ -146,7 +146,7 @@ export async function updateBookingAction(input: {
         return { ok: false, error: "Nelze přesunout rezervaci do minulosti." };
     }
 
-    // Existing bookings may keep a service that's no longer offered — only
+    // Existing bookings may keep a service that's no longer offered – only
     // check that it exists, not that it's active.
     if (
         await hasUnknownService(
@@ -182,10 +182,10 @@ export async function updateBookingAction(input: {
     );
 
     // Name/phone/note fixes are written in place regardless of whether the
-    // slot itself changes — a typo fix shouldn't move the Booking (and so
+    // slot itself changes – a typo fix shouldn't move the Booking (and so
     // shouldn't invalidate its cancelToken). Only the main contact is a
     // Client of this group; everyone else's name lives on their own
-    // booking as guestName — writing it to b.clientId would rename the main
+    // booking as guestName – writing it to b.clientId would rename the main
     // contact once per member. Must run before the move below, which copies
     // guestName over to the new bookings.
     const phone = input.phone || null;
@@ -266,7 +266,7 @@ export async function updateBookingAction(input: {
     }
 
     // A move cancels + recreates, so the client's magic link from the
-    // confirmation email stops working — online bookings (the only ones
+    // confirmation email stops working – online bookings (the only ones
     // with that email and link) get a new one. Phone/in-person bookings
     // were arranged directly and never got a link.
     if (existing[0].source === "ONLINE") {
@@ -280,7 +280,7 @@ export async function updateBookingAction(input: {
 export async function getManualBookingSlotsAction(
     serviceIds: number[],
     dateStr: string,
-    // Sum over the whole group — must match what createManualBookingAction
+    // Sum over the whole group – must match what createManualBookingAction
     // will validate with, or the dialog offers slots that then get rejected.
     extraMinutes: number = 0
 ): Promise<number[]> {
@@ -326,7 +326,7 @@ export async function createManualBookingAction(input: {
         return { ok: false, error: "Nelze vytvořit rezervaci v minulosti." };
     }
 
-    // Every check below runs before findOrCreateClient — a rejected booking
+    // Every check below runs before findOrCreateClient – a rejected booking
     // must not create or update a client. None of them need the client:
     // extra time comes from the form, not from the Client.
     if (
@@ -339,7 +339,7 @@ export async function createManualBookingAction(input: {
     }
 
     // Extra time comes from the form per person (prefilled from the main
-    // contact's Client), not from Clients — guests don't have one.
+    // contact's Client), not from Clients – guests don't have one.
     const people = input.people.map((p, i) => ({
         guestName: i === 0 ? null : p.name,
         extraTimeMinutes: normalizeExtraMinutes(p.extraTimeMinutes),
@@ -349,7 +349,7 @@ export async function createManualBookingAction(input: {
     const extraMinutes = people.reduce((sum, p) => sum + p.extraTimeMinutes, 0);
 
     if (input.outsideHours) {
-        // Custom time entered by hand — skips the availability-window
+        // Custom time entered by hand – skips the availability-window
         // check entirely, so overlap with existing bookings needs its
         // own explicit check here.
         const services = await prisma.service.findMany({
@@ -387,7 +387,7 @@ export async function createManualBookingAction(input: {
         }
     }
 
-    // Only the main contact is a Client — the rest of the group shares
+    // Only the main contact is a Client – the rest of the group shares
     // their contact and is stored as guestName on its own booking, same as
     // the online group booking. Email and note belong to the main contact
     // too; email isn't a form field here, it's only ever carried through
@@ -426,7 +426,7 @@ export async function createManualBookingAction(input: {
 
     // The main contact's extra time field doubles as their Client setting,
     // so it doesn't have to be set separately on the Klienti page. Only
-    // after the booking succeeded — a rejected slot changes nothing.
+    // after the booking succeeded – a rejected slot changes nothing.
     if (client.extraTimeMinutes !== people[0].extraTimeMinutes) {
         await prisma.client.update({
             where: { id: client.id },

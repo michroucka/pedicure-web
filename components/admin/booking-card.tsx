@@ -10,7 +10,7 @@ import type {
 
 export type BookingItem = Booking & { client: Client; service: Service };
 
-// Already started (or on an earlier day) — dimmed in the timeline, but
+// Already started (or on an earlier day) – dimmed in the timeline, but
 // cancel/move stay fully usable (no-shows get rebooked after the fact).
 export function isBookingPast(
     booking: BookingItem,

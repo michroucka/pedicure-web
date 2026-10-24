@@ -13,7 +13,7 @@ import { getAvailableDaysInRange } from "./get-available-days-in-range.ts";
 import { HORIZON_DAYS } from "./booking-horizon.ts";
 import { addUtcDays } from "./utils.ts";
 
-// dayOfWeek 0 (Sunday) exclusively — RecurringAvailability has no date
+// dayOfWeek 0 (Sunday) exclusively – RecurringAvailability has no date
 // column, only dayOfWeek, so two test files touching the same dayOfWeek
 // race when run in parallel regardless of which calendar dates they
 // otherwise use. get-available-slots.test.ts owns Saturday (dayOfWeek 6);
@@ -182,7 +182,7 @@ describe("getAvailableDaysInRange", () => {
     });
 
     it("counts the same service once per person in a group", async () => {
-        // 30 min window — fits one 30 min service, not two people with it
+        // 30 min window – fits one 30 min service, not two people with it
         await prisma.recurringAvailability.create({
             data: { dayOfWeek: 0, startTime: 540, endTime: 570 },
         });

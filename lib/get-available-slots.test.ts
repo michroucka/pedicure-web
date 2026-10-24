@@ -15,7 +15,7 @@ import { addUtcDays } from "./utils.ts";
 
 // Saturday, far enough in the future not to collide with anything real.
 // Production only has recurring availability on weekdays (Mon-Fri), so
-// Saturday starts genuinely empty on this branch — no inherited rows to
+// Saturday starts genuinely empty on this branch – no inherited rows to
 // account for. dayOfWeek/date scoping below (6 / this exact date) keeps
 // cleanup from ever touching the real Mon-Fri rows this branch also
 // inherited from production at fork time.
@@ -38,7 +38,7 @@ describe("getAvailableSlots", () => {
 
     let serviceId: number;
     let service2Id: number | undefined;
-    // Tests run in parallel with other test files — a broad deleteMany by
+    // Tests run in parallel with other test files – a broad deleteMany by
     // name (like "Test Klient") can race with another file's fixture using
     // the same literal name, so this tracks exactly the client this test
     // created and cleans up only that one.
@@ -150,7 +150,7 @@ describe("getAvailableSlots", () => {
         });
 
         const slots = await getAvailableSlots(SATURDAY, [serviceId]);
-        // Both edges of the now-fully-open 09:00-10:00 window must be free —
+        // Both edges of the now-fully-open 09:00-10:00 window must be free –
         // the grid point in between depends on the smallest active service
         // duration across the whole DB, which this test doesn't control.
         expect(slots).toEqual(expect.arrayContaining([540, 570]));
@@ -176,7 +176,7 @@ describe("getAvailableSlots", () => {
     it("does not offer a group-booking start that would overflow into an existing booking", async () => {
         // Window: 09:00-10:00 (540-600). Existing booking fills 09:30-10:00 (570-600),
         // leaving only a 30-min gap at 09:00. A group of 2 × 30 min needs 60 min
-        // continuously — 09:00 would overflow, so no slot should be returned.
+        // continuously – 09:00 would overflow, so no slot should be returned.
         await prisma.recurringAvailability.create({
             data: { dayOfWeek: DAY_OF_WEEK, startTime: 540, endTime: 600 },
         });
@@ -232,7 +232,7 @@ describe("getAvailableSlots", () => {
             },
         });
 
-        // Both people share the same serviceId — before the fix, findMany
+        // Both people share the same serviceId – before the fix, findMany
         // deduplicated the ID and computed only 30 min instead of 60.
         const slots = await getAvailableSlots(SATURDAY, [serviceId, serviceId]);
         expect(slots).toEqual([]);

@@ -17,7 +17,7 @@ import {
 import { QrCode } from "lucide-react";
 import { QrPayment } from "@/components/admin/qr-payment.tsx";
 
-// For a walk-in the pedikérka hasn't logged as a booking (e.g. a friend) —
+// For a walk-in the pedikérka hasn't logged as a booking (e.g. a friend) –
 // same QR UI as BookingDetailDialog's QR mode, but with no booking to
 // prefill the amount from, so it starts empty and autofocuses for typing.
 export function QuickQrDialog() {

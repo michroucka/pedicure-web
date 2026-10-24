@@ -16,12 +16,12 @@ const SIGNATURE = stripDiacritics(
     `${BUSINESS_INFO.name} - ${BUSINESS_INFO.tagline}`
 );
 
-// Constant in code, not a DB field — same convention as
+// Constant in code, not a DB field – same convention as
 // canClientModifyBooking's 24h window (see lib/booking-modification-window.ts).
 const LOW_CREDIT_THRESHOLD_CZK = 100;
 
 // Deliberately plain ASCII, no diacritics, no per-service/per-client
-// breakdown — Czech diacritics force UCS-2 encoding, which drops the
+// breakdown – Czech diacritics force UCS-2 encoding, which drops the
 // per-segment SMS limit from 160 to 70 chars. Without diacritics this stays
 // a single GSM-7 segment (~115 chars) no matter how many people are in a
 // group booking, instead of silently splitting into 2-3 billed segments.
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         orderBy: { startTime: "asc" },
     });
 
-    // A group booking shares one contact/phone — one SMS per group, not
+    // A group booking shares one contact/phone – one SMS per group, not
     // per person, same convention as the confirmation email.
     const groups = new Map<string, BookingForReminder[]>();
     for (const booking of bookings) {
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     let sentCount = 0;
     for (const group of groups.values()) {
         const phone = group[0].client.phone;
-        // No phone on file (e.g. an in-person booking taken without one) —
+        // No phone on file (e.g. an in-person booking taken without one) –
         // nothing to text, skip. Doesn't need reminderSent tracking either:
         // this cron only ever looks at today's date, so there's no later
         // run that would retry it.
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
         }
     }
 
-    // Checked once per cron run (not per SMS) — plenty granular for
+    // Checked once per cron run (not per SMS) – plenty granular for
     // catching a draining balance before reminders start silently failing.
     const creditCzk = await getSmsCreditCzk();
     if (creditCzk !== null && creditCzk < LOW_CREDIT_THRESHOLD_CZK) {

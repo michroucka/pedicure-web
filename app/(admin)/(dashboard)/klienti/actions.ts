@@ -51,8 +51,8 @@ export async function updateClientAction(
 }
 
 // "Smazat" in the UI. A client without any booking is really deleted; one
-// with bookings (past or cancelled ones too) can't be — the bookings must
-// stay in the calendar and Booking.clientId is required — so it's only
+// with bookings (past or cancelled ones too) can't be – the bookings must
+// stay in the calendar and Booking.clientId is required – so it's only
 // hidden (active: false) from the client list and the name autocomplete.
 // A hidden client who books again gets matched and reactivated (see
 // findOrCreateClient).
@@ -63,7 +63,7 @@ export async function deleteClientAction(id: string): Promise<void> {
     await requireAdmin();
     if (!idSchema.safeParse(id).success) return;
     // deleteMany/updateMany: an already-deleted client is a no-op, not a
-    // thrown P2025 — the end state the admin wanted is reached either way.
+    // thrown P2025 – the end state the admin wanted is reached either way.
     await prisma.$transaction(async (tx) => {
         const bookingCount = await tx.booking.count({
             where: { clientId: id },

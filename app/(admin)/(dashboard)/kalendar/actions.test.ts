@@ -24,14 +24,14 @@ vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
     sendBookingMovedEmail: vi.fn(),
 }));
 
-// outsideHours: true throughout — same reason as move-booking.test.ts: it
+// outsideHours: true throughout – same reason as move-booking.test.ts: it
 // only checks overlap with other bookings, not the RecurringAvailability
 // this branch inherited from production.
 const DATE_STR = "2099-11-02";
 const DATE = new Date(`${DATE_STR}T00:00:00.000Z`);
 
 // Already in the "XXX XXX XXX" shape the actions normalize to (see
-// adminPhoneSchema) — otherwise the stored phone wouldn't match `phone`.
+// adminPhoneSchema) – otherwise the stored phone wouldn't match `phone`.
 function uniquePhone(): string {
     const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
     return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
@@ -223,7 +223,7 @@ describe("kalendar actions", () => {
         });
 
         it("counts a service once per person in the custom-time overlap check", async () => {
-            // 2x 30 min from 9:00 = until 10:00 — collides with a booking at
+            // 2x 30 min from 9:00 = until 10:00 – collides with a booking at
             // 9:45; counting the shared service only once (9:00-9:30)
             // would wrongly let it through
             const other = await prisma.client.create({
@@ -316,7 +316,7 @@ describe("kalendar actions", () => {
                 error: "Rezervace by přesáhla půlnoc.",
             });
             expect(await bookingsForPhone()).toHaveLength(0);
-            // rejected before findOrCreateClient — no orphan client either
+            // rejected before findOrCreateClient – no orphan client either
             expect(await prisma.client.count({ where: { phone } })).toBe(0);
         });
 
@@ -649,7 +649,7 @@ describe("kalendar actions", () => {
                 startTime: 600,
                 outsideHours: true,
             });
-            // online booking, only renamed — not moved, link stays valid
+            // online booking, only renamed – not moved, link stays valid
             await updateBookingAction({
                 groupId: null,
                 people: [
@@ -714,7 +714,7 @@ describe("kalendar actions", () => {
                 null,
                 DATE_STR
             );
-            // longer than any real opening window — nothing can fit
+            // longer than any real opening window – nothing can fit
             const withHugeExtra = await getMoveSlotsAction(
                 booking.id,
                 null,
@@ -723,7 +723,7 @@ describe("kalendar actions", () => {
                 [24 * 60]
             );
 
-            // DATE is a Monday — the inherited RecurringAvailability covers
+            // DATE is a Monday – the inherited RecurringAvailability covers
             // every weekday (see sprava/[token]/actions.test.ts), so the
             // empty result really comes from the override
             expect(withoutExtra.length).toBeGreaterThan(0);

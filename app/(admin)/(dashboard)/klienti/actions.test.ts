@@ -12,7 +12,7 @@ vi.mock("@/lib/require-admin.ts", () => ({
 }));
 
 // Already in the "XXX XXX XXX" shape updateClientAction normalizes to (see
-// adminPhoneSchema) — otherwise afterEach wouldn't find the edited client.
+// adminPhoneSchema) – otherwise afterEach wouldn't find the edited client.
 function uniquePhone(): string {
     const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
     return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;

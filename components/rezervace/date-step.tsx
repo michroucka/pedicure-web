@@ -19,8 +19,8 @@ import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
 import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 // The next HORIZON_DAYS are fetched once per service selection instead of
-// once per visible month — browsing a few months back/forth then costs
-// zero extra round-trips. Only a month outside this window (rare — see the
+// once per visible month – browsing a few months back/forth then costs
+// zero extra round-trips. Only a month outside this window (rare – see the
 // second effect below) needs its own fetch.
 
 export function DateStep({
@@ -57,7 +57,7 @@ export function DateStep({
     const currentServices: number[] = parseServiceIdsParam(
         searchParams.get("services")
     );
-    // Set after an extra_time_conflict redirect — same value the time step
+    // Set after an extra_time_conflict redirect – same value the time step
     // uses, so the calendar only offers days this client actually fits.
     const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
 
@@ -75,7 +75,7 @@ export function DateStep({
             setHorizon({ from: tomorrow.getTime(), to: horizonEnd.getTime() });
 
             // If the month we're showing has nothing free, jump straight to
-            // the month of the first free day in the horizon — otherwise the
+            // the month of the first free day in the horizon – otherwise the
             // calendar just looks fully booked. Skipped once a date's already
             // picked (e.g. coming back from a later step), so it doesn't yank
             // the user away from their selection.
@@ -93,7 +93,7 @@ export function DateStep({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams.get("services"), searchParams.get("extraMinutes")]);
 
-    // Fallback for browsing past the pre-fetched horizon (rare) — fetch
+    // Fallback for browsing past the pre-fetched horizon (rare) – fetch
     // just that month and merge it in, keeping the horizon data we already
     // have instead of throwing it away.
     useEffect(() => {

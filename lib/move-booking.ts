@@ -121,7 +121,7 @@ export async function moveBooking(
 }
 
 // Moves every booking in the group together, preserving each person's own
-// extraTimeMinutes and re-laying them out sequentially from the new start —
+// extraTimeMinutes and re-laying them out sequentially from the new start –
 // same allocation as createGroupBooking. `serviceOverrides` /
 // `extraTimeOverrides` (bookingId -> new value) let the edit dialog change a
 // person's service or extra time in the same step, since both change the

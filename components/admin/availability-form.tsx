@@ -141,7 +141,7 @@ function DayField({
     });
     const blocks = useWatch({ control, name: `days.${dayIndex}.blocks` });
     // daySchema's overlap check is an error on the blocks array itself, not
-    // on one block — zodResolver files it under `root` for a field array.
+    // on one block – zodResolver files it under `root` for a field array.
     const { errors } = useFormState({
         control,
         name: `days.${dayIndex}.blocks`,

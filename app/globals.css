@@ -127,7 +127,7 @@
 }
 
 /*
- * Storefront palette (marketing + booking) — one fixed identity (no
+ * Storefront palette (marketing + booking) – one fixed identity (no
  * light/dark switching), scoped so shadcn components (Button, Card, ...)
  * pick it up automatically without touching the admin app's tokens.
  * Background/neutrals are derived from the app's --primary hue (2.79) so

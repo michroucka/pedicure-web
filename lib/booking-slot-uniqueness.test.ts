@@ -5,7 +5,7 @@ import { cancelBooking } from "./cancel-booking.ts";
 import { isBookingSlotConflict } from "./booking-conflict-error.ts";
 
 // Runs against the isolated Neon "test" branch (see .env.test / package.json's
-// pretest + test scripts) — real rows get committed here, not rolled back,
+// pretest + test scripts) – real rows get committed here, not rolled back,
 // because cancelBooking/moveBooking manage their own internal transactions
 // against the shared `prisma` singleton rather than accepting an injectable
 // client, so a single outer rollback-transaction can't wrap a whole

@@ -14,7 +14,7 @@ export default async function ClientsPage() {
         where: { active: true },
         orderBy: { name: "asc" },
         include: {
-            // For the delete confirmation — upcoming bookings stay in the
+            // For the delete confirmation – upcoming bookings stay in the
             // calendar, which the pedikérka should know before deleting.
             _count: {
                 select: {

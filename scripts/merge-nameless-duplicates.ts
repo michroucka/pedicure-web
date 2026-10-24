@@ -6,7 +6,7 @@ import type { Client } from "../lib/generated/prisma/client.ts";
 // Merges clients that share an exact (case-sensitive) name, as long as
 // they can't be two different people: within one name, all clients without
 // a phone plus at most one distinct phone number. Two different phones
-// under one name are two real people — those names are skipped (reported).
+// under one name are two real people – those names are skipped (reported).
 // Strategy: keep the client with the phone if there is one, otherwise the
 // oldest record; move the duplicates' bookings onto it, carry over the
 // phone/email/note/extraTimeMinutes it's missing, then delete the
@@ -61,7 +61,7 @@ async function main() {
                 where: { clientId: c.id },
             });
             console.log(
-                `  Sloučit:   ${c.id} (${c.createdAt.toISOString()})${c.phone ? ` tel. ${c.phone}` : ""} — ${bookingCount} rezervací`
+                `  Sloučit:   ${c.id} (${c.createdAt.toISOString()})${c.phone ? ` tel. ${c.phone}` : ""} – ${bookingCount} rezervací`
             );
         }
 

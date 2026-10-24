@@ -61,8 +61,8 @@ export default async function AdminHomePage({
     );
     const weekEnd = weekDays[6];
 
-    // Both timelines render on every request — which one is visible is a
-    // pure CSS decision (see DayNav/the lg:hidden wrappers below) — so
+    // Both timelines render on every request – which one is visible is a
+    // pure CSS decision (see DayNav/the lg:hidden wrappers below) – so
     // fetch once for the whole week and derive the single day's data from
     // it instead of querying twice.
     const [services, clients, bookings, recurring, exceptions] =
@@ -129,12 +129,12 @@ export default async function AdminHomePage({
     const dayBookings = bookingsByDay[dayIndex];
     const dayExceptions = exceptionsByDay[dayIndex];
 
-    // An empty weekend day just eats up column width for nothing — on a
+    // An empty weekend day just eats up column width for nothing – on a
     // tablet-width screen that's the difference between the week fitting
     // and needing a horizontal scroll. A weekday stays visible even when
     // empty (it's still where new bookings get added), and a weekend day
     // stays too if it has a booking or is open at all (e.g. an EXTRA_OPEN
-    // exception with nothing booked into it yet — it still needs to be
+    // exception with nothing booked into it yet – it still needs to be
     // clickable).
     const weekViewIndexes = weekDays
         .map((_, i) => i)

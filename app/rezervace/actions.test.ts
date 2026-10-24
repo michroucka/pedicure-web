@@ -13,7 +13,7 @@ import {
 } from "./actions.ts";
 
 // redirect() normally throws Next.js's own NEXT_REDIRECT error to stop the
-// action — mimic that with a recognisable error so tests can assert where
+// action – mimic that with a recognisable error so tests can assert where
 // the action wanted to go.
 class RedirectError extends Error {
     constructor(public url: string) {
@@ -38,7 +38,7 @@ vi.mock("@/lib/turnstile.ts", () => ({
     verifyTurnstileToken: vi.fn().mockResolvedValue(true),
 }));
 // Real availability on the test branch is inherited from production and
-// can change — these tests are about who gets which name/extra time, not
+// can change – these tests are about who gets which name/extra time, not
 // about slot computation (covered in get-available-slots.test.ts).
 vi.mock("@/lib/get-available-slots.ts", () => ({
     getAvailableSlots: vi.fn(),
@@ -50,7 +50,7 @@ vi.mock("@/lib/get-available-days-in-range.ts", () => ({
 const TEST_DATE = new Date("2099-10-01T00:00:00.000Z");
 const START = 540;
 
-// Formatted the way PhoneInput sends it ("XXX XXX XXX") — the booking
+// Formatted the way PhoneInput sends it ("XXX XXX XXX") – the booking
 // schemas reject anything else (see PHONE_RE).
 function uniquePhone(): string {
     const digits = `7${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
@@ -178,7 +178,7 @@ describe("rezervace actions", () => {
                 data: { name: "Jana Beránková", phone },
             });
 
-            // must actually complete — a validation redirect would leave the
+            // must actually complete – a validation redirect would leave the
             // client untouched too and pass the assertions below for nothing
             const url = await submitGroup(["Jana Beránková", "Eva Beránková"]);
             expect(url).toMatch(/^\/rezervace\/sprava\/[\w-]+\?created=1$/);

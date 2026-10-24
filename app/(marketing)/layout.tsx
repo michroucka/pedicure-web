@@ -12,7 +12,7 @@ export const viewport: Viewport = {
     themeColor: "#38252A",
 };
 
-// LocalBusiness structured data — lets Google tie this site to the same
+// LocalBusiness structured data – lets Google tie this site to the same
 // business as the Google Business Profile/Firmy.cz listings instead of
 // treating them as unrelated.
 const LOCAL_BUSINESS_JSON_LD = {

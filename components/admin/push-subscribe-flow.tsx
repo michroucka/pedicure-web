@@ -33,7 +33,7 @@ function getStandaloneSnapshot() {
     return window.matchMedia(STANDALONE_QUERY).matches;
 }
 
-// No `window` on the server — render as "not standalone" there; React
+// No `window` on the server – render as "not standalone" there; React
 // swaps in the real value during hydration without a mismatch.
 function getStandaloneServerSnapshot() {
     return false;

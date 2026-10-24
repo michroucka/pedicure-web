@@ -24,7 +24,7 @@ export default async function SpravaPage({
     searchParams,
 }: {
     params: Promise<{ token: string }>;
-    // ?moved=1 — set by ManageBooking right after a successful move, which
+    // ?moved=1 – set by ManageBooking right after a successful move, which
     // lands here on the new token; otherwise the page looks the same as
     // before and the client can't tell the move happened.
     // ?created=1 - set by submitBooking/submitGroupBooking, which land here

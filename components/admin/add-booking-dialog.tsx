@@ -112,7 +112,7 @@ export function AddBookingDialog({
     const [phone, setPhone] = useState("");
     const [note, setNote] = useState("");
     // Carried silently from an autocomplete pick, never shown/edited in
-    // this form — see pickClient below.
+    // this form – see pickClient below.
     const [pickedEmail, setPickedEmail] = useState<string>();
     const [suggestOpen, setSuggestOpen] = useState(false);
     const [people, setPeople] = useState<PersonInput[]>([emptyPerson()]);
@@ -185,7 +185,7 @@ export function AddBookingDialog({
     }
 
     // Applies a main contact name/phone change, prefilling their extra time
-    // from the matched client — slots only refresh when the total actually
+    // from the matched client – slots only refresh when the total actually
     // changed, so typing a name doesn't keep clearing the picked slot.
     function updateMainContact(name: string, phoneValue: string) {
         let next = people.map((p, idx) => (idx === 0 ? { ...p, name } : p));
@@ -205,7 +205,7 @@ export function AddBookingDialog({
     function updateMainContactName(name: string) {
         updateMainContact(name, phone);
         // Typing after a pick means it might not be the same person anymore
-        // — the phone the admin sees stays as-is (she can just edit it),
+        // – the phone the admin sees stays as-is (she can just edit it),
         // but the silently-carried email shouldn't follow a name that no
         // longer matches who it came from.
         setPickedEmail(undefined);

@@ -38,7 +38,7 @@ import { Spinner } from "@/components/ui/spinner.tsx";
 
 const SLIDER_STEP = 15;
 // Fallback track bounds when a day has no blocks yet to derive a range
-// from — widened automatically (see trackBoundsFor) to always fit whatever
+// from – widened automatically (see trackBoundsFor) to always fit whatever
 // real data ends up on it.
 const DEFAULT_TRACK: TimeSlot = { start: 13 * 60, end: 20 * 60 };
 
@@ -102,7 +102,7 @@ export function ExceptionForm({
 
     function recurringFor(d: Date): TimeSlot[] {
         // `d` comes straight from the Calendar's onSelect, which is local
-        // midnight, not UTC midnight — reading getUTCDay() on it directly
+        // midnight, not UTC midnight – reading getUTCDay() on it directly
         // shifts the weekday back a day in any timezone ahead of UTC
         // (Czech local time included). Normalize first.
         const dayOfWeek = localDateToUtcMidnight(d).getUTCDay();
@@ -221,7 +221,7 @@ export function ExceptionForm({
     function addBlock() {
         setConflicts(null);
         if (blocks.length === 0) {
-            // Nothing open yet on this day — the recurring schedule (if
+            // Nothing open yet on this day – the recurring schedule (if
             // any) is the most useful starting point, otherwise fall back
             // to the default track's own span.
             const base = date ? recurringFor(date)[0] : undefined;

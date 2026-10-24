@@ -8,7 +8,7 @@ export const DEFAULT_EXTRA_MINUTES = 15;
 
 // Kept as checkbox + minutes (not just a number) so clearing the input
 // while typing doesn't untick the checkbox and hide the field under the
-// admin's fingers — 0 minutes only ever comes from unticking.
+// admin's fingers – 0 minutes only ever comes from unticking.
 export type ExtraTime = { enabled: boolean; minutes: number };
 
 export const NO_EXTRA_TIME: ExtraTime = {
@@ -61,7 +61,7 @@ export function ExtraTimeField({
                                 minutes: Number(e.target.value) || 0,
                             })
                         }
-                        // step only drives the arrows — snap whatever was
+                        // step only drives the arrows – snap whatever was
                         // typed to a multiple of 5 once she leaves the
                         // field, so what she sees is what gets saved (the
                         // server normalizes the same way). Ticked means

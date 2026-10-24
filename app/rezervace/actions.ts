@@ -299,7 +299,7 @@ export async function submitGroupBooking(
 }
 
 // extraMinutes comes from the URL after an extra_time_conflict redirect
-// (see buildSlotConflictRedirect) — the day picker has to use it too, not
+// (see buildSlotConflictRedirect) – the day picker has to use it too, not
 // just the slot list, or it offers days where this client fits nowhere.
 export async function getAvailableDaysAction(
     range: { from: Date; to: Date },
@@ -317,7 +317,7 @@ export async function getAvailableDaysAction(
     );
 }
 
-// Extra time of the (main) contact only — group guests aren't Clients and
+// Extra time of the (main) contact only – group guests aren't Clients and
 // always get 0, same as submitGroupBooking.
 //
 // Public and unauthenticated, so it only answers when both the phone and
@@ -351,7 +351,7 @@ export async function getAvailableSlotsAction(
     serviceIds: number[],
     extraMinutes: number = 0
 ): Promise<number[]> {
-    // Called in the background by the slot picker — invalid input just
+    // Called in the background by the slot picker – invalid input just
     // means "no slots", not a redirect.
     const parsedDate = z.date().safeParse(date);
     const parsedServiceIds = serviceIdsSchema.safeParse(serviceIds);

@@ -51,7 +51,7 @@ export const dateRangeSchema = z
         }
     );
 
-// Looked up while the form is still being typed — empty or half-written
+// Looked up while the form is still being typed – empty or half-written
 // values are fine here (no nameSchema / PHONE_RE), just bounded.
 export const contactLookupSchema = z.object({
     name: z.string().trim().max(100),

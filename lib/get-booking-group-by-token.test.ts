@@ -6,7 +6,7 @@ import { moveGroupBooking } from "./move-booking.ts";
 import { cancelBooking } from "./cancel-booking.ts";
 import { getBookingGroupByToken } from "./get-booking-group-by-token.ts";
 
-// outsideHours: true for moves — same reason as move-booking.test.ts: these
+// outsideHours: true for moves – same reason as move-booking.test.ts: these
 // tests are about which rows the token resolves to, not availability.
 describe("getBookingGroupByToken", () => {
     let clientId: string;
@@ -66,7 +66,7 @@ describe("getBookingGroupByToken", () => {
     });
 
     it("returns only the current members after the group was moved later (regression)", async () => {
-        // moved to a later time, the cancelled originals sort first — the
+        // moved to a later time, the cancelled originals sort first – the
         // manage page then showed "Rezervace zrušena" for a live booking
         const group = await createGroup();
         const moved = await moveGroupBooking(group[0].groupId!, testDate, 660, {

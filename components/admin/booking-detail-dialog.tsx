@@ -161,7 +161,7 @@ export function BookingDetailDialog({
               .sort((a, b) => a.startTime - b.startTime)
         : [booking];
     // Editing always acts on the whole group, so its schedule is anchored to
-    // the group's first booking — not to whichever member was clicked
+    // the group's first booking – not to whichever member was clicked
     // (clicking the 2nd person must still preselect/compare the group's
     // start, or saving would shift the whole group to that person's time).
     // Same for contact details: they belong to the main contact.
@@ -798,7 +798,7 @@ export function BookingDetailDialog({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Uložit změny?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {/* Only online bookings get the "moved" email —
+                            {/* Only online bookings get the "moved" email –
                             mirrors updateBookingAction. */}
                             {groupStart.source === "ONLINE"
                                 ? "Měníš termín, službu nebo délku rezervace. Klientovi přijde e-mail s novým termínem a novým odkazem pro správu rezervace (SMS ani push se neposílá)."

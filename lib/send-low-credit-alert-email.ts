@@ -1,7 +1,7 @@
 import { getResendClient } from "@/lib/resend-client.ts";
 import { EMAIL_FROM } from "@/lib/business-info.ts";
 
-// Internal ops alert, not client-facing — plain text is enough, no
+// Internal ops alert, not client-facing – plain text is enough, no
 // react-email template needed.
 export async function sendLowCreditAlertEmail(
     creditCzk: number
