@@ -74,7 +74,8 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - **CI: GitHub Actions** (`.github/workflows/ci.yml`) – na každý PR
   typecheck, lint, `prettier --check`, testy a `next build`. Testy běží
   proti Neon test branchi přes GitHub secrets `TEST_DATABASE_URL`
-  a `TEST_DATABASE_URL_UNPOOLED`; běhy se řadí za sebe (sdílené fixtures)
+  a `TEST_DATABASE_URL_UNPOOLED`; nový push zruší starší běh téže větve,
+  běhy různých PR se můžou na test branchi potkat (pak spustit znovu)
 
 ## Kalendářní integrace (Apple Calendar)
 

@@ -5,12 +5,15 @@ on:
     push:
         branches: [main]
 
-# Every run shares one Neon test branch - two runs at once would collide on
-# the same fixtures (the test suite itself runs files sequentially for the
-# same reason, see vitest.config.ts).
+# A new push to the same branch/PR cancels its older run. A single global
+# group would serialize all runs on the shared Neon test branch, but GitHub
+# keeps only one pending run per group and silently cancels the rest, so
+# PRs ended up with cancelled checks. Runs of different PRs can therefore
+# overlap on the test branch - fine for one developer, re-run if two ever
+# collide.
 concurrency:
-    group: neon-test-branch
-    cancel-in-progress: false
+    group: ci-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
     checks:
