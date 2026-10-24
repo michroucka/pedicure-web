@@ -241,6 +241,7 @@ BookingConfirmationEmail.PreviewProps = {
     ],
     dateLabel: "29. srpna 2026",
     timeLabel: "09:00 – 10:15",
-    manageUrl: "https://www.pedikurakralovice.cz/rezervace/sprava/preview-token",
+    manageUrl:
+        "https://www.pedikurakralovice.cz/rezervace/sprava/preview-token",
     variant: "created",
 } satisfies Parameters<typeof BookingConfirmationEmail>[0];

@@ -24,7 +24,10 @@ export function KeepAwakeLogView() {
     return (
         <Collapsible className="rounded-md data-[state=open]:bg-muted">
             <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="group w-full">
+                <Button
+                    variant="ghost"
+                    className="group w-full"
+                >
                     <ScrollText className="size-4" />
                     Diagnostika nezhasínání
                     <ChevronDownIcon className="ml-auto group-data-[state=open]:rotate-180" />
@@ -32,7 +35,9 @@ export function KeepAwakeLogView() {
             </CollapsibleTrigger>
             <CollapsibleContent className="flex flex-col gap-2 p-2.5 pt-0 text-sm">
                 {newestFirst.length === 0 ? (
-                    <p className="text-muted-foreground">Zatím žádné záznamy.</p>
+                    <p className="text-muted-foreground">
+                        Zatím žádné záznamy.
+                    </p>
                 ) : (
                     <ol className="flex max-h-80 flex-col gap-1 overflow-y-auto font-mono text-xs">
                         {newestFirst.map((entry, i) => (

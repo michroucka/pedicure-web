@@ -33,17 +33,27 @@ describe("moveBooking / moveGroupBooking", () => {
 
         const services = await Promise.all([
             prisma.service.create({
-                data: { name: "Test Service 30", durationMinutes: 30, price: 100 },
+                data: {
+                    name: "Test Service 30",
+                    durationMinutes: 30,
+                    price: 100,
+                },
             }),
             prisma.service.create({
-                data: { name: "Test Service 45", durationMinutes: 45, price: 150 },
+                data: {
+                    name: "Test Service 45",
+                    durationMinutes: 45,
+                    price: 150,
+                },
             }),
         ]);
         serviceIds = services.map((s) => s.id);
     });
 
     afterEach(async () => {
-        await prisma.booking.deleteMany({ where: { clientId: { in: clientIds } } });
+        await prisma.booking.deleteMany({
+            where: { clientId: { in: clientIds } },
+        });
         await prisma.client.deleteMany({ where: { id: { in: clientIds } } });
         await prisma.service.deleteMany({ where: { id: { in: serviceIds } } });
     });
@@ -128,8 +138,16 @@ describe("moveBooking / moveGroupBooking", () => {
         });
         const group = await createGroupBooking(
             [
-                { clientId: clientIds[1], extraTimeMinutes: 0, serviceId: serviceIds[0] },
-                { clientId: clientIds[1], extraTimeMinutes: 0, serviceId: serviceIds[0] },
+                {
+                    clientId: clientIds[1],
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                },
+                {
+                    clientId: clientIds[1],
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                },
             ],
             testDate,
             600,
@@ -137,16 +155,23 @@ describe("moveBooking / moveGroupBooking", () => {
         );
 
         await expect(
-            moveBooking(solo.id, otherDate, 23 * 60 + 50, { outsideHours: true })
+            moveBooking(solo.id, otherDate, 23 * 60 + 50, {
+                outsideHours: true,
+            })
         ).rejects.toThrow(PAST_MIDNIGHT_ERROR);
         // 2 x 30 min from 23:10 ends at 00:10
         await expect(
-            moveGroupBooking(group[0].groupId!, otherDate, 23 * 60 + 10, { outsideHours: true })
+            moveGroupBooking(group[0].groupId!, otherDate, 23 * 60 + 10, {
+                outsideHours: true,
+            })
         ).rejects.toThrow(PAST_MIDNIGHT_ERROR);
 
         // the transaction rolled back — nothing got cancelled
         const stillConfirmed = await prisma.booking.count({
-            where: { id: { in: [solo.id, ...group.map((b) => b.id)] }, status: "CONFIRMED" },
+            where: {
+                id: { in: [solo.id, ...group.map((b) => b.id)] },
+                status: "CONFIRMED",
+            },
         });
         expect(stillConfirmed).toBe(3);
     });
@@ -169,8 +194,16 @@ describe("moveBooking / moveGroupBooking", () => {
     it("moves every member of a group together, preserving groupId and each person's own service", async () => {
         const group = await createGroupBooking(
             [
-                { clientId: clientIds[0], extraTimeMinutes: 0, serviceId: serviceIds[0] }, // 30 min
-                { clientId: clientIds[1], extraTimeMinutes: 0, serviceId: serviceIds[1] }, // 45 min
+                {
+                    clientId: clientIds[0],
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                }, // 30 min
+                {
+                    clientId: clientIds[1],
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[1],
+                }, // 45 min
             ],
             testDate,
             540,
@@ -189,7 +222,9 @@ describe("moveBooking / moveGroupBooking", () => {
         const originalsAfter = await prisma.booking.findMany({
             where: { id: { in: originalIds } },
         });
-        expect(originalsAfter.every((b) => b.status === "CANCELLED")).toBe(true);
+        expect(originalsAfter.every((b) => b.status === "CANCELLED")).toBe(
+            true
+        );
 
         expect(moved.every((b) => b.groupId === groupId)).toBe(true);
         expect(moved[0].serviceId).toBe(serviceIds[0]);
@@ -231,21 +266,48 @@ describe("moveBooking / moveGroupBooking", () => {
         });
         const group = await createGroupBooking(
             [
-                { clientId: clientIds[0], extraTimeMinutes: 30, serviceId: serviceIds[0] },
-                { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId: serviceIds[1] },
-                { clientId: clientIds[0], guestName: "Petr Host", extraTimeMinutes: 0, serviceId: serviceIds[0] },
+                {
+                    clientId: clientIds[0],
+                    extraTimeMinutes: 30,
+                    serviceId: serviceIds[0],
+                },
+                {
+                    clientId: clientIds[0],
+                    guestName: "Eva Host",
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[1],
+                },
+                {
+                    clientId: clientIds[0],
+                    guestName: "Petr Host",
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                },
             ],
             testDate,
             540,
             "ONLINE"
         );
 
-        const moved = await moveGroupBooking(group[0].groupId!, otherDate, 600, {
-            outsideHours: true,
-        });
+        const moved = await moveGroupBooking(
+            group[0].groupId!,
+            otherDate,
+            600,
+            {
+                outsideHours: true,
+            }
+        );
 
-        expect(moved.map((b) => b.clientId)).toEqual([clientIds[0], clientIds[0], clientIds[0]]);
-        expect(moved.map((b) => b.guestName)).toEqual([null, "Eva Host", "Petr Host"]);
+        expect(moved.map((b) => b.clientId)).toEqual([
+            clientIds[0],
+            clientIds[0],
+            clientIds[0],
+        ]);
+        expect(moved.map((b) => b.guestName)).toEqual([
+            null,
+            "Eva Host",
+            "Petr Host",
+        ]);
         expect(moved.map((b) => b.extraTimeMinutes)).toEqual([30, 0, 0]);
         expect(moved.map((b) => [b.startTime, b.endTime])).toEqual([
             [600, 660], // 30 + 30
@@ -263,8 +325,17 @@ describe("moveBooking / moveGroupBooking", () => {
         });
         const group = await createGroupBooking(
             [
-                { clientId: clientIds[0], extraTimeMinutes: 0, serviceId: serviceIds[0] },
-                { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId: serviceIds[0] },
+                {
+                    clientId: clientIds[0],
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                },
+                {
+                    clientId: clientIds[0],
+                    guestName: "Eva Host",
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                },
             ],
             testDate,
             540,
@@ -279,9 +350,14 @@ describe("moveBooking / moveGroupBooking", () => {
             source: "PHONE",
         });
 
-        const moved = await moveGroupBooking(group[0].groupId!, otherDate, 600, {
-            outsideHours: true,
-        });
+        const moved = await moveGroupBooking(
+            group[0].groupId!,
+            otherDate,
+            600,
+            {
+                outsideHours: true,
+            }
+        );
 
         expect(moved[moved.length - 1].endTime).toBe(660);
     });

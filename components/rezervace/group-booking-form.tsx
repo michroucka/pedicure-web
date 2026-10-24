@@ -42,7 +42,10 @@ export function GroupBookingForm({
     durationMinutes,
     initialExtraMinutes = 0,
 }: {
-    boundSubmitAction: (data: GroupFormData, turnstileToken: string | null) => Promise<void>;
+    boundSubmitAction: (
+        data: GroupFormData,
+        turnstileToken: string | null
+    ) => Promise<void>;
     serviceNames: string[];
     backHref: string;
     startTime: number;
@@ -72,7 +75,11 @@ export function GroupBookingForm({
     const phone = useWatch({ control, name: "phone" });
     // Only the main contact is a Client with its own extra time (guests get
     // 0, same as on submit).
-    const extraMinutes = useClientExtraMinutes(names?.[0], phone, initialExtraMinutes);
+    const extraMinutes = useClientExtraMinutes(
+        names?.[0],
+        phone,
+        initialExtraMinutes
+    );
 
     return (
         <form onSubmit={handleSubmit(submit)}>

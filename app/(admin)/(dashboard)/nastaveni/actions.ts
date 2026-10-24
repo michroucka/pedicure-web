@@ -1,4 +1,4 @@
-"use server"
+"use server";
 
 import { z } from "zod";
 import { signOut } from "@/auth.ts";
@@ -78,8 +78,14 @@ export async function savePushSubscriptionAction({
     userAgent?: string;
 }) {
     const username = await requireAdmin();
-    const parsed = pushSubscriptionSchema.safeParse({ endpoint, p256dh, auth: subAuth, userAgent });
-    if (!parsed.success) return { ok: false, error: "Neplatné údaje o zařízení." };
+    const parsed = pushSubscriptionSchema.safeParse({
+        endpoint,
+        p256dh,
+        auth: subAuth,
+        userAgent,
+    });
+    if (!parsed.success)
+        return { ok: false, error: "Neplatné údaje o zařízení." };
     ({ endpoint, p256dh, auth: subAuth, userAgent } = parsed.data);
 
     const admin = await prisma.adminUser.findUnique({
@@ -90,8 +96,14 @@ export async function savePushSubscriptionAction({
     await prisma.pushSubscription.upsert({
         where: { endpoint },
         update: { p256dh, auth: subAuth, userAgent },
-        create: { adminUserId: admin.id, endpoint , p256dh , auth: subAuth, userAgent }
-    })
+        create: {
+            adminUserId: admin.id,
+            endpoint,
+            p256dh,
+            auth: subAuth,
+            userAgent,
+        },
+    });
 }
 
 export async function deletePushSubscriptionAction(endpoint: string) {

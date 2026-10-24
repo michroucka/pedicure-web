@@ -7,7 +7,9 @@ import { deleteClientAction, updateClientAction } from "./actions.ts";
 // revalidatePath needs a Next.js request context.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 // Actions call requireAdmin() first; there is no session in tests.
-vi.mock("@/lib/require-admin.ts", () => ({ requireAdmin: vi.fn(async () => "admin") }));
+vi.mock("@/lib/require-admin.ts", () => ({
+    requireAdmin: vi.fn(async () => "admin"),
+}));
 
 // Already in the "XXX XXX XXX" shape updateClientAction normalizes to (see
 // adminPhoneSchema) — otherwise afterEach wouldn't find the edited client.
@@ -31,22 +33,30 @@ describe("klienti actions", () => {
     afterEach(async () => {
         const clients = await prisma.client.findMany({ where: { phone } });
         const clientIds = clients.map((c) => c.id);
-        await prisma.booking.deleteMany({ where: { clientId: { in: clientIds } } });
+        await prisma.booking.deleteMany({
+            where: { clientId: { in: clientIds } },
+        });
         await prisma.client.deleteMany({ where: { id: { in: clientIds } } });
         await prisma.service.delete({ where: { id: serviceId } });
     });
 
     describe("deleteClientAction", () => {
         it("really deletes a client without any booking", async () => {
-            const client = await prisma.client.create({ data: { name: "Překlep", phone } });
+            const client = await prisma.client.create({
+                data: { name: "Překlep", phone },
+            });
 
             await deleteClientAction(client.id);
 
-            expect(await prisma.client.findUnique({ where: { id: client.id } })).toBeNull();
+            expect(
+                await prisma.client.findUnique({ where: { id: client.id } })
+            ).toBeNull();
         });
 
         it("only hides a client with bookings, keeping the bookings untouched", async () => {
-            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const client = await prisma.client.create({
+                data: { name: "Jana", phone },
+            });
             const booking = await createBooking({
                 clientId: client.id,
                 serviceId,
@@ -57,15 +67,21 @@ describe("klienti actions", () => {
 
             await deleteClientAction(client.id);
 
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: client.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
             expect(after.active).toBe(false);
-            const bookingAfter = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
+            const bookingAfter = await prisma.booking.findUniqueOrThrow({
+                where: { id: booking.id },
+            });
             expect(bookingAfter.status).toBe("CONFIRMED");
             expect(bookingAfter.clientId).toBe(client.id);
         });
 
         it("hides a client whose bookings are all cancelled too (history)", async () => {
-            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const client = await prisma.client.create({
+                data: { name: "Jana", phone },
+            });
             const booking = await createBooking({
                 clientId: client.id,
                 serviceId,
@@ -73,11 +89,16 @@ describe("klienti actions", () => {
                 startTime: 540,
                 source: "PHONE",
             });
-            await prisma.booking.update({ where: { id: booking.id }, data: { status: "CANCELLED" } });
+            await prisma.booking.update({
+                where: { id: booking.id },
+                data: { status: "CANCELLED" },
+            });
 
             await deleteClientAction(client.id);
 
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: client.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
             expect(after.active).toBe(false);
         });
     });
@@ -97,7 +118,9 @@ describe("klienti actions", () => {
 
         it("reactivates a hidden client matched by name when there's no phone", async () => {
             const name = `Bez Telefonu ${phone}`;
-            const client = await prisma.client.create({ data: { name, active: false } });
+            const client = await prisma.client.create({
+                data: { name, active: false },
+            });
 
             const matched = await findOrCreateClient(undefined, name);
 
@@ -120,22 +143,39 @@ describe("klienti actions", () => {
             });
 
             expect(result).toEqual({ ok: true });
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: client.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
             expect(after.name).toBe("Jana Nová");
             expect(after.active).toBe(false);
         });
 
         it("normalizes the phone and rejects one that can't be", async () => {
-            const client = await prisma.client.create({ data: { name: "Jana", phone } });
-            const data = { name: "Jana", email: "", extraTimeMinutes: 0, note: "" };
+            const client = await prisma.client.create({
+                data: { name: "Jana", phone },
+            });
+            const data = {
+                name: "Jana",
+                email: "",
+                extraTimeMinutes: 0,
+                note: "",
+            };
 
             expect(
-                await updateClientAction(client.id, { ...data, phone: phone.replaceAll(" ", "") })
+                await updateClientAction(client.id, {
+                    ...data,
+                    phone: phone.replaceAll(" ", ""),
+                })
             ).toEqual({ ok: true });
-            const after = await prisma.client.findUniqueOrThrow({ where: { id: client.id } });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
             expect(after.phone).toBe(phone);
 
-            const rejected = await updateClientAction(client.id, { ...data, phone: "12345" });
+            const rejected = await updateClientAction(client.id, {
+                ...data,
+                phone: "12345",
+            });
             expect(rejected.ok).toBe(false);
         });
 

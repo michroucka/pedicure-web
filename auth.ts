@@ -87,7 +87,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     where: { username: parsed.data.username },
                 });
                 if (!admin) {
-                    await argon2.verify(DUMMY_PASSWORD_HASH, parsed.data.password);
+                    await argon2.verify(
+                        DUMMY_PASSWORD_HASH,
+                        parsed.data.password
+                    );
                     return null;
                 }
 
@@ -97,7 +100,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 );
                 if (!valid) return null;
 
-                return { id: admin.id, name: admin.username, email: admin.email };
+                return {
+                    id: admin.id,
+                    name: admin.username,
+                    email: admin.email,
+                };
             },
         }),
     ],

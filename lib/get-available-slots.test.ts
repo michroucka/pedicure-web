@@ -1,4 +1,13 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    afterAll,
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "vitest";
 import { prisma } from "./prisma.ts";
 import { getAvailableSlots } from "./get-available-slots.ts";
 import { HORIZON_DAYS } from "./booking-horizon.ts";
@@ -76,7 +85,9 @@ describe("getAvailableSlots", () => {
         try {
             expect(await getAvailableSlots(SATURDAY, [serviceId])).toEqual([]);
             expect(
-                await getAvailableSlots(SATURDAY, [serviceId], 0, { allowToday: true })
+                await getAvailableSlots(SATURDAY, [serviceId], 0, {
+                    allowToday: true,
+                })
             ).toEqual([540]);
         } finally {
             vi.setSystemTime(FAKE_NOW);
@@ -190,7 +201,10 @@ describe("getAvailableSlots", () => {
             },
         });
 
-        const slots = await getAvailableSlots(SATURDAY, [serviceId, service2Id]);
+        const slots = await getAvailableSlots(SATURDAY, [
+            serviceId,
+            service2Id,
+        ]);
         expect(slots).toEqual([]);
     });
 

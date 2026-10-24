@@ -21,9 +21,7 @@ export default function ReservationLayout({
     return (
         <PortalContainerProvider className="storefront min-h-svh bg-background text-foreground">
             <BookingNav />
-            <div className="mt-8 max-lg:mx-4">
-                {children}
-            </div>
+            <div className="mt-8 max-lg:mx-4">{children}</div>
             <Analytics />
             <SpeedInsights />
         </PortalContainerProvider>

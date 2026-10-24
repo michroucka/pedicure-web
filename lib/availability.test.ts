@@ -276,7 +276,13 @@ describe("toRecurringRows", () => {
     it("merges blocks that touch into one row", () => {
         expect(
             toRecurringRows([
-                { dayOfWeek: 1, blocks: [{ start: 720, end: 840 }, { start: 540, end: 720 }] },
+                {
+                    dayOfWeek: 1,
+                    blocks: [
+                        { start: 720, end: 840 },
+                        { start: 540, end: 720 },
+                    ],
+                },
             ])
         ).toEqual([{ dayOfWeek: 1, startTime: 540, endTime: 840 }]);
     });
@@ -284,7 +290,13 @@ describe("toRecurringRows", () => {
     it("keeps blocks with a gap (lunch break) separate", () => {
         expect(
             toRecurringRows([
-                { dayOfWeek: 1, blocks: [{ start: 540, end: 720 }, { start: 840, end: 1020 }] },
+                {
+                    dayOfWeek: 1,
+                    blocks: [
+                        { start: 540, end: 720 },
+                        { start: 840, end: 1020 },
+                    ],
+                },
             ])
         ).toEqual([
             { dayOfWeek: 1, startTime: 540, endTime: 720 },
@@ -302,4 +314,3 @@ describe("toRecurringRows", () => {
         ).toEqual([{ dayOfWeek: 2, startTime: 540, endTime: 660 }]);
     });
 });
-

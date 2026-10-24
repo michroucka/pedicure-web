@@ -34,10 +34,7 @@ function serviceContext(bookings: BookingWithRelations[]) {
         // edit dialog's getMoveSlotsAction).
         bookingIds: bookings.map((b) => b.id),
         serviceIds: bookings.map((b) => b.serviceId),
-        extraMinutes: bookings.reduce(
-            (sum, b) => sum + b.extraTimeMinutes,
-            0
-        ),
+        extraMinutes: bookings.reduce((sum, b) => sum + b.extraTimeMinutes, 0),
     };
 }
 
@@ -96,7 +93,8 @@ export async function getRescheduleDaysAction(
     range: { from: Date; to: Date }
 ): Promise<Date[]> {
     const parsedRange = dateRangeSchema.safeParse(range);
-    if (!tokenSchema.safeParse(token).success || !parsedRange.success) return [];
+    if (!tokenSchema.safeParse(token).success || !parsedRange.success)
+        return [];
 
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") return [];
@@ -112,7 +110,8 @@ export async function getRescheduleSlotsAction(
     dateStr: string
 ): Promise<number[]> {
     const parsedDateStr = dateStrSchema.safeParse(dateStr);
-    if (!tokenSchema.safeParse(token).success || !parsedDateStr.success) return [];
+    if (!tokenSchema.safeParse(token).success || !parsedDateStr.success)
+        return [];
 
     const bookings = await getBookingGroupByToken(token);
     if (!bookings || bookings[0].status !== "CONFIRMED") return [];
@@ -140,7 +139,10 @@ export async function moveBookingByTokenAction(
     // The picker only ever offers real slots — a malformed target is
     // tampering, answered the same as a slot that's no longer free.
     const parsedDateStr = dateStrSchema.safeParse(dateStr);
-    if (!parsedDateStr.success || !startTimeSchema.safeParse(startTime).success) {
+    if (
+        !parsedDateStr.success ||
+        !startTimeSchema.safeParse(startTime).success
+    ) {
         return { ok: false, error: SLOT_TAKEN_ERROR };
     }
 

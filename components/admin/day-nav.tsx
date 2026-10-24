@@ -141,11 +141,11 @@ export function DayNav({
     const shownWeekStart = isNavigating
         ? startOfWeekUtc(localDateToUtcMidnight(date))
         : weekStart;
-    const shownWeekEnd = isNavigating
-        ? addUtcDays(shownWeekStart, 6)
-        : weekEnd;
+    const shownWeekEnd = isNavigating ? addUtcDays(shownWeekStart, 6) : weekEnd;
 
-    const isToday = localDateToUtcMidnight(date).getTime() === localDateToUtcMidnight(new Date()).getTime();
+    const isToday =
+        localDateToUtcMidnight(date).getTime() ===
+        localDateToUtcMidnight(new Date()).getTime();
     const { blockedFull, blockedPartial, extraOpen } =
         categorizeExceptions(exceptions);
     const hasException =
@@ -203,10 +203,15 @@ export function DayNav({
                             {getISOWeek(shownWeekStart)}. týden
                         </span>
                         <span className="font-semibold">
-                            {format(shownWeekStart,
-                                shownWeekStart.getUTCMonth() === shownWeekEnd.getUTCMonth()
-                                    ? "d." : "d. MMMM", { locale: cs }
-                            )} –{" "}
+                            {format(
+                                shownWeekStart,
+                                shownWeekStart.getUTCMonth() ===
+                                    shownWeekEnd.getUTCMonth()
+                                    ? "d."
+                                    : "d. MMMM",
+                                { locale: cs }
+                            )}{" "}
+                            –{" "}
                             {format(shownWeekEnd, "d. MMMM yyyy", {
                                 locale: cs,
                             })}

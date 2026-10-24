@@ -1,4 +1,13 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    afterAll,
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "vitest";
 import { prisma } from "./prisma.ts";
 import { getAvailableDaysInRange } from "./get-available-days-in-range.ts";
 import { HORIZON_DAYS } from "./booking-horizon.ts";
@@ -70,7 +79,9 @@ describe("getAvailableDaysInRange", () => {
         vi.setSystemTime(addUtcDays(SUNDAY, -(HORIZON_DAYS + 2)));
 
         try {
-            expect(await getAvailableDaysInRange(RANGE, [serviceId])).toEqual([]);
+            expect(await getAvailableDaysInRange(RANGE, [serviceId])).toEqual(
+                []
+            );
         } finally {
             vi.setSystemTime(FAKE_NOW);
         }
@@ -176,7 +187,10 @@ describe("getAvailableDaysInRange", () => {
             data: { dayOfWeek: 0, startTime: 540, endTime: 570 },
         });
 
-        const days = await getAvailableDaysInRange(RANGE, [serviceId, serviceId]);
+        const days = await getAvailableDaysInRange(RANGE, [
+            serviceId,
+            serviceId,
+        ]);
 
         expect(days).toEqual([]);
     });

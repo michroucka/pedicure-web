@@ -117,7 +117,10 @@ export function PersonsStep({
                                     variant="ghost"
                                     onClick={() => removePerson(i)}
                                 >
-                                    <Trash2 data-icon="inline-start" className="text-destructive" />
+                                    <Trash2
+                                        data-icon="inline-start"
+                                        className="text-destructive"
+                                    />
                                 </Button>
                             )}
                         </div>

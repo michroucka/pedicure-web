@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Input } from "@/components/ui/input.tsx";
 import { ComponentProps } from "react";
@@ -13,5 +13,5 @@ export function PhoneInput(props: ComponentProps<typeof Input>) {
                 props.onChange?.(e);
             }}
         />
-    )
+    );
 }

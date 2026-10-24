@@ -59,7 +59,9 @@ async function buildSlotConflictRedirect(
 
 // Everything sent after an online booking, run via after() so the client's
 // redirect doesn't wait for Resend/Web Push.
-async function notifyNewOnlineBooking(where: { id: string } | { groupId: string }) {
+async function notifyNewOnlineBooking(
+    where: { id: string } | { groupId: string }
+) {
     const bookings = await prisma.booking.findMany({
         where,
         include: { client: true, service: true },
@@ -136,11 +138,15 @@ export async function submitBooking(
     const { name, phone, email } = parsedData.data;
     const { serviceId, date, startTime } = parsedContext.data;
 
-    await rejectAbusiveSubmission(turnstileToken, { phone, email, name }, {
-        date,
-        serviceIds: [serviceId],
-        startTime,
-    });
+    await rejectAbusiveSubmission(
+        turnstileToken,
+        { phone, email, name },
+        {
+            date,
+            serviceIds: [serviceId],
+            startTime,
+        }
+    );
 
     const service = await prisma.service.findUnique({
         where: { id: serviceId, active: true },
@@ -212,11 +218,15 @@ export async function submitGroupBooking(
         redirect("/rezervace");
     }
 
-    await rejectAbusiveSubmission(turnstileToken, { phone, email, name: names[0] }, {
-        date,
-        serviceIds,
-        startTime,
-    });
+    await rejectAbusiveSubmission(
+        turnstileToken,
+        { phone, email, name: names[0] },
+        {
+            date,
+            serviceIds,
+            startTime,
+        }
+    );
 
     const services = await prisma.service.findMany({
         where: { id: { in: serviceIds }, active: true },
@@ -246,7 +256,12 @@ export async function submitGroupBooking(
         );
     }
 
-    const client = await upsertMatchedClient(matchedClient, phone, names[0], email);
+    const client = await upsertMatchedClient(
+        matchedClient,
+        phone,
+        names[0],
+        email
+    );
 
     const people = names.map((name, i) => ({
         clientId: client.id,
@@ -258,7 +273,12 @@ export async function submitGroupBooking(
     let groupId: string;
     let cancelToken: string;
     try {
-        const bookings = await createGroupBooking(people, date, startTime, "ONLINE");
+        const bookings = await createGroupBooking(
+            people,
+            date,
+            startTime,
+            "ONLINE"
+        );
         groupId = bookings[0].groupId!;
         // Any member's token manages the whole group (getBookingGroupByToken).
         cancelToken = bookings[0].cancelToken;
@@ -321,7 +341,8 @@ export async function getExtraMinutesAction(contact: {
     if (!name || !phone) return 0;
 
     const client = await findClient(phone, name);
-    if (!client || comparableName(client.name) !== comparableName(name)) return 0;
+    if (!client || comparableName(client.name) !== comparableName(name))
+        return 0;
     return client.extraTimeMinutes;
 }
 

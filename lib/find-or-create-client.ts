@@ -8,7 +8,13 @@ export async function findOrCreateClient(
     email?: string,
     note?: string
 ): Promise<Client> {
-    return upsertMatchedClient(await findClient(phone, name), phone, name, email, note);
+    return upsertMatchedClient(
+        await findClient(phone, name),
+        phone,
+        name,
+        email,
+        note
+    );
 }
 
 // The write half of findOrCreateClient, for callers that already looked the

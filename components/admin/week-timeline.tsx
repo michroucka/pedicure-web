@@ -10,7 +10,10 @@ import {
     getCzechToday,
     getCzechNowMinutes,
 } from "@/lib/utils.ts";
-import { categorizeExceptions, computeClosedRanges } from "@/lib/availability.ts";
+import {
+    categorizeExceptions,
+    computeClosedRanges,
+} from "@/lib/availability.ts";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
 import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
 import {
@@ -100,7 +103,7 @@ export function WeekTimeline({
     // and the header/axis stick to that box directly.
     return (
         <div className="h-full overflow-auto">
-            <div className="flex p-3 mb-16">
+            <div className="mb-16 flex p-3">
                 <div
                     className="sticky left-0 z-10 w-12 shrink-0 bg-background"
                     style={{ height: gridHeight, marginTop: 24 }}
@@ -222,7 +225,7 @@ export function WeekTimeline({
                                                     }}
                                                 />
                                                 <div
-                                                    className="absolute -translate-y-1/2 left-0 -translate-x-9.5 z-10 bg-red-500 rounded-full text-[11px] text-white tabular-nums px-1 py-1/2"
+                                                    className="py-1/2 absolute left-0 z-10 -translate-x-9.5 -translate-y-1/2 rounded-full bg-red-500 px-1 text-[11px] text-white tabular-nums"
                                                     style={{
                                                         top:
                                                             (nowMinutes -

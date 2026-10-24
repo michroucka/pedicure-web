@@ -10,7 +10,11 @@ import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
 import { sumServiceDurations } from "@/lib/service-duration.ts";
-import { dateStrSchema, serviceIdsSchema, startTimeSchema } from "@/lib/validation.ts";
+import {
+    dateStrSchema,
+    serviceIdsSchema,
+    startTimeSchema,
+} from "@/lib/validation.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit.ts";
 import { BUSINESS_INFO } from "@/lib/business-info.ts";
@@ -20,7 +24,8 @@ import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 const SUBMIT_ERRORS: Record<string, { title: string; description: string }> = {
     verification: {
         title: "Ověření se nezdařilo",
-        description: "Nepodařilo se ověřit, že rezervaci odesílá člověk. Zkuste ji prosím odeslat znovu.",
+        description:
+            "Nepodařilo se ověřit, že rezervaci odesílá člověk. Zkuste ji prosím odeslat znovu.",
     },
     booking_limit: {
         title: "Příliš mnoho rezervací",
@@ -28,8 +33,9 @@ const SUBMIT_ERRORS: Record<string, { title: string; description: string }> = {
     },
 };
 
-
-export default async function DetailsPage({ searchParams }: {
+export default async function DetailsPage({
+    searchParams,
+}: {
     searchParams: Promise<{
         date?: string;
         services?: string;
@@ -47,7 +53,11 @@ export default async function DetailsPage({ searchParams }: {
         parseServiceIdsParam(services)
     );
     const parsedSlot = startTimeSchema.safeParse(slot ? Number(slot) : NaN);
-    if (!parsedDate.success || !parsedServiceIds.success || !parsedSlot.success) {
+    if (
+        !parsedDate.success ||
+        !parsedServiceIds.success ||
+        !parsedSlot.success
+    ) {
         redirect("/rezervace");
     }
     const serviceIds = parsedServiceIds.data;
@@ -64,7 +74,7 @@ export default async function DetailsPage({ searchParams }: {
 
     const serviceNames = serviceIds.map(
         (id) => availableServices.find((s) => s.id === id)?.name ?? ""
-    )
+    );
 
     const backHref = `/rezervace?date=${date}&services=${services}&slot=${slot}`;
 
@@ -73,7 +83,7 @@ export default async function DetailsPage({ searchParams }: {
     const timeSummary = `${formatTime(startTime)} – ${formatTime(startTime + totalDuration + knownExtraMinutes)}`;
 
     return (
-        <div className="max-w-md mx-auto">
+        <div className="mx-auto max-w-md">
             {error && Object.hasOwn(SUBMIT_ERRORS, error) && (
                 <Alert
                     variant="warning"
@@ -81,7 +91,9 @@ export default async function DetailsPage({ searchParams }: {
                 >
                     <AlertCircle />
                     <AlertTitle>{SUBMIT_ERRORS[error].title}</AlertTitle>
-                    <AlertDescription>{SUBMIT_ERRORS[error].description}</AlertDescription>
+                    <AlertDescription>
+                        {SUBMIT_ERRORS[error].description}
+                    </AlertDescription>
                 </Alert>
             )}
             <Card className="mb-6">

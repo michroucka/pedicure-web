@@ -9,8 +9,11 @@ import {
 import { formatTime } from "@/lib/utils.ts";
 import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
 import { prisma } from "@/lib/prisma.ts";
-import type { Booking, Client, Service } from "@/lib/generated/prisma/client.ts";
-
+import type {
+    Booking,
+    Client,
+    Service,
+} from "@/lib/generated/prisma/client.ts";
 
 const SUBJECTS: Record<BookingEmailVariant, string> = {
     created: "Potvrzení rezervace",
@@ -73,7 +76,9 @@ export async function sendBookingConfirmationEmail(
 
 // After a move (magic link or admin) — takes the ids of the newly created
 // bookings, since the move functions return them without relations.
-export async function sendBookingMovedEmail(bookingIds: string[]): Promise<void> {
+export async function sendBookingMovedEmail(
+    bookingIds: string[]
+): Promise<void> {
     const bookings = await prisma.booking.findMany({
         where: { id: { in: bookingIds } },
         include: { client: true, service: true },

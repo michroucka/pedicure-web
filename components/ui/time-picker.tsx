@@ -38,19 +38,20 @@ const VISIBLE_ROWS = 5;
 const timePickerTriggerVariants = cva(
     "inline-block cursor-pointer text-left whitespace-nowrap tabular-nums outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-invalid:ring-3 data-invalid:ring-destructive/20 dark:data-invalid:ring-destructive/40",
     {
-    variants: {
-        variant: {
-            // Same box as the shadcn Input, so it sits naturally next to
-            // regular form fields.
-            default: "h-8 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 focus-visible:border-ring data-invalid:border-destructive md:text-sm dark:data-invalid:border-destructive/50",
-            // Compact, borderless, muted — a small inline time label (e.g.
-            // sitting right under a Slider) rather than a standalone field.
-            ghost: "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent",
+        variants: {
+            variant: {
+                // Same box as the shadcn Input, so it sits naturally next to
+                // regular form fields.
+                default:
+                    "h-8 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 focus-visible:border-ring data-invalid:border-destructive md:text-sm dark:data-invalid:border-destructive/50",
+                // Compact, borderless, muted — a small inline time label (e.g.
+                // sitting right under a Slider) rather than a standalone field.
+                ghost: "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent",
+            },
         },
-    },
-    defaultVariants: {
-        variant: "default",
-    },
+        defaultVariants: {
+            variant: "default",
+        },
     }
 );
 
@@ -222,7 +223,10 @@ function WheelColumn({
 
     function endDrag(e: React.PointerEvent) {
         const drag = dragRef.current;
-        if (drag?.dragging && containerRef.current?.hasPointerCapture(e.pointerId)) {
+        if (
+            drag?.dragging &&
+            containerRef.current?.hasPointerCapture(e.pointerId)
+        ) {
             containerRef.current.releasePointerCapture(e.pointerId);
         }
         dragRef.current = null;
@@ -238,7 +242,7 @@ function WheelColumn({
             // gesture to its own snap point, causing jumps/jitter).
             // Snapping to the nearest item is done entirely in JS instead:
             // handleScroll's debounce + the scrollToIndex effect above.
-            className="touch-none overflow-y-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="touch-none [scrollbar-width:none] overflow-y-scroll [&::-webkit-scrollbar]:hidden"
             style={{
                 height: ITEM_HEIGHT * VISIBLE_ROWS,
                 paddingBlock: ITEM_HEIGHT * Math.floor(VISIBLE_ROWS / 2),
@@ -394,8 +398,10 @@ function TimePicker({
     const minuteValues = React.useMemo(() => {
         let lo = 0;
         let hi = 59 - (59 % step);
-        if (pendingHour === minHour) lo = Math.max(lo, minMinutes - minHour * 60);
-        if (pendingHour === maxHour) hi = Math.min(hi, maxMinutes - maxHour * 60);
+        if (pendingHour === minHour)
+            lo = Math.max(lo, minMinutes - minHour * 60);
+        if (pendingHour === maxHour)
+            hi = Math.min(hi, maxMinutes - maxHour * 60);
         lo = alignUp(lo, step);
         hi = alignDown(hi, step);
         if (lo > hi) return [alignDown(hi, step)];
@@ -503,7 +509,13 @@ function TimePicker({
                     >
                         {value || placeholder}
                     </button>
-                    {name && <input type="hidden" name={name} value={value} />}
+                    {name && (
+                        <input
+                            type="hidden"
+                            name={name}
+                            value={value}
+                        />
+                    )}
                 </div>
             </PopoverAnchor>
             <PopoverContent

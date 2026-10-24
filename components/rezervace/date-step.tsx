@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,7 +23,11 @@ import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 // zero extra round-trips. Only a month outside this window (rare — see the
 // second effect below) needs its own fetch.
 
-export function DateStep({ onContinueAction }: { onContinueAction: () => void }) {
+export function DateStep({
+    onContinueAction,
+}: {
+    onContinueAction: () => void;
+}) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -44,12 +48,15 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
     const tomorrow = localDateToUtcMidnight(addDays(startOfDay(new Date()), 1));
     const horizonEnd = addDays(tomorrow, HORIZON_DAYS);
 
-    const gridStart = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
+    const gridStart = startOfWeek(startOfMonth(currentMonth), {
+        weekStartsOn: 1,
+    });
     const gridEnd = localDateToUtcMidnight(addDays(gridStart, 41));
     const rangeFrom = localDateToUtcMidnight(maxDate([gridStart, tomorrow]));
 
-    const currentServices: number[] =
-        parseServiceIdsParam(searchParams.get("services"));
+    const currentServices: number[] = parseServiceIdsParam(
+        searchParams.get("services")
+    );
     // Set after an extra_time_conflict redirect — same value the time step
     // uses, so the calendar only offers days this client actually fits.
     const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
@@ -73,7 +80,9 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
             // picked (e.g. coming back from a later step), so it doesn't yank
             // the user away from their selection.
             if (!dateParam && days.length > 0) {
-                const firstAvailable = days.reduce((min, d) => (d < min ? d : min));
+                const firstAvailable = days.reduce((min, d) =>
+                    d < min ? d : min
+                );
                 const firstMonth = startOfMonth(firstAvailable).getTime();
                 if (firstMonth !== startOfMonth(currentMonth).getTime()) {
                     hasAutoJumped.current = true;
@@ -89,7 +98,10 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
     // have instead of throwing it away.
     useEffect(() => {
         if (!horizon) return;
-        if (gridStart.getTime() >= horizon.from && gridEnd.getTime() <= horizon.to) {
+        if (
+            gridStart.getTime() >= horizon.from &&
+            gridEnd.getTime() <= horizon.to
+        ) {
             return;
         }
 
@@ -134,7 +146,9 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
                     updateParam("date", format(d, "yyyy-MM-dd"));
                     onContinueAction();
                 }}
-                disabled={(day) => !availableSet.has(localDateToUtcMidnight(day).getTime())}
+                disabled={(day) =>
+                    !availableSet.has(localDateToUtcMidnight(day).getTime())
+                }
                 month={currentMonth}
                 onMonthChange={setCurrentMonth}
                 fixedWeeks

@@ -1,4 +1,4 @@
- import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { auth, signIn } from "@/auth.ts";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";

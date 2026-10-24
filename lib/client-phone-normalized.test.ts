@@ -34,7 +34,9 @@ describe("Client.phoneNormalized", () => {
     });
 
     it("follows a phone change and stays null without a phone", async () => {
-        const client = await prisma.client.create({ data: { name: "Test Normalizace" } });
+        const client = await prisma.client.create({
+            data: { name: "Test Normalizace" },
+        });
         createdIds.push(client.id);
         expect(client.phoneNormalized).toBeNull();
 

@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { nameSchema, PHONE_RE, serviceIdsSchema, startTimeSchema } from "@/lib/validation.ts";
+import {
+    nameSchema,
+    PHONE_RE,
+    serviceIdsSchema,
+    startTimeSchema,
+} from "@/lib/validation.ts";
 import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
 
 export const soloDataSchema = z.object({
@@ -14,11 +19,9 @@ export const soloContextSchema = z.object({
     startTime: startTimeSchema,
 });
 
-export const groupDataSchema = soloDataSchema
-    .omit({ name: true })
-    .extend({
-        names: z.array(nameSchema).min(2).max(4),
-    });
+export const groupDataSchema = soloDataSchema.omit({ name: true }).extend({
+    names: z.array(nameSchema).min(2).max(4),
+});
 
 export const groupContextSchema = soloContextSchema
     .omit({ serviceId: true })
@@ -38,10 +41,15 @@ export const dateRangeSchema = z
         from: z.date(),
         to: z.date(),
     })
-    .refine((r) => r.from <= r.to, { message: "Konec rozsahu musí být po jeho začátku." })
-    .refine((r) => r.to.getTime() - r.from.getTime() <= MAX_DAY_RANGE_DAYS * DAY_MS, {
-        message: "Příliš dlouhý rozsah.",
-    });
+    .refine((r) => r.from <= r.to, {
+        message: "Konec rozsahu musí být po jeho začátku.",
+    })
+    .refine(
+        (r) => r.to.getTime() - r.from.getTime() <= MAX_DAY_RANGE_DAYS * DAY_MS,
+        {
+            message: "Příliš dlouhý rozsah.",
+        }
+    );
 
 // Looked up while the form is still being typed — empty or half-written
 // values are fine here (no nameSchema / PHONE_RE), just bounded.

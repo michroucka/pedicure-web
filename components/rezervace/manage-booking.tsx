@@ -54,7 +54,9 @@ export function ManageBooking({
     function openMove() {
         setMode("move");
         if (availableDays !== undefined) return;
-        const tomorrow = localDateToUtcMidnight(addDays(startOfDay(new Date()), 1));
+        const tomorrow = localDateToUtcMidnight(
+            addDays(startOfDay(new Date()), 1)
+        );
         const horizonEnd = addDays(tomorrow, HORIZON_DAYS);
         startDaysTransition(async () => {
             const days = await getRescheduleDaysAction(token, {
@@ -128,7 +130,9 @@ export function ManageBooking({
                     onSelect={pickMoveDate}
                     disabled={(day) =>
                         availableDays === undefined ||
-                        !availableDaySet.has(localDateToUtcMidnight(day).getTime())
+                        !availableDaySet.has(
+                            localDateToUtcMidnight(day).getTime()
+                        )
                     }
                     className="w-full bg-transparent"
                 />
@@ -238,8 +242,8 @@ export function ManageBooking({
                         <AlertDialogTitle>Zrušit rezervaci?</AlertDialogTitle>
                         <AlertDialogDescription>
                             {serviceLabel} • {formatTime(startTime)} –{" "}
-                            {formatTime(startTime + durationMinutes)}. Tuto
-                            akci nelze vzít zpět.
+                            {formatTime(startTime + durationMinutes)}. Tuto akci
+                            nelze vzít zpět.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

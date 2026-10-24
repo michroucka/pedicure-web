@@ -38,7 +38,12 @@ export const adminPhoneSchema = z
     .pipe(
         z.union([
             z.literal(""),
-            z.string().regex(PHONE_RE, "Neplatné telefonní číslo (formát 123 456 789)."),
+            z
+                .string()
+                .regex(
+                    PHONE_RE,
+                    "Neplatné telefonní číslo (formát 123 456 789)."
+                ),
         ])
     );
 

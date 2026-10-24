@@ -48,9 +48,15 @@ import {
     Pencil,
     Sparkles,
     StickyNote,
-    QrCode, ChevronDownIcon,
+    QrCode,
+    ChevronDownIcon,
 } from "lucide-react";
-import { formatPhoneNumber, formatTime, localDateToUtcMidnight, toTelHref } from "@/lib/utils.ts";
+import {
+    formatPhoneNumber,
+    formatTime,
+    localDateToUtcMidnight,
+    toTelHref,
+} from "@/lib/utils.ts";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
@@ -435,7 +441,9 @@ export function BookingDetailDialog({
                                     placeholder="+420 123 456 789"
                                     value={editPhone}
                                     onChange={(e) =>
-                                        setEditPhone(formatPhoneNumber(e.target.value))
+                                        setEditPhone(
+                                            formatPhoneNumber(e.target.value)
+                                        )
                                     }
                                 />
                                 <span className="flex items-center gap-1 text-sm font-medium">
@@ -472,7 +480,10 @@ export function BookingDetailDialog({
                                 </Select>
 
                                 <ExtraTimeField
-                                    value={editPeople[0]?.extraTime ?? extraTimeFromMinutes(0)}
+                                    value={
+                                        editPeople[0]?.extraTime ??
+                                        extraTimeFromMinutes(0)
+                                    }
                                     onChange={(v) =>
                                         updateEditPersonExtraTime(0, v)
                                     }

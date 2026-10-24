@@ -14,8 +14,9 @@ type CalendarNavigationValue = {
     startNavigation: (target: Date) => void;
 };
 
-const CalendarNavigationContext =
-    createContext<CalendarNavigationValue | null>(null);
+const CalendarNavigationContext = createContext<CalendarNavigationValue | null>(
+    null
+);
 
 const toParam = (d: Date) => format(d, "yyyy-MM-dd");
 

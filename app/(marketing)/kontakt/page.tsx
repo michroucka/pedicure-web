@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Mail, MapPin, Phone, Star } from "lucide-react";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
 import Image from "next/image";
-import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info.ts"
+import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info.ts";
 import { MapEmbed } from "@/components/marketing/map-embed.tsx";
 
 export const metadata: Metadata = {

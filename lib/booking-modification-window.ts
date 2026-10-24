@@ -9,8 +9,11 @@ export const CLIENT_MODIFICATION_WINDOW_HOURS = 24;
 
 export function canClientModifyBooking(date: Date, startTime: number): boolean {
     const today = getCzechToday();
-    const daysUntil = Math.round((date.getTime() - today.getTime()) / (ONE_DAY_MINUTES * 60 * 1000));
-    const minutesUntil = daysUntil * ONE_DAY_MINUTES + startTime - getCzechNowMinutes();
+    const daysUntil = Math.round(
+        (date.getTime() - today.getTime()) / (ONE_DAY_MINUTES * 60 * 1000)
+    );
+    const minutesUntil =
+        daysUntil * ONE_DAY_MINUTES + startTime - getCzechNowMinutes();
 
     return minutesUntil >= CLIENT_MODIFICATION_WINDOW_HOURS * 60;
 }

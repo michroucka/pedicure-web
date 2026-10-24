@@ -13,7 +13,7 @@ type BookingForReminder = Booking & { client: Client };
 // SMS text stays diacritics-free (GSM-7 fits 160 chars per part, Unicode
 // only 70), so the brand from BUSINESS_INFO gets stripped too.
 const SIGNATURE = stripDiacritics(
-    `${BUSINESS_INFO.name} - ${BUSINESS_INFO.tagline}`,
+    `${BUSINESS_INFO.name} - ${BUSINESS_INFO.tagline}`
 );
 
 // Constant in code, not a DB field — same convention as

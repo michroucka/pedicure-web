@@ -23,7 +23,15 @@ import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
-import { AlertCircle, Check, Mail, Phone, StickyNote, Trash2, UserRound } from "lucide-react";
+import {
+    AlertCircle,
+    Check,
+    Mail,
+    Phone,
+    StickyNote,
+    Trash2,
+    UserRound,
+} from "lucide-react";
 import { formatPhoneNumber } from "@/lib/utils.ts";
 import {
     deleteClientAction,
@@ -210,8 +218,8 @@ export function ClientEditDialog({
                     <AlertDialogHeader>
                         <AlertDialogTitle>Smazat klienta?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {client.name} zmizí ze seznamu klientů a z
-                            nabídky jmen při přidávání rezervace.
+                            {client.name} zmizí ze seznamu klientů a z nabídky
+                            jmen při přidávání rezervace.
                             {client.upcomingBookings > 0 &&
                                 ` Má ${upcomingLabel(client.upcomingBookings)} – ${client.upcomingBookings === 1 ? "ta zůstane" : "ty zůstanou"} v kalendáři.`}
                         </AlertDialogDescription>

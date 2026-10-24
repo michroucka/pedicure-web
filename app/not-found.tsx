@@ -33,7 +33,7 @@ export default function NotFound() {
                             <SearchX className="size-7 text-primary" />
                         </div>
                         <h1 className="mt-6 italic">Stránka nenalezena</h1>
-                        <p className="mt-4 max-w-prose text-pretty text-base leading-relaxed text-muted-foreground">
+                        <p className="mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
                             Stránka, kterou hledáte, tu není – možná byl odkaz
                             přesunutý nebo už neplatí.
                         </p>

@@ -247,7 +247,10 @@ export function toRecurringRows(
 ): { dayOfWeek: number; startTime: number; endTime: number }[] {
     const slotsByDay = new Map<number, TimeSlot[]>();
     for (const day of days) {
-        slotsByDay.set(day.dayOfWeek, [...(slotsByDay.get(day.dayOfWeek) ?? []), ...day.blocks]);
+        slotsByDay.set(day.dayOfWeek, [
+            ...(slotsByDay.get(day.dayOfWeek) ?? []),
+            ...day.blocks,
+        ]);
     }
     return [...slotsByDay].flatMap(([dayOfWeek, slots]) =>
         mergeSubsequentSlots(slots).map((slot) => ({

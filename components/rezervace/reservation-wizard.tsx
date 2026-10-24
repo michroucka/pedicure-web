@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Service } from "@/lib/generated/prisma/client.ts";
 import { useState } from "react";
@@ -26,17 +26,16 @@ export function ReservationWizard({ services }: { services: Service[] }) {
             hasServices && hasDate && hasSlot
                 ? 3
                 : hasServices && hasDate
-                ? 2
-                : hasServices
-                ? 1
-                : 0;
+                  ? 2
+                  : hasServices
+                    ? 1
+                    : 0;
         return { index, gen: 0 };
     });
     const advance = (index: number) =>
-        setStep((s) => ({ index, gen: s.gen + 1}));
+        setStep((s) => ({ index, gen: s.gen + 1 }));
 
-    const serviceIds =
-        parseServiceIdsParam(searchParams.get("services"));
+    const serviceIds = parseServiceIdsParam(searchParams.get("services"));
     const selectedServices = serviceIds
         .map((id) => services.find((s) => s.id === id))
         .filter((s): s is Service => !!s);

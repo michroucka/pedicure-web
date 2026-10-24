@@ -230,7 +230,11 @@ export function AddBookingDialog({
         if (people.length >= 4) return;
         const next = [
             ...people,
-            { name: people[0].name, serviceId: undefined, extraTime: NO_EXTRA_TIME },
+            {
+                name: people[0].name,
+                serviceId: undefined,
+                extraTime: NO_EXTRA_TIME,
+            },
         ];
         setPeople(next);
         refreshSlots(date, next);

@@ -40,11 +40,7 @@ const LOCAL_BUSINESS_JSON_LD = {
     ],
 };
 
-export default function MarketingLayout({
-    children,
-}: {
-    children: ReactNode;
-}) {
+export default function MarketingLayout({ children }: { children: ReactNode }) {
     return (
         <PortalContainerProvider
             className={`storefront flex min-h-svh flex-col bg-background text-foreground ${fontDisplay.variable}`}

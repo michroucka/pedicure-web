@@ -5,7 +5,8 @@ const isDev = process.env.NODE_ENV !== "production";
 // vercel.live. Preview builds run with NODE_ENV=production, so they're told
 // apart by VERCEL_ENV, which is set at build time when the headers below
 // are baked in. Production never allows it.
-const vercelToolbar = process.env.VERCEL_ENV === "preview" ? " https://vercel.live" : "";
+const vercelToolbar =
+    process.env.VERCEL_ENV === "preview" ? " https://vercel.live" : "";
 
 // Every third-party origin the pages load something from. Adding a new embed
 // or script means adding its origin here, or the browser silently blocks it.

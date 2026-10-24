@@ -201,13 +201,21 @@ export function ExceptionForm({
     function typeStart(block: Block, value: string) {
         if (!value) return;
         const start = parseTime(roundToQuarterHour(value));
-        updateBlock(block.id, Math.min(start, block.end - SLIDER_STEP), block.end);
+        updateBlock(
+            block.id,
+            Math.min(start, block.end - SLIDER_STEP),
+            block.end
+        );
     }
 
     function typeEnd(block: Block, value: string) {
         if (!value) return;
         const end = parseTime(roundToQuarterHour(value));
-        updateBlock(block.id, block.start, Math.max(end, block.start + SLIDER_STEP));
+        updateBlock(
+            block.id,
+            block.start,
+            Math.max(end, block.start + SLIDER_STEP)
+        );
     }
 
     function addBlock() {
@@ -261,10 +269,7 @@ export function ExceptionForm({
             if (conflicts === null) {
                 const { blocked } = diffDayBlocks(recurringFor(date), target);
 
-                const found = await checkDayOverrideConflicts(
-                    dateStr,
-                    blocked
-                );
+                const found = await checkDayOverrideConflicts(dateStr, blocked);
                 if (found.length > 0) {
                     setConflicts(found);
                     return;
@@ -294,7 +299,8 @@ export function ExceptionForm({
                         selected={range}
                         onSelect={updateRange}
                         disabled={(day) =>
-                            localDateToUtcMidnight(day).getTime() < minDate.getTime()
+                            localDateToUtcMidnight(day).getTime() <
+                            minDate.getTime()
                         }
                         modifiers={modifiers}
                         components={{ DayButton: ExceptionDayButton }}
@@ -308,7 +314,8 @@ export function ExceptionForm({
                         selected={date}
                         onSelect={updateDate}
                         disabled={(day) =>
-                            localDateToUtcMidnight(day).getTime() < minDate.getTime()
+                            localDateToUtcMidnight(day).getTime() <
+                            minDate.getTime()
                         }
                         modifiers={modifiers}
                         components={{ DayButton: ExceptionDayButton }}
@@ -317,7 +324,7 @@ export function ExceptionForm({
                     />
                 )}
 
-                <div className="flex flex-col gap-3 h-full">
+                <div className="flex h-full flex-col gap-3">
                     {(rangeMode ? !range?.from || !range?.to : !date) && (
                         <p className="text-sm text-muted-foreground max-lg:text-center">
                             {rangeMode
@@ -397,14 +404,8 @@ export function ExceptionForm({
                                     >
                                         <div className="flex-1">
                                             <Slider
-                                                value={[
-                                                    block.start,
-                                                    block.end,
-                                                ]}
-                                                onValueChange={([
-                                                    start,
-                                                    end,
-                                                ]) =>
+                                                value={[block.start, block.end]}
+                                                onValueChange={([start, end]) =>
                                                     updateBlock(
                                                         block.id,
                                                         start,
@@ -422,17 +423,13 @@ export function ExceptionForm({
                                                     icon={null}
                                                     variant="ghost"
                                                     max={formatTime(
-                                                        block.end -
-                                                            SLIDER_STEP
+                                                        block.end - SLIDER_STEP
                                                     )}
                                                     value={formatTime(
                                                         block.start
                                                     )}
                                                     onChange={(value) =>
-                                                        typeStart(
-                                                            block,
-                                                            value
-                                                        )
+                                                        typeStart(block, value)
                                                     }
                                                 />
                                                 <TimePicker
@@ -448,10 +445,7 @@ export function ExceptionForm({
                                                         block.end
                                                     )}
                                                     onChange={(value) =>
-                                                        typeEnd(
-                                                            block,
-                                                            value
-                                                        )
+                                                        typeEnd(block, value)
                                                     }
                                                 />
                                             </div>
@@ -491,9 +485,7 @@ export function ExceptionForm({
                                     <AlertCircle />
                                     <AlertTitle>
                                         V tomto termínu{" "}
-                                        {conflicts.length > 1
-                                            ? "jsou"
-                                            : "je"}{" "}
+                                        {conflicts.length > 1 ? "jsou" : "je"}{" "}
                                         rezervace
                                     </AlertTitle>
                                     <AlertDescription>

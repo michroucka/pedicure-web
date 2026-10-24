@@ -5,8 +5,7 @@ import Link from "next/link";
 export function PrivacyNotice() {
     return (
         <p className="mt-6 text-xs leading-relaxed text-pretty text-muted-foreground">
-            Odesláním rezervace berete na vědomí zpracování osobních údajů
-            podle{" "}
+            Odesláním rezervace berete na vědomí zpracování osobních údajů podle{" "}
             <Link
                 href="/ochrana-osobnich-udaju"
                 target="_blank"

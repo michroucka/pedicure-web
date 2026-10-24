@@ -11,7 +11,10 @@ export async function GET(
     const { token: rawToken } = await params;
     const token = rawToken.replace(/\.ics$/, "");
 
-    if (!process.env.ICS_FEED_TOKEN || !secretEquals(token, process.env.ICS_FEED_TOKEN)) {
+    if (
+        !process.env.ICS_FEED_TOKEN ||
+        !secretEquals(token, process.env.ICS_FEED_TOKEN)
+    ) {
         return NextResponse.json({ error: "Not Found" }, { status: 404 });
     }
 

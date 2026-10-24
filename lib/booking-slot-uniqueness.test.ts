@@ -76,7 +76,13 @@ describe("booking slot uniqueness", () => {
 
     // Booking_no_overlap – different start times, overlapping ranges.
     it("rejects a confirmed booking overlapping another one with a different start", async () => {
-        await createBooking({ clientId, serviceId, date: testDate, startTime: 720, source: "ONLINE" });
+        await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 720,
+            source: "ONLINE",
+        });
 
         const error = await createBooking({
             clientId,
@@ -90,13 +96,31 @@ describe("booking slot uniqueness", () => {
     });
 
     it("allows back-to-back bookings and overlap with a cancelled one", async () => {
-        const first = await createBooking({ clientId, serviceId, date: testDate, startTime: 780, source: "ONLINE" });
+        const first = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 780,
+            source: "ONLINE",
+        });
 
-        const adjacent = await createBooking({ clientId, serviceId, date: testDate, startTime: 810, source: "ONLINE" });
+        const adjacent = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 810,
+            source: "ONLINE",
+        });
         expect(adjacent.status).toBe("CONFIRMED");
 
         await cancelBooking(first.id);
-        const overCancelled = await createBooking({ clientId, serviceId, date: testDate, startTime: 765, source: "ONLINE" });
+        const overCancelled = await createBooking({
+            clientId,
+            serviceId,
+            date: testDate,
+            startTime: 765,
+            source: "ONLINE",
+        });
         expect(overCancelled.status).toBe("CONFIRMED");
     });
 });

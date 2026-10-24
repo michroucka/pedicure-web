@@ -16,7 +16,9 @@ import {
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 // after() runs its callback right away here so the post-move side effects
 // can be asserted; the email/push senders themselves are mocked.
-vi.mock("next/server", () => ({ after: vi.fn((callback: () => unknown) => callback()) }));
+vi.mock("next/server", () => ({
+    after: vi.fn((callback: () => unknown) => callback()),
+}));
 vi.mock("@/lib/send-push.ts", () => ({ sendPushNotification: vi.fn() }));
 vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
     sendBookingMovedEmail: vi.fn(),
@@ -69,7 +71,9 @@ describe("rezervace/sprava/[token] actions", () => {
 
     afterEach(async () => {
         vi.useRealTimers();
-        await prisma.booking.deleteMany({ where: { clientId: { in: clientIds } } });
+        await prisma.booking.deleteMany({
+            where: { clientId: { in: clientIds } },
+        });
         await prisma.client.deleteMany({ where: { id: { in: clientIds } } });
         await prisma.service.delete({ where: { id: serviceId } });
         await prisma.recurringAvailability.deleteMany({
@@ -84,9 +88,13 @@ describe("rezervace/sprava/[token] actions", () => {
         });
 
         it("answers a well-formed but unknown token and a non-string token the same way", async () => {
-            const unknown = await cancelBookingByTokenAction(crypto.randomUUID());
+            const unknown = await cancelBookingByTokenAction(
+                crypto.randomUUID()
+            );
             // server actions take whatever the client sends, types or not
-            const tampered = await cancelBookingByTokenAction(42 as unknown as string);
+            const tampered = await cancelBookingByTokenAction(
+                42 as unknown as string
+            );
 
             expect(unknown).toEqual({ ok: false, error: expect.any(String) });
             expect(tampered).toEqual(unknown);
@@ -101,7 +109,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 source: "ONLINE",
             });
 
-            const result = await cancelBookingByTokenAction(booking.cancelToken);
+            const result = await cancelBookingByTokenAction(
+                booking.cancelToken
+            );
 
             expect(result).toEqual({ ok: true });
             const after = await prisma.booking.findUniqueOrThrow({
@@ -119,7 +129,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 source: "ONLINE",
             });
 
-            const result = await cancelBookingByTokenAction(booking.cancelToken);
+            const result = await cancelBookingByTokenAction(
+                booking.cancelToken
+            );
 
             expect(result.ok).toBe(false);
             const after = await prisma.booking.findUniqueOrThrow({
@@ -139,7 +151,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 "ONLINE"
             );
 
-            const result = await cancelBookingByTokenAction(group[1].cancelToken);
+            const result = await cancelBookingByTokenAction(
+                group[1].cancelToken
+            );
 
             expect(result).toEqual({ ok: true });
             const after = await prisma.booking.findMany({
@@ -168,10 +182,16 @@ describe("rezervace/sprava/[token] actions", () => {
                 source: "ONLINE",
             });
 
-            const result = await moveBookingByTokenAction(booking.cancelToken, "2026-02-30", 540);
+            const result = await moveBookingByTokenAction(
+                booking.cancelToken,
+                "2026-02-30",
+                540
+            );
 
             expect(result.ok).toBe(false);
-            const after = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
+            const after = await prisma.booking.findUniqueOrThrow({
+                where: { id: booking.id },
+            });
             expect(after.status).toBe("CONFIRMED");
             expect(sendBookingMovedEmail).not.toHaveBeenCalled();
         });
@@ -242,7 +262,12 @@ describe("rezervace/sprava/[token] actions", () => {
             const group = await createGroupBooking(
                 [
                     { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
-                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                    {
+                        clientId: clientIds[0],
+                        guestName: "Eva Host",
+                        extraTimeMinutes: 0,
+                        serviceId,
+                    },
                 ],
                 ORIGINAL_DATE,
                 555, // 9:15-10:15 sticks out of the 9:00-10:00 window
@@ -322,9 +347,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 where: { groupId, status: "CONFIRMED" },
             });
             expect(newRows).toHaveLength(2);
-            expect(newRows.every((b) => b.date.getTime() === TARGET_DATE.getTime())).toBe(
-                true
-            );
+            expect(
+                newRows.every((b) => b.date.getTime() === TARGET_DATE.getTime())
+            ).toBe(true);
             // one email for the whole group, with all its new bookings
             expect(sendBookingMovedEmail).toHaveBeenCalledOnce();
             expect(
@@ -335,7 +360,9 @@ describe("rezervace/sprava/[token] actions", () => {
 
     describe("getRescheduleSlotsAction / getRescheduleDaysAction", () => {
         it("returns no slots/days for an unknown token", async () => {
-            expect(await getRescheduleSlotsAction("nope", "2026-06-21")).toEqual([]);
+            expect(
+                await getRescheduleSlotsAction("nope", "2026-06-21")
+            ).toEqual([]);
             expect(
                 await getRescheduleDaysAction("nope", {
                     from: TARGET_DATE,
@@ -367,7 +394,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 from: TARGET_DATE,
                 to: TARGET_DATE,
             });
-            expect(days.map((d) => d.getTime())).toEqual([TARGET_DATE.getTime()]);
+            expect(days.map((d) => d.getTime())).toEqual([
+                TARGET_DATE.getTime(),
+            ]);
         });
 
         it("returns nothing for a malformed date or an overlong range, even with a valid token", async () => {
@@ -379,7 +408,9 @@ describe("rezervace/sprava/[token] actions", () => {
                 source: "ONLINE",
             });
 
-            expect(await getRescheduleSlotsAction(booking.cancelToken, "nesmysl")).toEqual([]);
+            expect(
+                await getRescheduleSlotsAction(booking.cancelToken, "nesmysl")
+            ).toEqual([]);
             expect(
                 await getRescheduleDaysAction(booking.cancelToken, {
                     from: TARGET_DATE,
@@ -399,7 +430,12 @@ describe("rezervace/sprava/[token] actions", () => {
             const group = await createGroupBooking(
                 [
                     { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
-                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                    {
+                        clientId: clientIds[0],
+                        guestName: "Eva Host",
+                        extraTimeMinutes: 0,
+                        serviceId,
+                    },
                 ],
                 ORIGINAL_DATE,
                 540,
@@ -421,7 +457,12 @@ describe("rezervace/sprava/[token] actions", () => {
             const group = await createGroupBooking(
                 [
                     { clientId: clientIds[0], extraTimeMinutes: 0, serviceId },
-                    { clientId: clientIds[0], guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                    {
+                        clientId: clientIds[0],
+                        guestName: "Eva Host",
+                        extraTimeMinutes: 0,
+                        serviceId,
+                    },
                 ],
                 ORIGINAL_DATE,
                 540,
@@ -438,7 +479,9 @@ describe("rezervace/sprava/[token] actions", () => {
             });
 
             expect(slots).toEqual([540]);
-            expect(days.map((d) => d.getTime())).toEqual([ORIGINAL_DATE.getTime()]);
+            expect(days.map((d) => d.getTime())).toEqual([
+                ORIGINAL_DATE.getTime(),
+            ]);
         });
 
         it("offers a same-day time overlapping a solo booking's own slot", async () => {

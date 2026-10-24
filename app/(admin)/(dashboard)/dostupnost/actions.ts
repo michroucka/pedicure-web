@@ -190,7 +190,10 @@ export async function checkRangeConflicts(
     await requireAdmin();
     // Same rules (incl. the max length) as saveCloseRange — an invalid
     // range shows no conflicts and then fails there with the message.
-    const result = closeRangeSchema.safeParse({ startDate: startDateStr, endDate: endDateStr });
+    const result = closeRangeSchema.safeParse({
+        startDate: startDateStr,
+        endDate: endDateStr,
+    });
     if (!result.success) return [];
     const dates = datesInRange(result.data.startDate, result.data.endDate);
 

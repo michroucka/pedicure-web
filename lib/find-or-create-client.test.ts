@@ -51,9 +51,15 @@ describe("findClient / findOrCreateClient", () => {
         });
 
         it("does not fall back to the name when a phone is given but unknown", async () => {
-            await createClient({ name: "Jana Unikátní Testová", phone: uniquePhone() });
+            await createClient({
+                name: "Jana Unikátní Testová",
+                phone: uniquePhone(),
+            });
 
-            const found = await findClient(uniquePhone(), "Jana Unikátní Testová");
+            const found = await findClient(
+                uniquePhone(),
+                "Jana Unikátní Testová"
+            );
 
             expect(found).toBeUndefined();
         });
@@ -79,7 +85,11 @@ describe("findClient / findOrCreateClient", () => {
         it("creates a new client when nothing matches", async () => {
             const phone = uniquePhone();
 
-            const client = await findOrCreateClient(phone, "Nová Klientka", "nova@example.com");
+            const client = await findOrCreateClient(
+                phone,
+                "Nová Klientka",
+                "nova@example.com"
+            );
             createdIds.push(client.id);
 
             expect(client.name).toBe("Nová Klientka");
@@ -89,7 +99,10 @@ describe("findClient / findOrCreateClient", () => {
 
         it("reuses the client matched by phone instead of creating a duplicate", async () => {
             const phone = uniquePhone();
-            const existing = await createClient({ name: "Jana Testová", phone });
+            const existing = await createClient({
+                name: "Jana Testová",
+                phone,
+            });
 
             const client = await findOrCreateClient(phone, "Jana Testová");
 
@@ -99,7 +112,10 @@ describe("findClient / findOrCreateClient", () => {
 
         it("renames a phone-matched client to the latest provided name", async () => {
             const phone = uniquePhone();
-            const existing = await createClient({ name: "Jana Testová", phone });
+            const existing = await createClient({
+                name: "Jana Testová",
+                phone,
+            });
 
             const client = await findOrCreateClient(phone, "Jana Nová-Testová");
 
@@ -109,7 +125,11 @@ describe("findClient / findOrCreateClient", () => {
 
         it("keeps the client's extraTimeMinutes when reusing it", async () => {
             const phone = uniquePhone();
-            await createClient({ name: "Jana Testová", phone, extraTimeMinutes: 15 });
+            await createClient({
+                name: "Jana Testová",
+                phone,
+                extraTimeMinutes: 15,
+            });
 
             const client = await findOrCreateClient(phone, "Jana Testová");
 

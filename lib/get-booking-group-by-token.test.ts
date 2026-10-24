@@ -34,7 +34,12 @@ describe("getBookingGroupByToken", () => {
         return createGroupBooking(
             [
                 { clientId, extraTimeMinutes: 0, serviceId },
-                { clientId, guestName: "Eva Host", extraTimeMinutes: 0, serviceId },
+                {
+                    clientId,
+                    guestName: "Eva Host",
+                    extraTimeMinutes: 0,
+                    serviceId,
+                },
             ],
             testDate,
             540,
@@ -79,9 +84,14 @@ describe("getBookingGroupByToken", () => {
         const first = await moveGroupBooking(group[0].groupId!, testDate, 660, {
             outsideHours: true,
         });
-        const second = await moveGroupBooking(group[0].groupId!, testDate, 600, {
-            outsideHours: true,
-        });
+        const second = await moveGroupBooking(
+            group[0].groupId!,
+            testDate,
+            600,
+            {
+                outsideHours: true,
+            }
+        );
 
         const viaGuest = await getBookingGroupByToken(second[1].cancelToken);
 

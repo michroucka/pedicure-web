@@ -14,14 +14,7 @@ import { Input } from "@/components/ui/input.tsx";
 import { PhoneInput } from "@/components/phone-input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert.tsx";
-import {
-    Check,
-    ChevronLeft,
-    Info,
-    Mail,
-    Phone,
-    UserRound,
-} from "lucide-react";
+import { Check, ChevronLeft, Info, Mail, Phone, UserRound } from "lucide-react";
 import Link from "next/link";
 import { PrivacyNotice } from "@/components/rezervace/privacy-notice.tsx";
 import { useTurnstile } from "@/components/rezervace/use-turnstile.tsx";
@@ -37,7 +30,10 @@ export function SoloBookingForm({
     durationMinutes,
     initialExtraMinutes = 0,
 }: {
-    boundSubmitAction: (data: SoloFormData, turnstileToken: string | null) => Promise<void>;
+    boundSubmitAction: (
+        data: SoloFormData,
+        turnstileToken: string | null
+    ) => Promise<void>;
     backHref: string;
     startTime: number;
     durationMinutes: number;
@@ -64,14 +60,18 @@ export function SoloBookingForm({
 
     const name = useWatch({ control, name: "name" });
     const phone = useWatch({ control, name: "phone" });
-    const extraMinutes = useClientExtraMinutes(name, phone, initialExtraMinutes);
+    const extraMinutes = useClientExtraMinutes(
+        name,
+        phone,
+        initialExtraMinutes
+    );
 
     return (
         <>
             {extraMinutes > 0 && extraMinutes !== initialExtraMinutes && (
                 <Alert
                     variant="info"
-                    className="mb-4 -mt-4"
+                    className="-mt-4 mb-4"
                 >
                     <Info />
                     <AlertTitle>Delší rezervace</AlertTitle>

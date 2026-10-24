@@ -77,9 +77,7 @@ export function ExtraTimeField({
                             })
                         }
                     />
-                    <span className="text-sm text-muted-foreground">
-                        min
-                    </span>
+                    <span className="text-sm text-muted-foreground">min</span>
                 </div>
             )}
         </div>

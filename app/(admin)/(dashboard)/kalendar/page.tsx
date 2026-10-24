@@ -33,9 +33,9 @@ export default async function AdminHomePage({
     if ([6, 0].includes(today.getUTCDay())) {
         const weekend = [
             today,
-            today.getUTCDay() === 0 ?
-                addUtcDays(today, -1) :
-                addUtcDays(today, 1)
+            today.getUTCDay() === 0
+                ? addUtcDays(today, -1)
+                : addUtcDays(today, 1),
         ];
         const weekendBookings = await prisma.booking.count({
             where: {
@@ -65,40 +65,41 @@ export default async function AdminHomePage({
     // pure CSS decision (see DayNav/the lg:hidden wrappers below) — so
     // fetch once for the whole week and derive the single day's data from
     // it instead of querying twice.
-    const [services, clients, bookings, recurring, exceptions] = await Promise.all([
-        prisma.service.findMany({ orderBy: { id: "asc" } }),
-        prisma.client.findMany({
-            select: {
-                id: true,
-                name: true,
-                phone: true,
-                email: true,
-                extraTimeMinutes: true,
-                // hidden ("deleted") clients are left out of the autocomplete
-                // but still matched for the extra time prefill - the server
-                // matches them too (see AddBookingDialog)
-                active: true,
-            },
-            orderBy: { name: "asc" },
-        }),
-        prisma.booking.findMany({
-            where: { date: { in: weekDays }, status: "CONFIRMED" },
-            include: { client: true, service: true },
-            orderBy: { startTime: "asc" },
-        }),
-        prisma.recurringAvailability.findMany(),
-        // Scoped to "from the shown week (or today) on", not just this week
-        // - the date picker's Calendar shows open/closed dots across whole
-        // months, and this table is tiny for a single-provider business, so
-        // fetching further out than the visible week costs nothing. Starting
-        // at the week, not today, keeps a past week's blocked/extra-open
-        // days rendered correctly.
-        prisma.availabilityException.findMany({
-            where: {
-                date: { gte: weekStart < today ? weekStart : today },
-            },
-        }),
-    ]);
+    const [services, clients, bookings, recurring, exceptions] =
+        await Promise.all([
+            prisma.service.findMany({ orderBy: { id: "asc" } }),
+            prisma.client.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                    phone: true,
+                    email: true,
+                    extraTimeMinutes: true,
+                    // hidden ("deleted") clients are left out of the autocomplete
+                    // but still matched for the extra time prefill - the server
+                    // matches them too (see AddBookingDialog)
+                    active: true,
+                },
+                orderBy: { name: "asc" },
+            }),
+            prisma.booking.findMany({
+                where: { date: { in: weekDays }, status: "CONFIRMED" },
+                include: { client: true, service: true },
+                orderBy: { startTime: "asc" },
+            }),
+            prisma.recurringAvailability.findMany(),
+            // Scoped to "from the shown week (or today) on", not just this week
+            // - the date picker's Calendar shows open/closed dots across whole
+            // months, and this table is tiny for a single-provider business, so
+            // fetching further out than the visible week costs nothing. Starting
+            // at the week, not today, keeps a past week's blocked/extra-open
+            // days rendered correctly.
+            prisma.availabilityException.findMany({
+                where: {
+                    date: { gte: weekStart < today ? weekStart : today },
+                },
+            }),
+        ]);
 
     const windowsByDay = weekDays.map((d) =>
         resolveDayTimeSlots(

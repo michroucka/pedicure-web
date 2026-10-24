@@ -10,12 +10,14 @@ import { subscribeAndSave } from "@/lib/push-client.ts";
 // here — that would pop a dialog without a user gesture.
 export function PushResubscribe() {
     useEffect(() => {
-        if (!("serviceWorker" in navigator) || !("Notification" in window)) return;
+        if (!("serviceWorker" in navigator) || !("Notification" in window))
+            return;
         if (Notification.permission !== "granted") return;
 
         navigator.serviceWorker.ready
             .then(async (registration) => {
-                const subscription = await registration.pushManager.getSubscription();
+                const subscription =
+                    await registration.pushManager.getSubscription();
                 if (subscription) return;
                 await subscribeAndSave(registration);
             })

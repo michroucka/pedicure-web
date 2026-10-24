@@ -1,7 +1,7 @@
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma.ts";
 
-type PushPayload = { title: string; body: string; url?: string};
+type PushPayload = { title: string; body: string; url?: string };
 
 async function sendOne(
     sub: { endpoint: string; p256dh: string; auth: string },
@@ -30,17 +30,15 @@ async function sendOne(
     }
 }
 
-export async function sendPushNotification(payload: PushPayload): Promise<void> {
+export async function sendPushNotification(
+    payload: PushPayload
+): Promise<void> {
     const vapidSubject = process.env.VAPID_SUBJECT;
     const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
     if (!vapidSubject || !vapidPublicKey || !vapidPrivateKey) return;
 
-    webpush.setVapidDetails(
-        vapidSubject,
-        vapidPublicKey,
-        vapidPrivateKey,
-    );
+    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 
     const subscriptions = await prisma.pushSubscription.findMany();
     await Promise.allSettled(subscriptions.map((sub) => sendOne(sub, payload)));

@@ -31,7 +31,10 @@ import {
 // The admin forms validate the same things first, so this only shows up
 // for tampered input or a phone that couldn't be normalized.
 function invalidInput(error: { issues: { message: string }[] }) {
-    return { ok: false as const, error: error.issues[0]?.message ?? "Neplatné údaje." };
+    return {
+        ok: false as const,
+        error: error.issues[0]?.message ?? "Neplatné údaje.",
+    };
 }
 
 // Ids of services that don't exist (or, with activeOnly, are no longer
@@ -63,7 +66,8 @@ export async function getMoveSlotsAction(
         overrideExtraMinutes,
     });
     if (!parsed.success) return [];
-    ({ id, groupId, dateStr, overrideServiceIds, overrideExtraMinutes } = parsed.data);
+    ({ id, groupId, dateStr, overrideServiceIds, overrideExtraMinutes } =
+        parsed.data);
 
     const date = toDateOnly(new Date(dateStr));
 
@@ -144,7 +148,12 @@ export async function updateBookingAction(input: {
 
     // Existing bookings may keep a service that's no longer offered — only
     // check that it exists, not that it's active.
-    if (await hasUnknownService(input.people.map((p) => p.serviceId), false)) {
+    if (
+        await hasUnknownService(
+            input.people.map((p) => p.serviceId),
+            false
+        )
+    ) {
         return { ok: false, error: "Služba nenalezena." };
     }
 
@@ -216,24 +225,37 @@ export async function updateBookingAction(input: {
     let movedIds: string[];
     try {
         if (input.groupId) {
-            const moved = await moveGroupBooking(input.groupId, date, input.startTime, {
-                outsideHours: input.outsideHours,
-                serviceOverrides: Object.fromEntries(
-                    existing.map((b, i) => [b.id, input.people[i].serviceId])
-                ),
-                extraTimeOverrides: Object.fromEntries(
-                    existing.map((b, i) => [b.id, extraTimes[i]])
-                ),
-                allowUnfillableGaps: true,
-            });
+            const moved = await moveGroupBooking(
+                input.groupId,
+                date,
+                input.startTime,
+                {
+                    outsideHours: input.outsideHours,
+                    serviceOverrides: Object.fromEntries(
+                        existing.map((b, i) => [
+                            b.id,
+                            input.people[i].serviceId,
+                        ])
+                    ),
+                    extraTimeOverrides: Object.fromEntries(
+                        existing.map((b, i) => [b.id, extraTimes[i]])
+                    ),
+                    allowUnfillableGaps: true,
+                }
+            );
             movedIds = moved.map((b) => b.id);
         } else {
-            const moved = await moveBooking(input.people[0].bookingId, date, input.startTime, {
-                outsideHours: input.outsideHours,
-                serviceId: input.people[0].serviceId,
-                extraTimeMinutes: extraTimes[0],
-                allowUnfillableGaps: true,
-            });
+            const moved = await moveBooking(
+                input.people[0].bookingId,
+                date,
+                input.startTime,
+                {
+                    outsideHours: input.outsideHours,
+                    serviceId: input.people[0].serviceId,
+                    extraTimeMinutes: extraTimes[0],
+                    allowUnfillableGaps: true,
+                }
+            );
             movedIds = [moved.id];
         }
     } catch (error) {
@@ -263,15 +285,24 @@ export async function getManualBookingSlotsAction(
     extraMinutes: number = 0
 ): Promise<number[]> {
     await requireAdmin();
-    const parsed = manualBookingSlotsInputSchema.safeParse({ serviceIds, dateStr, extraMinutes });
+    const parsed = manualBookingSlotsInputSchema.safeParse({
+        serviceIds,
+        dateStr,
+        extraMinutes,
+    });
     if (!parsed.success) return [];
     ({ serviceIds, dateStr, extraMinutes } = parsed.data);
 
     const date = toDateOnly(new Date(dateStr));
-    return getAvailableSlots(date, serviceIds, normalizeExtraMinutes(extraMinutes), {
-        allowToday: true,
-        allowUnfillableGaps: true,
-    });
+    return getAvailableSlots(
+        date,
+        serviceIds,
+        normalizeExtraMinutes(extraMinutes),
+        {
+            allowToday: true,
+            allowUnfillableGaps: true,
+        }
+    );
 }
 
 export async function createManualBookingAction(input: {
@@ -298,7 +329,12 @@ export async function createManualBookingAction(input: {
     // Every check below runs before findOrCreateClient — a rejected booking
     // must not create or update a client. None of them need the client:
     // extra time comes from the form, not from the Client.
-    if (await hasUnknownService(input.people.map((p) => p.serviceId), true)) {
+    if (
+        await hasUnknownService(
+            input.people.map((p) => p.serviceId),
+            true
+        )
+    ) {
         return { ok: false, error: "Služba už není v nabídce." };
     }
 
@@ -334,7 +370,10 @@ export async function createManualBookingAction(input: {
             input.startTime + totalDuration
         );
         if (overlaps) {
-            return { ok: false, error: "Zvolený čas koliduje s jinou rezervací." };
+            return {
+                ok: false,
+                error: "Zvolený čas koliduje s jinou rezervací.",
+            };
         }
     } else {
         const validSlots = await getAvailableSlots(
@@ -371,7 +410,12 @@ export async function createManualBookingAction(input: {
                 source: input.source,
             });
         } else {
-            await createGroupBooking(bookingPeople, date, input.startTime, input.source);
+            await createGroupBooking(
+                bookingPeople,
+                date,
+                input.startTime,
+                input.source
+            );
         }
     } catch (error) {
         if (isBookingSlotConflict(error)) {

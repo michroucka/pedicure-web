@@ -16,10 +16,18 @@ describe("createBooking / createGroupBooking", () => {
 
         const services = await Promise.all([
             prisma.service.create({
-                data: { name: "Test Service 30", durationMinutes: 30, price: 100 },
+                data: {
+                    name: "Test Service 30",
+                    durationMinutes: 30,
+                    price: 100,
+                },
             }),
             prisma.service.create({
-                data: { name: "Test Service 45", durationMinutes: 45, price: 150 },
+                data: {
+                    name: "Test Service 45",
+                    durationMinutes: 45,
+                    price: 150,
+                },
             }),
         ]);
         serviceIds = services.map((s) => s.id);
@@ -63,16 +71,34 @@ describe("createBooking / createGroupBooking", () => {
         const group = await createGroupBooking(
             [
                 { clientId, extraTimeMinutes: 15, serviceId: serviceIds[0] },
-                { clientId, guestName: "Eva Host", extraTimeMinutes: 0, serviceId: serviceIds[1] },
-                { clientId, guestName: "Petr Host", extraTimeMinutes: 10, serviceId: serviceIds[0] },
+                {
+                    clientId,
+                    guestName: "Eva Host",
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[1],
+                },
+                {
+                    clientId,
+                    guestName: "Petr Host",
+                    extraTimeMinutes: 10,
+                    serviceId: serviceIds[0],
+                },
             ],
             testDate,
             540,
             "ONLINE"
         );
 
-        expect(group.map((b) => b.clientId)).toEqual([clientId, clientId, clientId]);
-        expect(group.map((b) => b.guestName)).toEqual([null, "Eva Host", "Petr Host"]);
+        expect(group.map((b) => b.clientId)).toEqual([
+            clientId,
+            clientId,
+            clientId,
+        ]);
+        expect(group.map((b) => b.guestName)).toEqual([
+            null,
+            "Eva Host",
+            "Petr Host",
+        ]);
         expect(group.map((b) => b.extraTimeMinutes)).toEqual([15, 0, 10]);
         expect(new Set(group.map((b) => b.groupId)).size).toBe(1);
 

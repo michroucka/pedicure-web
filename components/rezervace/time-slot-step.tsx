@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -10,7 +10,11 @@ import { Spinner } from "@/components/ui/spinner.tsx";
 import { AlertCircle, CalendarX } from "lucide-react";
 import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
-export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void }) {
+export function TimeSlotStep({
+    onSelectAction,
+}: {
+    onSelectAction: () => void;
+}) {
     const [availableSlots, setAvailableSlots] = useState<number[]>();
     const [isLoading, startTransition] = useTransition();
 
@@ -91,7 +95,7 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                     Vyberte prosím jiné datum.
                 </div>
             ) : (
-                <div className="grid grid-cols-4 lg:grid-cols-5 gap-2">
+                <div className="grid grid-cols-4 gap-2 lg:grid-cols-5">
                     {availableSlots?.map((s) => (
                         <Button
                             key={s}
@@ -106,5 +110,5 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
                 </div>
             )}
         </div>
-    )
+    );
 }

@@ -5,6 +5,7 @@ import { createHash, timingSafeEqual } from "crypto";
 // Hashing first gives timingSafeEqual equal-length inputs, so the length
 // of the real secret doesn't leak either.
 export function secretEquals(provided: string, expected: string): boolean {
-    const digest = (value: string) => createHash("sha256").update(value).digest();
+    const digest = (value: string) =>
+        createHash("sha256").update(value).digest();
     return timingSafeEqual(digest(provided), digest(expected));
 }
