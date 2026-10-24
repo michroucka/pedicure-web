@@ -19,33 +19,28 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
     const searchParams = useSearchParams();
 
     const dateParam = searchParams.get("date");
-    const date = dateParam ? new Date(dateParam) : undefined;
-
-    const currentServices: number[] =
-        parseServiceIdsParam(searchParams.get("services"));
+    const servicesParam = searchParams.get("services");
+    const extraMinutesParam = searchParams.get("extraMinutes");
 
     const slotParam = searchParams.get("slot");
     const selectedSlot = slotParam ? Number(slotParam) : undefined;
     const error = searchParams.get("error");
-    const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
+    const extraMinutes = Number(extraMinutesParam ?? 0);
 
+    // Keyed on the raw URL params (strings), not on the parsed Date/array -
+    // those are new objects every render and would refetch in a loop.
     useEffect(() => {
-        if (!date) return;
-        const selectedDate = date;
+        if (!dateParam) return;
 
         startTransition(async () => {
             const slots = await getAvailableSlotsAction(
-                selectedDate,
-                currentServices,
-                extraMinutes
+                new Date(dateParam),
+                parseServiceIdsParam(servicesParam),
+                Number(extraMinutesParam ?? 0)
             );
             setAvailableSlots(slots);
         });
-    }, [
-        searchParams.get("services"),
-        searchParams.get("date"),
-        searchParams.get("extraMinutes"),
-    ]);
+    }, [dateParam, servicesParam, extraMinutesParam]);
 
     function selectSlot(s: number) {
         const params = new URLSearchParams(searchParams);
