@@ -19,7 +19,9 @@ export async function findOrCreateClient(
 
 // The write half of findOrCreateClient, for callers that already looked the
 // client up with findClient (online booking reads the extra time before
-// validating the slot) and shouldn't query it twice.
+// validating the slot) and shouldn't repeat the whole search. The match is
+// re-read by id (a cheap primary-key lookup) right before writing: the
+// admin may have deleted or edited that client in the meantime.
 export async function upsertMatchedClient(
     matched: Client | undefined,
     phone: string | undefined,
@@ -27,7 +29,10 @@ export async function upsertMatchedClient(
     email?: string,
     note?: string
 ): Promise<Client> {
-    let client = matched;
+    let client = matched
+        ? ((await prisma.client.findUnique({ where: { id: matched.id } })) ??
+          undefined)
+        : undefined;
 
     if (!client) {
         client = await prisma.client.create({

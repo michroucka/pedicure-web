@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { prisma } from "./prisma.ts";
 import { findClient } from "./find-client.ts";
-import { findOrCreateClient } from "./find-or-create-client.ts";
+import {
+    findOrCreateClient,
+    upsertMatchedClient,
+} from "./find-or-create-client.ts";
 
 // findClient matches by phone across the whole shared test branch, so
 // each test uses its own random number – a fixed one (e.g. "999999999",
@@ -78,6 +81,44 @@ describe("findClient / findOrCreateClient", () => {
 
             expect((await findClient(undefined, name))?.id).toBe(client.id);
             expect(await findClient(undefined, `${name} X`)).toBeUndefined();
+        });
+    });
+
+    describe("upsertMatchedClient", () => {
+        it("creates a new client when the matched one was deleted meanwhile", async () => {
+            const phone = uniquePhone();
+            const stale = await createClient({ name: "Smazaná", phone });
+            await prisma.client.delete({ where: { id: stale.id } });
+
+            const client = await upsertMatchedClient(
+                stale,
+                phone,
+                "Smazaná",
+                "s@example.com"
+            );
+            createdIds.push(client.id);
+
+            expect(client.id).not.toBe(stale.id);
+            expect(client.email).toBe("s@example.com");
+        });
+
+        it("compares against the current record, not the stale one", async () => {
+            const phone = uniquePhone();
+            const stale = await createClient({ name: "Původní", phone });
+            await prisma.client.update({
+                where: { id: stale.id },
+                data: { email: "nova@example.com" },
+            });
+
+            const client = await upsertMatchedClient(
+                stale,
+                phone,
+                "Původní",
+                "nova@example.com"
+            );
+
+            expect(client.id).toBe(stale.id);
+            expect(client.email).toBe("nova@example.com");
         });
     });
 

@@ -113,14 +113,12 @@ async function rejectAbusiveSubmission(
     contact: { phone: string; email: string; name: string },
     slot: { date: Date; serviceIds: number[]; startTime: number }
 ): Promise<void> {
-    const [isHuman, isOverLimit] = await Promise.all([
-        verifyTurnstileToken(turnstileToken),
-        hasReachedOnlineBookingLimit(contact.phone, contact.email),
-    ]);
-    if (!isHuman) {
+    // One after the other on purpose: a request that fails the bot check
+    // must not get to run any DB query.
+    if (!(await verifyTurnstileToken(turnstileToken))) {
         redirect(await detailsErrorUrl(contact, slot, "verification"));
     }
-    if (isOverLimit) {
+    if (await hasReachedOnlineBookingLimit(contact.phone, contact.email)) {
         redirect(await detailsErrorUrl(contact, slot, "booking_limit"));
     }
 }
