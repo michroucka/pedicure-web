@@ -421,16 +421,15 @@ describe("kalendar actions", () => {
             expect(bookings.map((b) => b.cancelToken)).toEqual(tokensBefore);
         });
 
-        it("refuses to save when the people no longer match the group's bookings", async () => {
-            const { group } = await createGroup();
+        it("matches people to bookings by id, not by their order in the dialog", async () => {
+            const { client, group } = await createGroup();
 
-            // stale dialog: same count, but the ids are in a different order
             const result = await updateBookingAction({
                 groupId: group[0].groupId,
                 people: [
                     {
-                        bookingId: group[1].id,
-                        name: "Eva",
+                        bookingId: group[2].id,
+                        name: "Petr Beránek",
                         serviceId: serviceIds[0],
                         extraTimeMinutes: 0,
                     },
@@ -441,7 +440,51 @@ describe("kalendar actions", () => {
                         extraTimeMinutes: 0,
                     },
                     {
-                        bookingId: group[2].id,
+                        bookingId: group[1].id,
+                        name: "Eva Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 540,
+            });
+
+            expect(result).toEqual({ ok: true });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
+            expect(after.name).toBe("Jana Beránková");
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                null,
+                "Eva Beránková",
+                "Petr Beránek",
+            ]);
+        });
+
+        it("refuses to save a dialog that no longer matches the group", async () => {
+            const { group } = await createGroup();
+
+            const result = await updateBookingAction({
+                groupId: group[0].groupId,
+                people: [
+                    {
+                        bookingId: group[0].id,
+                        name: "Jana Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: "uz-neexistuje",
                         name: "Petr",
                         serviceId: serviceIds[0],
                         extraTimeMinutes: 0,
@@ -458,6 +501,47 @@ describe("kalendar actions", () => {
             expect(bookings.map((b) => b.guestName)).toEqual([
                 null,
                 "Eva",
+                "Petr",
+            ]);
+        });
+
+        it("never renames the main contact after their own booking was cancelled (regression)", async () => {
+            const { client, group } = await createGroup();
+            await cancelBookingAction(group[0].id);
+
+            // the dialog now shows only the guests, Eva first
+            const result = await updateBookingAction({
+                groupId: group[0].groupId,
+                people: [
+                    {
+                        bookingId: group[1].id,
+                        name: "Eva Beránková",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                    {
+                        bookingId: group[2].id,
+                        name: "Petr",
+                        serviceId: serviceIds[0],
+                        extraTimeMinutes: 0,
+                    },
+                ],
+                phone,
+                note: "nova poznamka",
+                dateStr: DATE_STR,
+                startTime: 570,
+            });
+
+            expect(result).toEqual({ ok: true });
+            const after = await prisma.client.findUniqueOrThrow({
+                where: { id: client.id },
+            });
+            expect(after.name).toBe("Jana Beránková");
+            // contact details still reach the group's client
+            expect(after.note).toBe("nova poznamka");
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.guestName)).toEqual([
+                "Eva Beránková",
                 "Petr",
             ]);
         });

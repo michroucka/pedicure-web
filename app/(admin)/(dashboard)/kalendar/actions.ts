@@ -164,57 +164,88 @@ export async function updateBookingAction(input: {
         orderBy: { startTime: "asc" },
     });
 
-    if (existing.length !== input.people.length) {
+    if (existing.length === 0) {
         return { ok: false, error: "Rezervace nenalezena." };
     }
-    // People are matched to bookings by position below - a dialog opened
-    // before the group changed elsewhere (someone cancelled, then moved)
-    // would otherwise write names/services onto the wrong person.
-    if (existing.some((b, i) => b.id !== input.people[i].bookingId)) {
+
+    // Each person from the dialog is matched to their booking by id, never
+    // by position: the group's order changes when someone is cancelled
+    // (admin cancels per person), and a dialog opened before that would
+    // otherwise write names/services onto the wrong person.
+    const formByBookingId = new Map(input.people.map((p) => [p.bookingId, p]));
+    if (
+        existing.length !== input.people.length ||
+        existing.some((b) => !formByBookingId.has(b.id))
+    ) {
         return {
             ok: false,
             error: "Rezervace se mezitím změnila. Zavřete ji a otevřete znovu.",
         };
     }
-
-    const extraTimes = input.people.map((p) =>
-        normalizeExtraMinutes(p.extraTimeMinutes)
-    );
+    const people = existing.map((booking) => {
+        const form = formByBookingId.get(booking.id)!;
+        return {
+            booking,
+            name: form.name,
+            serviceId: form.serviceId,
+            extraTimeMinutes: normalizeExtraMinutes(form.extraTimeMinutes),
+        };
+    });
 
     // Name/phone/note fixes are written in place regardless of whether the
     // slot itself changes – a typo fix shouldn't move the Booking (and so
-    // shouldn't invalidate its cancelToken). Only the main contact is a
-    // Client of this group; everyone else's name lives on their own
-    // booking as guestName – writing it to b.clientId would rename the main
-    // contact once per member. Must run before the move below, which copies
-    // guestName over to the new bookings.
-    const phone = input.phone || null;
-    const note = input.note || null;
-    await prisma.$transaction(
-        existing.map((b, i) =>
-            i === 0
-                ? prisma.client.update({
-                      where: { id: b.clientId },
-                      data: {
-                          name: input.people[0].name,
-                          phone,
-                          note,
-                      },
-                  })
-                : prisma.booking.update({
-                      where: { id: b.id },
-                      data: { guestName: input.people[i].name },
-                  })
-        )
-    );
+    // shouldn't invalidate its cancelToken). Where a name belongs is decided
+    // by the booking itself, not by its position: guestName set = a guest,
+    // the name lives on that booking; guestName empty = the name is the
+    // client's (the main contact, or a pre-2026-10 guest with an own
+    // Client). Writing a guest's name to the shared client would rename the
+    // main contact - which is exactly what "first booking = main contact"
+    // did once the main contact's own booking was cancelled. Phone and note
+    // are the group's contact details and go to the main contact's client
+    // even if their own booking is cancelled (all bookings share it).
+    // Must run before the move below, which copies guestName over to the
+    // new bookings.
+    const contactClientId = (
+        existing.find((b) => b.guestName === null) ?? existing[0]
+    ).clientId;
+    const clientUpdates = new Map<
+        string,
+        { name?: string; phone?: string | null; note?: string | null }
+    >([
+        [
+            contactClientId,
+            { phone: input.phone || null, note: input.note || null },
+        ],
+    ]);
+    for (const person of people) {
+        if (person.booking.guestName !== null) continue;
+        const update = clientUpdates.get(person.booking.clientId) ?? {};
+        clientUpdates.set(person.booking.clientId, {
+            ...update,
+            name: person.name,
+        });
+    }
+    await prisma.$transaction([
+        ...[...clientUpdates].map(([clientId, data]) =>
+            prisma.client.update({ where: { id: clientId }, data })
+        ),
+        ...people
+            .filter((person) => person.booking.guestName !== null)
+            .map((person) =>
+                prisma.booking.update({
+                    where: { id: person.booking.id },
+                    data: { guestName: person.name },
+                })
+            ),
+    ]);
 
     const scheduleChanged =
         existing[0].date.getTime() !== date.getTime() ||
         existing[0].startTime !== input.startTime ||
-        existing.some(
-            (b, i) =>
-                b.serviceId !== input.people[i].serviceId ||
-                b.extraTimeMinutes !== extraTimes[i]
+        people.some(
+            (person) =>
+                person.booking.serviceId !== person.serviceId ||
+                person.booking.extraTimeMinutes !== person.extraTimeMinutes
         );
 
     if (!scheduleChanged) {
@@ -232,13 +263,10 @@ export async function updateBookingAction(input: {
                 {
                     outsideHours: input.outsideHours,
                     serviceOverrides: Object.fromEntries(
-                        existing.map((b, i) => [
-                            b.id,
-                            input.people[i].serviceId,
-                        ])
+                        people.map((p) => [p.booking.id, p.serviceId])
                     ),
                     extraTimeOverrides: Object.fromEntries(
-                        existing.map((b, i) => [b.id, extraTimes[i]])
+                        people.map((p) => [p.booking.id, p.extraTimeMinutes])
                     ),
                     allowUnfillableGaps: true,
                 }
@@ -246,13 +274,13 @@ export async function updateBookingAction(input: {
             movedIds = moved.map((b) => b.id);
         } else {
             const moved = await moveBooking(
-                input.people[0].bookingId,
+                people[0].booking.id,
                 date,
                 input.startTime,
                 {
                     outsideHours: input.outsideHours,
-                    serviceId: input.people[0].serviceId,
-                    extraTimeMinutes: extraTimes[0],
+                    serviceId: people[0].serviceId,
+                    extraTimeMinutes: people[0].extraTimeMinutes,
                     allowUnfillableGaps: true,
                 }
             );
