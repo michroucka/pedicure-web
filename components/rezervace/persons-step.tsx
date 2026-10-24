@@ -90,9 +90,13 @@ export function PersonsStep({
                     >
                         <div className="flex items-center gap-2">
                             <span className="w-16">{`Osoba ${i + 1}`}</span>
+                            {/* The URL can't hold an empty spot ("1,,3" parses
+                                as [1, 3]), so a person can only be picked once
+                                everyone before them has a service. */}
                             <Select
                                 onValueChange={(v) => v && updateService(i, v)}
                                 value={currentServices[i] ?? ""}
+                                disabled={i > currentServices.length}
                             >
                                 <SelectTrigger className="w-full max-w-48">
                                     <SelectValue placeholder="Vyberte službu" />
