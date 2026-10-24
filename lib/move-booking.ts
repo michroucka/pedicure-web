@@ -5,6 +5,7 @@ import { getAvailableSlots } from "./get-available-slots.ts";
 import { hasOverlappingBooking } from "./check-booking-overlap.ts";
 import { endsAfterMidnight, getCzechToday } from "./utils.ts";
 import { isBookingSlotConflict } from "./booking-conflict-error.ts";
+import { sumServiceDurations } from "./service-duration.ts";
 
 export const PAST_MIDNIGHT_ERROR = "Rezervace by přesáhla půlnoc.";
 export const ALREADY_CANCELLED_ERROR = "Rezervace už byla zrušena.";
@@ -166,10 +167,7 @@ export async function moveGroupBooking(
                 where: { id: { in: serviceIds } },
             });
             const groupDuration =
-                serviceIds.reduce((sum, id) => {
-                    const service = services.find((s) => s.id === id);
-                    return sum + (service?.durationMinutes ?? 0);
-                }, 0) + totalExtraMinutes;
+                sumServiceDurations(serviceIds, services) + totalExtraMinutes;
             if (endsAfterMidnight(newGroupStart, groupDuration)) {
                 throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
             }

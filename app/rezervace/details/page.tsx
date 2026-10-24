@@ -14,6 +14,7 @@ import { dateStrSchema, serviceIdsSchema, startTimeSchema } from "@/lib/validati
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit.ts";
 import { BUSINESS_INFO } from "@/lib/business-info.ts";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 // Set by submitBooking/submitGroupBooking (see detailsErrorUrl).
 const SUBMIT_ERRORS: Record<string, { title: string; description: string }> = {
@@ -43,7 +44,7 @@ export default async function DetailsPage({ searchParams }: {
     // back to the start of the wizard instead of crashing on Invalid Date/NaN.
     const parsedDate = dateStrSchema.safeParse(date);
     const parsedServiceIds = serviceIdsSchema.safeParse(
-        services?.split(",").filter(Boolean).map(Number) ?? []
+        parseServiceIdsParam(services)
     );
     const parsedSlot = startTimeSchema.safeParse(slot ? Number(slot) : NaN);
     if (!parsedDate.success || !parsedServiceIds.success || !parsedSlot.success) {

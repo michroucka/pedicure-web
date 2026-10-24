@@ -13,7 +13,7 @@ import { TimePicker } from "@/components/ui/time-picker.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { AlertCircle, Plus, Trash2, Check, CalendarX } from "lucide-react";
 import {
-    toUtcMidnight,
+    localDateToUtcMidnight,
     formatTime,
     parseTime,
     roundToQuarterHour,
@@ -78,11 +78,11 @@ export function ExceptionForm({
     );
     const [isPending, startTransition] = useTransition();
 
-    const minDate = addDays(toUtcMidnight(new Date()), 1);
+    const minDate = addDays(localDateToUtcMidnight(new Date()), 1);
 
     const exceptionsByDate = new Map<number, AvailabilityException[]>();
     for (const exception of exceptions) {
-        const key = toUtcMidnight(exception.date).getTime();
+        const key = localDateToUtcMidnight(exception.date).getTime();
         const existing = exceptionsByDate.get(key) ?? [];
         existing.push(exception);
         exceptionsByDate.set(key, existing);
@@ -105,7 +105,7 @@ export function ExceptionForm({
         // midnight, not UTC midnight — reading getUTCDay() on it directly
         // shifts the weekday back a day in any timezone ahead of UTC
         // (Czech local time included). Normalize first.
-        const dayOfWeek = toUtcMidnight(d).getUTCDay();
+        const dayOfWeek = localDateToUtcMidnight(d).getUTCDay();
         return recurring
             .filter((r) => r.dayOfWeek === dayOfWeek)
             .map((r) => ({ start: r.startTime, end: r.endTime }));
@@ -122,7 +122,7 @@ export function ExceptionForm({
         }
 
         const existing =
-            exceptionsByDate.get(toUtcMidnight(d).getTime()) ?? [];
+            exceptionsByDate.get(localDateToUtcMidnight(d).getTime()) ?? [];
         const resolved = resolveDayTimeSlots(
             recurringFor(d),
             existing.map((e) => ({
@@ -294,7 +294,7 @@ export function ExceptionForm({
                         selected={range}
                         onSelect={updateRange}
                         disabled={(day) =>
-                            toUtcMidnight(day).getTime() < minDate.getTime()
+                            localDateToUtcMidnight(day).getTime() < minDate.getTime()
                         }
                         modifiers={modifiers}
                         components={{ DayButton: ExceptionDayButton }}
@@ -308,7 +308,7 @@ export function ExceptionForm({
                         selected={date}
                         onSelect={updateDate}
                         disabled={(day) =>
-                            toUtcMidnight(day).getTime() < minDate.getTime()
+                            localDateToUtcMidnight(day).getTime() < minDate.getTime()
                         }
                         modifiers={modifiers}
                         components={{ DayButton: ExceptionDayButton }}

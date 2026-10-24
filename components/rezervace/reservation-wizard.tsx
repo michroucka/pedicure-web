@@ -12,6 +12,7 @@ import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Check, X } from "lucide-react";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 export function ReservationWizard({ services }: { services: Service[] }) {
     const router = useRouter();
@@ -35,7 +36,7 @@ export function ReservationWizard({ services }: { services: Service[] }) {
         setStep((s) => ({ index, gen: s.gen + 1}));
 
     const serviceIds =
-        searchParams.get("services")?.split(",").filter(Boolean).map(Number) ?? [];
+        parseServiceIdsParam(searchParams.get("services"));
     const selectedServices = serviceIds
         .map((id) => services.find((s) => s.id === id))
         .filter((s): s is Service => !!s);

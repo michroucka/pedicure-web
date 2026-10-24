@@ -15,7 +15,7 @@ import { ExceptionDayButton } from "@/components/admin/exception-day-button.tsx"
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
     cn,
-    toUtcMidnight,
+    localDateToUtcMidnight,
     startOfWeekUtc,
     addUtcDays,
 } from "@/lib/utils.ts";
@@ -139,13 +139,13 @@ export function DayNav({
     const { date, isNavigating } = useCalendarNavigation();
 
     const shownWeekStart = isNavigating
-        ? startOfWeekUtc(toUtcMidnight(date))
+        ? startOfWeekUtc(localDateToUtcMidnight(date))
         : weekStart;
     const shownWeekEnd = isNavigating
         ? addUtcDays(shownWeekStart, 6)
         : weekEnd;
 
-    const isToday = toUtcMidnight(date).getTime() === toUtcMidnight(new Date()).getTime();
+    const isToday = localDateToUtcMidnight(date).getTime() === localDateToUtcMidnight(new Date()).getTime();
     const { blockedFull, blockedPartial, extraOpen } =
         categorizeExceptions(exceptions);
     const hasException =

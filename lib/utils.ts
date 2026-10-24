@@ -28,7 +28,10 @@ export function toDateOnly(date: Date): Date {
     );
 }
 
-export function toUtcMidnight(d: Date): Date {
+// Unlike toDateOnly, reads the *local* calendar day - for dates coming from
+// a browser date picker (react-day-picker gives local midnight), which
+// toDateOnly would shift to the previous day east of UTC.
+export function localDateToUtcMidnight(d: Date): Date {
     return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
 }
 

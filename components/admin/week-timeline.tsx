@@ -6,7 +6,7 @@ import { cs } from "date-fns/locale";
 import {
     cn,
     formatTime,
-    toUtcMidnight,
+    localDateToUtcMidnight,
     getCzechToday,
     getCzechNowMinutes,
 } from "@/lib/utils.ts";
@@ -84,7 +84,7 @@ export function WeekTimeline({
     );
 
     const gridHeight = (gridEnd - gridStart) * PX_PER_MIN;
-    const today = toUtcMidnight(new Date());
+    const today = localDateToUtcMidnight(new Date());
     const todayCzech = getCzechToday();
 
     // The header row (weekday labels) and the time-axis both need to stay

@@ -20,6 +20,7 @@ import { endsAfterMidnight, toDateOnly, getCzechToday } from "@/lib/utils.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import { idSchema } from "@/lib/validation.ts";
+import { sumServiceDurations } from "@/lib/service-duration.ts";
 import {
     createManualBookingInputSchema,
     manualBookingSlotsInputSchema,
@@ -318,16 +319,8 @@ export async function createManualBookingAction(input: {
         const services = await prisma.service.findMany({
             where: { id: { in: serviceIds } },
         });
-        // Summed per person, not per fetched service — `in` returns each
-        // service once, so two people with the same service would
-        // otherwise only count it once.
         const totalDuration =
-            serviceIds.reduce(
-                (sum, id) =>
-                    sum +
-                    (services.find((s) => s.id === id)?.durationMinutes ?? 0),
-                0
-            ) + extraMinutes;
+            sumServiceDurations(serviceIds, services) + extraMinutes;
 
         // A custom time skips the availability windows, which are what
         // normally keeps a booking inside the day.

@@ -12,10 +12,11 @@ import {
     startOfDay,
 } from "date-fns";
 import { cs } from "date-fns/locale";
-import { cn, toUtcMidnight } from "@/lib/utils";
+import { cn, localDateToUtcMidnight } from "@/lib/utils";
 import { getAvailableDaysAction } from "@/app/rezervace/actions.ts";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 // The next HORIZON_DAYS are fetched once per service selection instead of
 // once per visible month — browsing a few months back/forth then costs
@@ -40,15 +41,15 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
     const [isLoading, startTransition] = useTransition();
     const hasAutoJumped = useRef(false);
 
-    const tomorrow = toUtcMidnight(addDays(startOfDay(new Date()), 1));
+    const tomorrow = localDateToUtcMidnight(addDays(startOfDay(new Date()), 1));
     const horizonEnd = addDays(tomorrow, HORIZON_DAYS);
 
     const gridStart = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
-    const gridEnd = toUtcMidnight(addDays(gridStart, 41));
-    const rangeFrom = toUtcMidnight(maxDate([gridStart, tomorrow]));
+    const gridEnd = localDateToUtcMidnight(addDays(gridStart, 41));
+    const rangeFrom = localDateToUtcMidnight(maxDate([gridStart, tomorrow]));
 
     const currentServices: number[] =
-        searchParams.get("services")?.split(",").filter(Boolean).map(Number) ?? [];
+        parseServiceIdsParam(searchParams.get("services"));
     // Set after an extra_time_conflict redirect — same value the time step
     // uses, so the calendar only offers days this client actually fits.
     const extraMinutes = Number(searchParams.get("extraMinutes") ?? 0);
@@ -133,7 +134,7 @@ export function DateStep({ onContinueAction }: { onContinueAction: () => void })
                     updateParam("date", format(d, "yyyy-MM-dd"));
                     onContinueAction();
                 }}
-                disabled={(day) => !availableSet.has(toUtcMidnight(day).getTime())}
+                disabled={(day) => !availableSet.has(localDateToUtcMidnight(day).getTime())}
                 month={currentMonth}
                 onMonthChange={setCurrentMonth}
                 fixedWeeks

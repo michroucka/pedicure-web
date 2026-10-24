@@ -49,7 +49,7 @@ import {
     formatTime,
     normalizeForSearch,
     normalizePhoneForMatch,
-    toUtcMidnight,
+    localDateToUtcMidnight,
 } from "@/lib/utils.ts";
 import {
     createManualBookingAction,
@@ -569,8 +569,8 @@ export function AddBookingDialog({
                             defaultMonth={date}
                             onSelect={pickDate}
                             disabled={(day) =>
-                                toUtcMidnight(day).getTime() <
-                                toUtcMidnight(new Date()).getTime()
+                                localDateToUtcMidnight(day).getTime() <
+                                localDateToUtcMidnight(new Date()).getTime()
                             }
                             className="w-full bg-transparent"
                         />

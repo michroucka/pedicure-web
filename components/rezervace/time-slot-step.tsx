@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import { Spinner } from "@/components/ui/spinner.tsx";
 import { AlertCircle, CalendarX } from "lucide-react";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void }) {
     const [availableSlots, setAvailableSlots] = useState<number[]>();
@@ -21,8 +22,7 @@ export function TimeSlotStep({ onSelectAction }: { onSelectAction: () => void })
     const date = dateParam ? new Date(dateParam) : undefined;
 
     const currentServices: number[] =
-        searchParams.get("services")?.split(",").filter(Boolean).map(Number) ??
-        [];
+        parseServiceIdsParam(searchParams.get("services"));
 
     const slotParam = searchParams.get("slot");
     const selectedSlot = slotParam ? Number(slotParam) : undefined;

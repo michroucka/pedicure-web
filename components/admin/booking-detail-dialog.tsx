@@ -50,7 +50,7 @@ import {
     StickyNote,
     QrCode, ChevronDownIcon,
 } from "lucide-react";
-import { formatPhoneNumber, formatTime, toUtcMidnight, toTelHref } from "@/lib/utils.ts";
+import { formatPhoneNumber, formatTime, localDateToUtcMidnight, toTelHref } from "@/lib/utils.ts";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
@@ -571,8 +571,8 @@ export function BookingDetailDialog({
                                 selected={editDate}
                                 onSelect={pickEditDate}
                                 disabled={(day) =>
-                                    toUtcMidnight(day).getTime() <
-                                    toUtcMidnight(new Date()).getTime()
+                                    localDateToUtcMidnight(day).getTime() <
+                                    localDateToUtcMidnight(new Date()).getTime()
                                 }
                                 className="w-full bg-transparent"
                             />
