@@ -15,6 +15,7 @@ import {
     SelectGroup,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { parseServiceIdsParam } from "@/lib/booking-url.ts";
 
 export function PersonsStep({
     services,
@@ -29,17 +30,17 @@ export function PersonsStep({
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const currentServices =
-        searchParams.get("services")?.split(",").filter(Boolean) ?? [];
+    // Strings, because that's what the service <Select> values are.
+    const currentServices = parseServiceIdsParam(
+        searchParams.get("services")
+    ).map(String);
     const [personCount, setPersonCount] = useState(() =>
         Math.max(currentServices.length, 1)
     );
 
     function updateService(index: number, value: string) {
         onChangeAction?.();
-        const current =
-            searchParams.get("services")?.split(",").filter(Boolean) ?? [];
-        const next = [...current];
+        const next = [...currentServices];
 
         if (value === "none") {
             next.splice(index, 1);

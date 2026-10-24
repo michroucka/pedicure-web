@@ -31,20 +31,26 @@ export function TimeSlotStep({
     const error = searchParams.get("error");
     const extraMinutes = Number(extraMinutesParam ?? 0);
 
-    // Keyed on the raw URL params (strings), not on the parsed Date/array -
-    // those are new objects every render and would refetch in a loop.
+    // Keyed on the raw URL params (strings) and the extraMinutes number,
+    // not on the parsed Date/array - those are new objects every render and
+    // would refetch in a loop. `cancelled`: switching dates quickly must not
+    // let the older, slower response overwrite the newer one.
     useEffect(() => {
         if (!dateParam) return;
+        let cancelled = false;
 
         startTransition(async () => {
             const slots = await getAvailableSlotsAction(
                 new Date(dateParam),
                 parseServiceIdsParam(servicesParam),
-                Number(extraMinutesParam ?? 0)
+                extraMinutes
             );
-            setAvailableSlots(slots);
+            if (!cancelled) setAvailableSlots(slots);
         });
-    }, [dateParam, servicesParam, extraMinutesParam]);
+        return () => {
+            cancelled = true;
+        };
+    }, [dateParam, servicesParam, extraMinutes]);
 
     function selectSlot(s: number) {
         const params = new URLSearchParams(searchParams);
