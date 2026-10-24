@@ -16,8 +16,10 @@ declare module "@auth/core/jwt" {
 }
 
 const credentialsSchema = z.object({
-    username: z.string().min(1),
-    password: z.string().min(1),
+    username: z.string().min(1).max(100),
+    // Same cap as a new password (nastaveni/actions.ts) - argon2 would
+    // otherwise hash whatever size a login request sends.
+    password: z.string().min(1).max(256),
 });
 
 // Verified against when the username doesn't exist, so a wrong username

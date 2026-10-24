@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { secretEquals } from "@/lib/secret-equals.ts";
 
 // Vercel Cron calls every cron route with `Authorization: Bearer $CRON_SECRET`
 // (set automatically once the CRON_SECRET env var exists on the project).
@@ -12,8 +13,8 @@ export function verifyCronRequest(request: NextRequest): NextResponse | null {
         );
     }
 
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const authHeader = request.headers.get("authorization") ?? "";
+    if (!secretEquals(authHeader, `Bearer ${process.env.CRON_SECRET}`)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

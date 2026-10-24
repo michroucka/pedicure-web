@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage({
     searchParams,
 }: {
-    searchParams: Promise<{ error?: string; passwordChanged?: boolean }>;
+    searchParams: Promise<{ error?: string; passwordChanged?: string }>;
 }) {
     const { error, passwordChanged } = await searchParams;
 

@@ -9,7 +9,11 @@ import argon2 from "argon2";
 const changePasswordSchema = z
     .object({
         currentPassword: z.string().min(1, "Zadejte současné heslo."),
-        newPassword: z.string().min(8, "Nové heslo musí mít alespoň 8 znaků."),
+        newPassword: z
+            .string()
+            .min(8, "Nové heslo musí mít alespoň 8 znaků.")
+            // argon2 hashes whatever it gets - no reason to accept megabytes.
+            .max(256, "Nové heslo může mít nejvýš 256 znaků."),
         confirmPassword: z.string(),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
