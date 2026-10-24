@@ -26,7 +26,6 @@ export const metadata: Metadata = {
         title: BUSINESS_INFO.name,
         description: DESCRIPTION,
         url: "/",
-        images: [{ url: "/portret.jpg", width: 1200, height: 1500 }],
     },
     verification: {
         other: {
