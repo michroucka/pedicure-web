@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { getResendClient } from "@/lib/resend-client.ts";
 import { EMAIL_FROM } from "@/lib/business-info.ts";
 
 // Internal ops alert, not client-facing — plain text is enough, no
@@ -6,9 +6,9 @@ import { EMAIL_FROM } from "@/lib/business-info.ts";
 export async function sendLowCreditAlertEmail(
     creditCzk: number
 ): Promise<void> {
-    const apiKey = process.env.RESEND_API_KEY;
+    const resend = getResendClient();
     const to = process.env.ALERT_EMAIL_TO;
-    if (!apiKey || !to) {
+    if (!resend || !to) {
         console.error(
             "RESEND_API_KEY nebo ALERT_EMAIL_TO není nastaven, upozornění na nízký kredit nebylo odesláno."
         );
@@ -16,7 +16,6 @@ export async function sendLowCreditAlertEmail(
     }
 
     try {
-        const resend = new Resend(apiKey);
         await resend.emails.send({
             from: EMAIL_FROM,
             to,

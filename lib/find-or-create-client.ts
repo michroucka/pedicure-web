@@ -8,7 +8,20 @@ export async function findOrCreateClient(
     email?: string,
     note?: string
 ): Promise<Client> {
-    let client = await findClient(phone, name);
+    return upsertMatchedClient(await findClient(phone, name), phone, name, email, note);
+}
+
+// The write half of findOrCreateClient, for callers that already looked the
+// client up with findClient (online booking reads the extra time before
+// validating the slot) and shouldn't query it twice.
+export async function upsertMatchedClient(
+    matched: Client | undefined,
+    phone: string | undefined,
+    name: string,
+    email?: string,
+    note?: string
+): Promise<Client> {
+    let client = matched;
 
     if (!client) {
         client = await prisma.client.create({

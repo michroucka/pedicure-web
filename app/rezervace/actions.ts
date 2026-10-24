@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma.ts";
 import { formatTime, normalizeForSearch } from "@/lib/utils.ts";
-import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
+import { upsertMatchedClient } from "@/lib/find-or-create-client.ts";
 import { findClient } from "@/lib/find-client.ts";
 import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
 import { createBooking } from "@/lib/create-booking.ts";
@@ -111,10 +111,14 @@ async function rejectAbusiveSubmission(
     contact: { phone: string; email: string; name: string },
     slot: { date: Date; serviceIds: number[]; startTime: number }
 ): Promise<void> {
-    if (!(await verifyTurnstileToken(turnstileToken))) {
+    const [isHuman, isOverLimit] = await Promise.all([
+        verifyTurnstileToken(turnstileToken),
+        hasReachedOnlineBookingLimit(contact.phone, contact.email),
+    ]);
+    if (!isHuman) {
         redirect(await detailsErrorUrl(contact, slot, "verification"));
     }
-    if (await hasReachedOnlineBookingLimit(contact.phone, contact.email)) {
+    if (isOverLimit) {
         redirect(await detailsErrorUrl(contact, slot, "booking_limit"));
     }
 }
@@ -147,8 +151,8 @@ export async function submitBooking(
 
     // Read-only lookup first: nothing about the client may be written until
     // the slot is known to be bookable.
-    const extraTimeMinutes =
-        (await findClient(phone, name))?.extraTimeMinutes ?? 0;
+    const matchedClient = await findClient(phone, name);
+    const extraTimeMinutes = matchedClient?.extraTimeMinutes ?? 0;
 
     const valid = await getAvailableSlots(date, [serviceId], extraTimeMinutes);
     if (!valid.includes(startTime)) {
@@ -162,7 +166,7 @@ export async function submitBooking(
         );
     }
 
-    const client = await findOrCreateClient(phone, name, email);
+    const client = await upsertMatchedClient(matchedClient, phone, name, email);
 
     let booking: { id: string; cancelToken: string };
     try {
@@ -223,8 +227,8 @@ export async function submitGroupBooking(
     }
 
     // Only the main contact can have extra time - guests aren't Clients.
-    const mainContactExtraMinutes =
-        (await findClient(phone, names[0]))?.extraTimeMinutes ?? 0;
+    const matchedClient = await findClient(phone, names[0]);
+    const mainContactExtraMinutes = matchedClient?.extraTimeMinutes ?? 0;
 
     const valid = await getAvailableSlots(
         date,
@@ -242,7 +246,7 @@ export async function submitGroupBooking(
         );
     }
 
-    const client = await findOrCreateClient(phone, names[0], email);
+    const client = await upsertMatchedClient(matchedClient, phone, names[0], email);
 
     const people = names.map((name, i) => ({
         clientId: client.id,

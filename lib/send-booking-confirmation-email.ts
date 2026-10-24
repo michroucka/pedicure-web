@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { getResendClient } from "@/lib/resend-client.ts";
 import { BUSINESS_INFO, EMAIL_FROM } from "@/lib/business-info.ts";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
@@ -33,8 +33,8 @@ export async function sendBookingConfirmationEmail(
     const email = bookings[0].client.email;
     if (!email) return;
 
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
+    const resend = getResendClient();
+    if (!resend) {
         console.error(
             "RESEND_API_KEY není nastaven, potvrzovací e-mail nebyl odeslán."
         );
@@ -46,7 +46,6 @@ export async function sendBookingConfirmationEmail(
     const manageUrl = `${BUSINESS_INFO.siteUrl}/rezervace/sprava/${bookings[0].cancelToken}`;
 
     try {
-        const resend = new Resend(apiKey);
         await resend.emails.send({
             from: EMAIL_FROM,
             to: email,

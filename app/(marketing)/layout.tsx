@@ -1,4 +1,6 @@
 import type { Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { fontDisplay } from "@/lib/fonts.ts";
 import { ReactNode } from "react";
 import { MarketingNav } from "@/components/marketing/marketing-nav.tsx";
@@ -57,6 +59,10 @@ export default function MarketingLayout({
             <MarketingNav />
             <main className="flex-1">{children}</main>
             <MarketingFooter />
+            {/* Public pages only - the admin isn't traffic worth measuring,
+                and it saves the tablet two scripts. */}
+            <Analytics />
+            <SpeedInsights />
         </PortalContainerProvider>
     );
 }
