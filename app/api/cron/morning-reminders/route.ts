@@ -31,6 +31,14 @@ function buildReminderMessage(bookings: BookingForReminder[]): string {
     return `Dobry den, pripominam Vam dnesni rezervaci na pedikuru od ${startTime}. Tesim se na Vas! ${SIGNATURE}`;
 }
 
+// "Dnes máš 1 klienta / 3 klienty / 5 klientů" - counts people, so a group
+// booking adds each member.
+function clientsWord(count: number): string {
+    if (count === 1) return "klienta";
+    if (count >= 2 && count <= 4) return "klienty";
+    return "klientů";
+}
+
 // Vercel Cron GETs this daily (auth in verifyCronRequest).
 export async function GET(request: NextRequest) {
     const unauthorizedResponse = verifyCronRequest(request);
@@ -94,7 +102,7 @@ export async function GET(request: NextRequest) {
         body:
             todaysBookings.length === 0
                 ? "Dnes máš volno! 🎉"
-                : `Dnes máš objednáno ${todaysBookings.length} klientů od ${formatTime(todaysBookings[0].startTime)} do ${formatTime(todaysBookings[todaysBookings.length - 1].endTime)}`,
+                : `Dnes máš ${todaysBookings.length} ${clientsWord(todaysBookings.length)} od ${formatTime(todaysBookings[0].startTime)} do ${formatTime(todaysBookings[todaysBookings.length - 1].endTime)}`,
         url: "/kalendar",
     });
 

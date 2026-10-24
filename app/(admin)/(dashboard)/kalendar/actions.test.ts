@@ -4,6 +4,7 @@ import { createBooking } from "@/lib/create-booking.ts";
 import { createGroupBooking } from "@/lib/create-group-booking.ts";
 import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
 import {
+    cancelBookingAction,
     createManualBookingAction,
     getMoveSlotsAction,
     updateBookingAction,
@@ -293,6 +294,28 @@ describe("kalendar actions", () => {
             expect(bookings.map((b) => b.cancelToken)).toEqual(tokensBefore);
         });
 
+        it("refuses to save when the people no longer match the group's bookings", async () => {
+            const { group } = await createGroup();
+
+            // stale dialog: same count, but the ids are in a different order
+            const result = await updateBookingAction({
+                groupId: group[0].groupId,
+                people: [
+                    { bookingId: group[1].id, name: "Eva", serviceId: serviceIds[0], extraTimeMinutes: 0 },
+                    { bookingId: group[0].id, name: "Jana Beránková", serviceId: serviceIds[0], extraTimeMinutes: 0 },
+                    { bookingId: group[2].id, name: "Petr", serviceId: serviceIds[0], extraTimeMinutes: 0 },
+                ],
+                phone,
+                note: "",
+                dateStr: DATE_STR,
+                startTime: 540,
+            });
+
+            expect(result.ok).toBe(false);
+            const bookings = await bookingsForPhone();
+            expect(bookings.map((b) => b.guestName)).toEqual([null, "Eva", "Petr"]);
+        });
+
         it("renames the main contact on the client", async () => {
             const { client, group } = await createGroup();
 
@@ -428,6 +451,26 @@ describe("kalendar actions", () => {
             });
 
             expect(sendBookingMovedEmail).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("cancelBookingAction", () => {
+        it("is a no-op for an unknown or already cancelled booking", async () => {
+            await expect(cancelBookingAction("neexistujici-id")).resolves.toBeUndefined();
+
+            const client = await prisma.client.create({ data: { name: "Jana", phone } });
+            const booking = await createBooking({
+                clientId: client.id,
+                serviceId: serviceIds[0],
+                date: DATE,
+                startTime: 900,
+                source: "PHONE",
+            });
+            await cancelBookingAction(booking.id);
+            await cancelBookingAction(booking.id);
+
+            const after = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
+            expect(after.status).toBe("CANCELLED");
         });
     });
 

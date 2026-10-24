@@ -5,7 +5,6 @@ import { after } from "next/server";
 import { prisma } from "@/lib/prisma.ts";
 import { requireAdmin } from "@/lib/require-admin.ts";
 import { isBookingSlotConflict } from "@/lib/booking-conflict-error.ts";
-import { cancelBooking } from "@/lib/cancel-booking.ts";
 import {
     moveBooking,
     moveGroupBooking,
@@ -106,7 +105,12 @@ export async function getMoveSlotsAction(
 export async function cancelBookingAction(id: string) {
     await requireAdmin();
     if (!idSchema.safeParse(id).success) return;
-    await cancelBooking(id);
+    // updateMany: a booking cancelled or deleted meanwhile (another device,
+    // retention cron) is a no-op, not a thrown P2025.
+    await prisma.booking.updateMany({
+        where: { id, status: "CONFIRMED" },
+        data: { status: "CANCELLED" },
+    });
     revalidatePath("/kalendar");
 }
 
@@ -152,6 +156,15 @@ export async function updateBookingAction(input: {
 
     if (existing.length !== input.people.length) {
         return { ok: false, error: "Rezervace nenalezena." };
+    }
+    // People are matched to bookings by position below - a dialog opened
+    // before the group changed elsewhere (someone cancelled, then moved)
+    // would otherwise write names/services onto the wrong person.
+    if (existing.some((b, i) => b.id !== input.people[i].bookingId)) {
+        return {
+            ok: false,
+            error: "Rezervace se mezitím změnila. Zavřete ji a otevřete znovu.",
+        };
     }
 
     const extraTimes = input.people.map((p) =>

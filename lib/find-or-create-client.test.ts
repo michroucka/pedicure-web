@@ -13,7 +13,12 @@ function uniquePhone(): string {
 describe("findClient / findOrCreateClient", () => {
     const createdIds: string[] = [];
 
-    async function createClient(data: { name: string; phone?: string; extraTimeMinutes?: number }) {
+    async function createClient(data: {
+        name: string;
+        phone?: string;
+        extraTimeMinutes?: number;
+        active?: boolean;
+    }) {
         const client = await prisma.client.create({ data });
         createdIds.push(client.id);
         return client;
@@ -51,6 +56,14 @@ describe("findClient / findOrCreateClient", () => {
             const found = await findClient(uniquePhone(), "Jana Unikátní Testová");
 
             expect(found).toBeUndefined();
+        });
+
+        it("prefers an active client over a hidden duplicate with the same phone", async () => {
+            const phone = uniquePhone();
+            await createClient({ name: "Starý Skrytý", phone, active: false });
+            const active = await createClient({ name: "Aktivní", phone });
+
+            expect((await findClient(phone, "Kdokoli"))?.id).toBe(active.id);
         });
 
         it("matches by exact name when there is no phone", async () => {
