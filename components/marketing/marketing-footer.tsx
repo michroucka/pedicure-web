@@ -64,7 +64,7 @@ export function MarketingFooter() {
                         Provozovatel: {OPERATOR_INFO.name}
                     </Link>
                     <a
-                        href="https://github.com/michroucka"
+                        href="https://www.michalroucka.cz"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline decoration-border underline-offset-2 transition-colors hover:text-foreground hover:decoration-foreground"
