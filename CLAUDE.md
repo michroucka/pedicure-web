@@ -242,7 +242,7 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   `source: "online"` (telefonické/osobní rezervace se domlouvají přímo)
 - **Připomínková SMS** klientovi ráno v den rezervace (cron) – jde
   automaticky u každé rezervace bez ohledu na zdroj, žádný opt-in
-  checkbox. Přes SMSManager.cz (`lib/sms.ts`, zatím neimplementováno)
+  checkbox. Přes SMSManager.cz (`lib/sms.ts`, `sendSms`), odesílá ranní cron
 - **Zrušení/přesun přes magic link** – max do 24h před termínem, kontrola
   přes `lib/booking-modification-window.ts`
   (`canClientModifyBooking`, konstanta v kódu, ne DB pole). Tohle omezení
