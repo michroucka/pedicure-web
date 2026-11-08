@@ -10,14 +10,16 @@ import {
 import { canClientModifyBooking } from "@/lib/booking-modification-window.ts";
 import { getAvailableSlots } from "@/lib/get-available-slots.ts";
 import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
-import { formatTime, toDateOnly } from "@/lib/utils.ts";
+import { toDateOnly } from "@/lib/utils.ts";
 import { revalidatePath } from "next/cache";
 import type { BookingWithRelations } from "@/lib/get-booking-group-by-token.ts";
 import { after } from "next/server";
 import { sendPushNotification } from "@/lib/send-push.ts";
 import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
+import {
+    adminCalendarUrl,
+    formatPushDateTime,
+} from "@/lib/booking-push-format.ts";
 import { dateRangeSchema } from "@/app/rezervace/schema.ts";
 import { dateStrSchema, startTimeSchema } from "@/lib/validation.ts";
 import { tokenSchema } from "./schema.ts";
@@ -45,10 +47,6 @@ function pushSubjectLine(bookings: BookingWithRelations[]): string {
     return bookings.length > 1
         ? `${bookings[0].client.name} – ${bookings.length} osoby`
         : `${bookings[0].client.name} – ${bookings[0].service.name}`;
-}
-
-function formatDateTime(date: Date, startTime: number): string {
-    return `${format(date, "d. MMMM yyyy", { locale: cs })} ${formatTime(startTime)}`;
 }
 
 export async function cancelBookingByTokenAction(
@@ -79,8 +77,8 @@ export async function cancelBookingByTokenAction(
                 bookings.length > 1
                     ? "❌ Skupinová rezervace zrušena"
                     : "❌ Rezervace zrušena",
-            body: `${pushSubjectLine(bookings)}, ${formatDateTime(bookings[0].date, bookings[0].startTime)}`,
-            url: "/kalendar",
+            body: `${pushSubjectLine(bookings)}, ${formatPushDateTime(bookings[0].date, bookings[0].startTime)}`,
+            url: adminCalendarUrl(bookings[0].date),
         })
     );
 
@@ -182,8 +180,8 @@ export async function moveBookingByTokenAction(
             after(() =>
                 sendPushNotification({
                     title: "🔁 Skupinová rezervace přesunuta",
-                    body: `${pushSubjectLine(bookings)}, ${formatDateTime(bookings[0].date, bookings[0].startTime)} → ${formatDateTime(date, startTime)}`,
-                    url: "/kalendar",
+                    body: `${pushSubjectLine(bookings)}, ${formatPushDateTime(bookings[0].date, bookings[0].startTime)} → ${formatPushDateTime(date, startTime)}`,
+                    url: adminCalendarUrl(date),
                 })
             );
             revalidatePath(`/rezervace/sprava/${token}`);
@@ -195,8 +193,8 @@ export async function moveBookingByTokenAction(
         after(() =>
             sendPushNotification({
                 title: "🔁 Rezervace přesunuta",
-                body: `${pushSubjectLine(bookings)}, ${formatDateTime(bookings[0].date, bookings[0].startTime)} → ${formatDateTime(date, startTime)}`,
-                url: "/kalendar",
+                body: `${pushSubjectLine(bookings)}, ${formatPushDateTime(bookings[0].date, bookings[0].startTime)} → ${formatPushDateTime(date, startTime)}`,
+                url: adminCalendarUrl(date),
             })
         );
         revalidatePath(`/rezervace/sprava/${token}`);
