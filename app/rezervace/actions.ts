@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma.ts";
-import { formatTime, normalizeForSearch } from "@/lib/utils.ts";
+import { normalizeForSearch } from "@/lib/utils.ts";
 import {
     reloadClient,
     upsertMatchedClient,
@@ -17,6 +17,10 @@ import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
 import { sendBookingConfirmationEmail } from "@/lib/send-booking-confirmation-email.ts";
 import { after } from "next/server";
 import { sendPushNotification } from "@/lib/send-push.ts";
+import {
+    adminCalendarUrl,
+    formatPushDateTime,
+} from "@/lib/booking-push-format.ts";
 import { verifyTurnstileToken } from "@/lib/turnstile.ts";
 import { hasReachedOnlineBookingLimit } from "@/lib/online-booking-limit.ts";
 import { z } from "zod";
@@ -77,13 +81,13 @@ async function notifyNewOnlineBooking(
         bookings.length > 1
             ? {
                   title: "👥 Nová skupinová rezervace",
-                  body: `${bookings[0].client.name} – ${bookings.length} osoby, ${formatTime(bookings[0].startTime)}`,
-                  url: "/kalendar",
+                  body: `${bookings[0].client.name} – ${bookings.length} osoby, ${formatPushDateTime(bookings[0].date, bookings[0].startTime)}`,
+                  url: adminCalendarUrl(bookings[0].date),
               }
             : {
                   title: "📅 Nová rezervace",
-                  body: `${bookings[0].client.name} – ${bookings[0].service.name}, ${formatTime(bookings[0].startTime)}`,
-                  url: "/kalendar",
+                  body: `${bookings[0].client.name} – ${bookings[0].service.name}, ${formatPushDateTime(bookings[0].date, bookings[0].startTime)}`,
+                  url: adminCalendarUrl(bookings[0].date),
               }
     );
 }

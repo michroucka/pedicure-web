@@ -29,17 +29,30 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
-    const url = event.notification.data?.url ?? "/kalendar";
-    event.waitUntil(
-      clients
-        .matchAll({ type: "window", includeUncontrolled: true })
-        .then((clientList) => {
-            for (const client of clientList) {
-                if (client.url.includes(url) && "focus" in client) {
-                    return client.focus();
-                }
-            }
-            if (clients.openWindow) return clients.openWindow(url);
-        })
-    );
+    const targetUrl = new URL(
+        event.notification.data?.url ?? "/kalendar",
+        self.location.origin
+    ).href;
+    event.waitUntil(showInAppWindow(targetUrl));
 });
+
+// The app runs permanently on the salon tablet, so the click reuses that
+// window (navigated to the booking's week) instead of opening a duplicate.
+// navigate() throws for a window this worker doesn't control (e.g. opened
+// before the worker was installed) - then a new window is the fallback.
+async function showInAppWindow(targetUrl) {
+    const windows = await clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+    });
+    const appWindow = windows.find((window) => "focus" in window);
+    if (appWindow) {
+        const focusedWindow = await appWindow.focus();
+        if (focusedWindow.url === targetUrl) return;
+        try {
+            await focusedWindow.navigate(targetUrl);
+            return;
+        } catch {}
+    }
+    if (clients.openWindow) await clients.openWindow(targetUrl);
+}

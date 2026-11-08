@@ -104,8 +104,11 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   smaže záznam z DB, jiné chyby jen loguje.
 - `public/sw.js` – `push` handler zobrazí notifikaci, `notificationclick`
   nejdřív zkusí zaostřit už otevřené okno appky (`clients.matchAll` +
-  `focus()`), teprve pak otevře nové (`clients.openWindow`) – appka běží
-  trvale na tabletu v provozovně, duplicitní okno by bylo matoucí.
+  `focus()`) a přepnout ho přes `navigate()` na URL z pushe, teprve pak
+  otevře nové (`clients.openWindow`) – appka běží trvale na tabletu
+  v provozovně, duplicitní okno by bylo matoucí. Pushe k rezervaci
+  (nová/zrušená/přesunutá) mají v textu datum i čas a URL na týden
+  rezervace (`lib/booking-push-format.ts`, `/kalendar?date=`).
 - Spouští se ze dvou míst: (1) `app/rezervace/actions.ts` při nové online
   rezervaci, přes Next.js `after()` aby se neprodlužoval redirect klientovi
   čekáním na odeslání pushe; (2) ranní cron
