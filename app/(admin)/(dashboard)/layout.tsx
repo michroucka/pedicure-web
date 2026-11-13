@@ -31,9 +31,9 @@ export default async function AdminDashboardLayout({
             <main className="flex-1 scrollbar-gutter-both overflow-y-auto pt-4">
                 {children}
             </main>
+            <KeepAwake />
             <AdminBottomNav />
             <PushResubscribe />
-            <KeepAwake />
         </div>
     );
 }
