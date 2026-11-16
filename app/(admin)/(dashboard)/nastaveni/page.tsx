@@ -13,7 +13,6 @@ import { LogoutButton } from "@/components/admin/logout-button.tsx";
 import { ChangePasswordForm } from "@/components/admin/change-password-form.tsx";
 import { PushSubscribeFlow } from "@/components/admin/push-subscribe-flow.tsx";
 import { KeepAwakeToggle } from "@/components/admin/keep-awake-toggle.tsx";
-import { KeepAwakeLogView } from "@/components/admin/keep-awake-log-view.tsx";
 
 export const metadata: Metadata = {
     title: "Nastavení",
@@ -55,7 +54,6 @@ export default function SettingsPage() {
             <PushSubscribeFlow />
 
             <KeepAwakeToggle />
-            <KeepAwakeLogView />
 
             <Card>
                 <CardHeader>

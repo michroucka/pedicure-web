@@ -28,10 +28,10 @@ export default async function AdminDashboardLayout({
 
     return (
         <div className="flex h-svh flex-col">
+            <KeepAwake />
             <main className="flex-1 scrollbar-gutter-both overflow-y-auto pt-4">
                 {children}
             </main>
-            <KeepAwake />
             <AdminBottomNav />
             <PushResubscribe />
         </div>
