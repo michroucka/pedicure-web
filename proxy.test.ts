@@ -83,13 +83,12 @@ describe("proxy", () => {
             );
         });
 
-        // Current behavior, see report: the query string is not carried over.
-        it("drops the query string when redirecting to the admin subdomain", async () => {
+        it("keeps the query string when redirecting to the admin subdomain", async () => {
             expectRedirect(
                 await visit(
                     "https://www.pedikurakralovice.cz/kalendar?date=2026-11-16"
                 ),
-                "https://admin.pedikurakralovice.cz/kalendar"
+                "https://admin.pedikurakralovice.cz/kalendar?date=2026-11-16"
             );
         });
 

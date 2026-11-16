@@ -105,9 +105,13 @@ export function parseTime(time: string): number {
     return hours * 60 + minutes;
 }
 
+const LAST_QUARTER_OF_DAY = 23 * 60 + 45;
+
 // Snaps a "HH:MM" value to the nearest 15-minute mark (remainder 0-7 rounds
 // down, 8-14 rounds up) – the time input's native `step` isn't honored
 // consistently across browsers, so we enforce it ourselves on blur.
+// 23:53+ stays at 23:45: a time input can't hold 24:00, and wrapping to
+// 00:00 would turn a late end time into the start of the day.
 export function roundToQuarterHour(time: string): string {
     if (!/^\d{2}:\d{2}$/.test(time)) return time;
 
@@ -116,7 +120,7 @@ export function roundToQuarterHour(time: string): string {
     const rounded =
         remainder <= 7 ? total - remainder : total + (15 - remainder);
 
-    return formatTime(((rounded % 1440) + 1440) % 1440);
+    return formatTime(Math.min(rounded, LAST_QUARTER_OF_DAY));
 }
 
 /**
@@ -161,15 +165,16 @@ export function normalizePhoneForMatch(value: string): string {
         : digits;
 }
 
-// Adds the Czech country code when the stored number doesn't already have
-// one – some client records have it, some don't – and strips everything
-// else down to bare digits. E.164 without the leading `+`, which is what
-// both `tel:` hrefs and the SMSManager API expect.
+// E.164 without the leading `+`, which is what both `tel:` hrefs and the
+// SMSManager API expect. A bare 9-digit number is Czech and gets 420 (some
+// client records have the code, some don't); anything longer already
+// carries a country code – Czech or foreign, the admin form accepts both –
+// written either with + or the 00 international prefix.
 export function toE164(value: string): string {
     const digits = value.replace(/\D/g, "");
-    return digits.startsWith("420") && digits.length > 9
-        ? digits
-        : `420${digits}`;
+    if (digits.length === 9) return `420${digits}`;
+    if (digits.startsWith("00")) return digits.slice(2);
+    return digits;
 }
 
 // Builds a `tel:` href from a stored phone number – see toE164.

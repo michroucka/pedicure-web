@@ -201,10 +201,12 @@ describe("roundToQuarterHour", () => {
         expect(roundToQuarterHour("09:53")).toBe("10:00");
     });
 
-    // Current behavior: 23:53+ wraps to "00:00" rather than "24:00", so an
-    // end time typed as 23:55 becomes the start of the day.
-    it("wraps past midnight to 00:00", () => {
-        expect(roundToQuarterHour("23:53")).toBe("00:00");
+    // A time input can't hold 24:00, and wrapping to 00:00 would turn a
+    // late end time into the start of the day.
+    it("never rounds past the last quarter of the day", () => {
+        expect(roundToQuarterHour("23:52")).toBe("23:45");
+        expect(roundToQuarterHour("23:53")).toBe("23:45");
+        expect(roundToQuarterHour("23:59")).toBe("23:45");
     });
 
     it("leaves non-HH:MM input untouched", () => {
@@ -256,11 +258,14 @@ describe("toE164", () => {
         expect(toE164("420 123 456")).toBe("420420123456");
     });
 
-    // Current behavior, see report: the 00 international prefix and
-    // non-Czech country codes are not recognized.
-    it("prefixes 420 to anything else, including 00420 and foreign codes", () => {
-        expect(toE164("00420123456789")).toBe("42000420123456789");
-        expect(toE164("+421 912 345 678")).toBe("420421912345678");
+    it("keeps a foreign country code", () => {
+        expect(toE164("+421 912 345 678")).toBe("421912345678");
+        expect(toE164("+49 151 2345 6789")).toBe("4915123456789");
+    });
+
+    it("drops the 00 international prefix", () => {
+        expect(toE164("00420123456789")).toBe("420123456789");
+        expect(toE164("00421 912 345 678")).toBe("421912345678");
     });
 });
 
@@ -268,6 +273,7 @@ describe("toTelHref", () => {
     it("builds a tel: link in +E.164 form", () => {
         expect(toTelHref("123 456 789")).toBe("tel:+420123456789");
         expect(toTelHref("+420 123 456 789")).toBe("tel:+420123456789");
+        expect(toTelHref("+421 912 345 678")).toBe("tel:+421912345678");
     });
 });
 
