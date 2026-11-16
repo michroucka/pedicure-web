@@ -7,15 +7,15 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from "@/components/ui/dialog.tsx";
-import { Button } from "@/components/ui/button.tsx";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip.tsx";
+} from "@/components/ui/tooltip";
 import { QrCode } from "lucide-react";
-import { QrPayment } from "@/components/admin/qr-payment.tsx";
+import { QrPayment } from "@/components/admin/qr-payment";
 
 // For a walk-in the pedikérka hasn't logged as a booking (e.g. a friend) –
 // same QR UI as BookingDetailDialog's QR mode, but with no booking to

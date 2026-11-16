@@ -1,5 +1,5 @@
 import webpush from "web-push";
-import { prisma } from "@/lib/prisma.ts";
+import { prisma } from "@/lib/prisma";
 
 type PushPayload = { title: string; body: string; url?: string };
 
@@ -21,9 +21,7 @@ async function sendOne(
             await prisma.pushSubscription.delete({
                 where: { endpoint: sub.endpoint },
             });
-            console.log(
-                "Nalezena mrtvá push subscription - záznam v DB byl smazán"
-            );
+            console.log("Dead push subscription found, DB record deleted");
         } else {
             console.error(err);
         }

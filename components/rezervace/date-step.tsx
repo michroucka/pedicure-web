@@ -13,10 +13,10 @@ import {
 } from "date-fns";
 import { cs } from "date-fns/locale";
 import { cn, localDateToUtcMidnight } from "@/lib/utils";
-import { getAvailableDaysAction } from "@/app/rezervace/actions.ts";
-import { Spinner } from "@/components/ui/spinner.tsx";
-import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
-import { parseServiceIdsParam } from "@/lib/booking-url.ts";
+import { getAvailableDaysAction } from "@/app/rezervace/actions";
+import { Spinner } from "@/components/ui/spinner";
+import { HORIZON_DAYS } from "@/lib/booking-horizon";
+import { parseServiceIdsParam } from "@/lib/booking-url";
 
 // The next HORIZON_DAYS are fetched once per service selection instead of
 // once per visible month – browsing a few months back/forth then costs

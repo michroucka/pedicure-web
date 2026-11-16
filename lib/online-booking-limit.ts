@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma.ts";
-import { getCzechToday, normalizePhoneForMatch } from "@/lib/utils.ts";
+import { prisma } from "@/lib/prisma";
+import { getCzechToday, normalizePhoneForMatch } from "@/lib/utils";
 
 // Upcoming online bookings one phone number or e-mail may hold at once (a
 // group booking counts as one). Pedikúra every 4-6 weeks within the 120-day

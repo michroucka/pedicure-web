@@ -8,8 +8,8 @@ import {
     CarouselContent,
     CarouselItem,
     type CarouselApi,
-} from "@/components/ui/carousel.tsx";
-import { cn } from "@/lib/utils.ts";
+} from "@/components/ui/carousel";
+import { cn } from "@/lib/utils";
 
 const PHOTOS = [
     {

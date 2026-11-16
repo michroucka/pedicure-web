@@ -9,14 +9,14 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from "@/components/ui/dialog.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { TimePicker } from "@/components/ui/time-picker.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
-import { Calendar } from "@/components/ui/calendar.tsx";
-import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
-import { Spinner } from "@/components/ui/spinner.tsx";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { TimePicker } from "@/components/ui/time-picker";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import {
     Select,
     SelectContent,
@@ -25,7 +25,7 @@ import {
     SelectLabel,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select.tsx";
+} from "@/components/ui/select";
 import {
     AlertCircle,
     Phone as PhoneIcon,
@@ -43,32 +43,32 @@ import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip.tsx";
+} from "@/components/ui/tooltip";
 import {
     formatPhoneNumber,
     formatTime,
     normalizeForSearch,
     normalizePhoneForMatch,
     localDateToUtcMidnight,
-} from "@/lib/utils.ts";
+} from "@/lib/utils";
 import {
     createManualBookingAction,
     getManualBookingSlotsAction,
-} from "@/app/(admin)/(dashboard)/kalendar/actions.ts";
-import type { Service } from "@/lib/generated/prisma/client.ts";
+} from "@/app/(admin)/(dashboard)/kalendar/actions";
+import type { Service } from "@/lib/generated/prisma/client";
 import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
-} from "@/components/ui/collapsible.tsx";
+} from "@/components/ui/collapsible";
 import {
     ExtraTimeField,
     NO_EXTRA_TIME,
     extraTimeFromMinutes,
     extraTimeToMinutes,
     type ExtraTime,
-} from "@/components/admin/extra-time-field.tsx";
-import { NoteHealthHint } from "@/components/admin/note-health-hint.tsx";
+} from "@/components/admin/extra-time-field";
+import { NoteHealthHint } from "@/components/admin/note-health-hint";
 
 type PersonInput = {
     name: string;

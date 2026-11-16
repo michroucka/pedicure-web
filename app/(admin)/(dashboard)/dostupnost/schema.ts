@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { dateStrSchema } from "@/lib/validation.ts";
+import { dateStrSchema } from "@/lib/validation";
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 

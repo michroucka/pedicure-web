@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info.ts";
+import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info";
 
 export function MarketingFooter() {
     return (

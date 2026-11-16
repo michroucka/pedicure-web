@@ -4,8 +4,8 @@ import {
     PHONE_RE,
     serviceIdsSchema,
     startTimeSchema,
-} from "@/lib/validation.ts";
-import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
+} from "@/lib/validation";
+import { HORIZON_DAYS } from "@/lib/booking-horizon";
 
 export const soloDataSchema = z.object({
     name: nameSchema,

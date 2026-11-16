@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma.ts";
-import { getCzechToday } from "@/lib/utils.ts";
-import { ClientList } from "@/components/admin/client-list.tsx";
+import { prisma } from "@/lib/prisma";
+import { getCzechToday } from "@/lib/utils";
+import { ClientList } from "@/components/admin/client-list";
 
 export const metadata: Metadata = {
     title: "Klienti",

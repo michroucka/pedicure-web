@@ -4,25 +4,25 @@ import { useState, type ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { format, addDays, getISOWeek } from "date-fns";
 import { cs } from "date-fns/locale";
-import { Button } from "@/components/ui/button.tsx";
+import { Button } from "@/components/ui/button";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover.tsx";
-import { Calendar } from "@/components/ui/calendar.tsx";
-import { ExceptionDayButton } from "@/components/admin/exception-day-button.tsx";
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { ExceptionDayButton } from "@/components/admin/exception-day-button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
     cn,
     localDateToUtcMidnight,
     startOfWeekUtc,
     addUtcDays,
-} from "@/lib/utils.ts";
-import { categorizeExceptions } from "@/lib/availability.ts";
-import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
-import { useCalendarNavigation } from "@/components/admin/calendar-navigation.tsx";
-import type { AvailabilityException } from "@/lib/generated/prisma/client.ts";
+} from "@/lib/utils";
+import { categorizeExceptions } from "@/lib/availability";
+import { ExceptionDot } from "@/components/admin/exception-dot";
+import { useCalendarNavigation } from "@/components/admin/calendar-navigation";
+import type { AvailabilityException } from "@/lib/generated/prisma/client";
 
 // No more Den/Týden toggle – which one is visible is decided purely by the
 // lg breakpoint (className below), same as everywhere else this app splits

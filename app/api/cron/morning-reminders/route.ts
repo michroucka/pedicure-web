@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma.ts";
-import { getCzechToday, formatTime, stripDiacritics } from "@/lib/utils.ts";
-import { BUSINESS_INFO } from "@/lib/business-info.ts";
-import { verifyCronRequest } from "@/lib/verify-cron-request.ts";
-import { sendSms, getSmsCreditCzk } from "@/lib/sms.ts";
-import { sendLowCreditAlertEmail } from "@/lib/send-low-credit-alert-email.ts";
-import type { Booking, Client } from "@/lib/generated/prisma/client.ts";
-import { sendPushNotification } from "@/lib/send-push.ts";
+import { prisma } from "@/lib/prisma";
+import { getCzechToday, formatTime, stripDiacritics } from "@/lib/utils";
+import { BUSINESS_INFO } from "@/lib/business-info";
+import { verifyCronRequest } from "@/lib/verify-cron-request";
+import { sendSms, getSmsCreditCzk } from "@/lib/sms";
+import { sendLowCreditAlertEmail } from "@/lib/send-low-credit-alert-email";
+import type { Booking, Client } from "@/lib/generated/prisma/client";
+import { sendPushNotification } from "@/lib/send-push";
 
 type BookingForReminder = Booking & { client: Client };
 

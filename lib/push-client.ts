@@ -1,4 +1,4 @@
-import { savePushSubscriptionAction } from "@/app/(admin)/(dashboard)/nastaveni/actions.ts";
+import { savePushSubscriptionAction } from "@/app/(admin)/(dashboard)/nastaveni/actions";
 
 function urlBase64ToUint8Array(base64String: Base64URLString) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);

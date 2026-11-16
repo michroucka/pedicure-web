@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { prisma } from "./prisma.ts";
-import { normalizePhoneForMatch } from "./utils.ts";
+import { prisma } from "./prisma";
+import { normalizePhoneForMatch } from "./utils";
 
 // Client.phoneNormalized is a generated column with its own SQL copy of
 // normalizePhoneForMatch (migration 20261023200000_client_phone_normalized).

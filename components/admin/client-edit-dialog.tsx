@@ -7,7 +7,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from "@/components/ui/dialog.tsx";
+} from "@/components/ui/dialog";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,12 +17,12 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
-import { Spinner } from "@/components/ui/spinner.tsx";
-import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
     AlertCircle,
     Check,
@@ -32,20 +32,20 @@ import {
     Trash2,
     UserRound,
 } from "lucide-react";
-import { formatPhoneNumber } from "@/lib/utils.ts";
+import { formatPhoneNumber } from "@/lib/utils";
 import {
     deleteClientAction,
     updateClientAction,
-} from "@/app/(admin)/(dashboard)/klienti/actions.ts";
-import type { ClientListItem } from "@/components/admin/client-list.tsx";
+} from "@/app/(admin)/(dashboard)/klienti/actions";
+import type { ClientListItem } from "@/components/admin/client-list";
 import {
     ExtraTimeField,
     NO_EXTRA_TIME,
     extraTimeFromMinutes,
     extraTimeToMinutes,
     type ExtraTime,
-} from "@/components/admin/extra-time-field.tsx";
-import { NoteHealthHint } from "@/components/admin/note-health-hint.tsx";
+} from "@/components/admin/extra-time-field";
+import { NoteHealthHint } from "@/components/admin/note-health-hint";
 
 export function ClientEditDialog({
     client,

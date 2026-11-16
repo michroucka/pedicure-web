@@ -1,24 +1,24 @@
 import { redirect } from "next/navigation";
-import { submitBooking, submitGroupBooking } from "@/app/rezervace/actions.ts";
-import { prisma } from "@/lib/prisma.ts";
-import { SoloBookingForm } from "@/components/rezervace/solo-booking-form.tsx";
-import { GroupBookingForm } from "@/components/rezervace/group-booking-form.tsx";
-import { Card, CardContent } from "@/components/ui/card.tsx";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import { submitBooking, submitGroupBooking } from "@/app/rezervace/actions";
+import { prisma } from "@/lib/prisma";
+import { SoloBookingForm } from "@/components/rezervace/solo-booking-form";
+import { GroupBookingForm } from "@/components/rezervace/group-booking-form";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, UsersRound, CalendarDays, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import { formatTime } from "@/lib/utils.ts";
-import { sumServiceDurations } from "@/lib/service-duration.ts";
+import { formatTime } from "@/lib/utils";
+import { sumServiceDurations } from "@/lib/service-duration";
 import {
     dateStrSchema,
     serviceIdsSchema,
     startTimeSchema,
-} from "@/lib/validation.ts";
-import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
-import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit.ts";
-import { BUSINESS_INFO } from "@/lib/business-info.ts";
-import { parseServiceIdsParam } from "@/lib/booking-url.ts";
+} from "@/lib/validation";
+import { normalizeExtraMinutes } from "@/lib/extra-time";
+import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit";
+import { BUSINESS_INFO } from "@/lib/business-info";
+import { parseServiceIdsParam } from "@/lib/booking-url";
 
 // Set by submitBooking/submitGroupBooking (see detailsErrorUrl).
 const SUBMIT_ERRORS: Record<string, { title: string; description: string }> = {

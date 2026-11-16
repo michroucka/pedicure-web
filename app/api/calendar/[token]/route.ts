@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addUtcDays, getCzechToday } from "@/lib/utils.ts";
-import { prisma } from "@/lib/prisma.ts";
-import { generateIcsFeed } from "@/lib/generate-ics-feed.ts";
-import { secretEquals } from "@/lib/secret-equals.ts";
+import { addUtcDays, getCzechToday } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
+import { generateIcsFeed } from "@/lib/generate-ics-feed";
+import { secretEquals } from "@/lib/secret-equals";
 
 export async function GET(
     request: NextRequest,

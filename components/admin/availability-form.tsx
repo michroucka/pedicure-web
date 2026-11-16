@@ -13,13 +13,13 @@ import { useTransition } from "react";
 import {
     availabilitySchema,
     type AvailabilityFormData,
-} from "@/app/(admin)/(dashboard)/dostupnost/schema.ts";
-import { Button } from "@/components/ui/button.tsx";
-import { Slider } from "@/components/ui/slider.tsx";
-import { TimePicker } from "@/components/ui/time-picker.tsx";
-import { Spinner } from "@/components/ui/spinner.tsx";
-import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
-import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils.ts";
+} from "@/app/(admin)/(dashboard)/dostupnost/schema";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { TimePicker } from "@/components/ui/time-picker";
+import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils";
 import { AlertCircle, Plus, Trash2, Save } from "lucide-react";
 
 const DAY_LABELS: Record<number, string> = {

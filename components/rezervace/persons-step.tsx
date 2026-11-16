@@ -1,9 +1,9 @@
 "use client";
 
-import { Service } from "@/lib/generated/prisma/client.ts";
+import { Service } from "@/lib/generated/prisma/client";
 import { useRouter } from "next/navigation";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button.tsx";
+import { Button } from "@/components/ui/button";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import {
     Select,
@@ -15,7 +15,7 @@ import {
     SelectGroup,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { parseServiceIdsParam } from "@/lib/booking-url.ts";
+import { parseServiceIdsParam } from "@/lib/booking-url";
 
 export function PersonsStep({
     services,

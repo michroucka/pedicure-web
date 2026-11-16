@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma.ts";
+import { prisma } from "@/lib/prisma";
 import {
     toDateOnly,
     getCzechToday,
     startOfWeekUtc,
     addUtcDays,
-} from "@/lib/utils.ts";
-import { resolveDayTimeSlots } from "@/lib/availability.ts";
-import { dateStrSchema } from "@/lib/validation.ts";
-import { DayNav } from "@/components/admin/day-nav.tsx";
-import { DayTimeline } from "@/components/admin/day-timeline.tsx";
-import { WeekTimeline } from "@/components/admin/week-timeline.tsx";
-import { AddBookingDialog } from "@/components/admin/add-booking-dialog.tsx";
-import { QuickQrDialog } from "@/components/admin/quick-qr-dialog.tsx";
-import { FloatingActions } from "@/components/admin/floating-actions.tsx";
+} from "@/lib/utils";
+import { resolveDayTimeSlots } from "@/lib/availability";
+import { dateStrSchema } from "@/lib/validation";
+import { DayNav } from "@/components/admin/day-nav";
+import { DayTimeline } from "@/components/admin/day-timeline";
+import { WeekTimeline } from "@/components/admin/week-timeline";
+import { AddBookingDialog } from "@/components/admin/add-booking-dialog";
+import { QuickQrDialog } from "@/components/admin/quick-qr-dialog";
+import { FloatingActions } from "@/components/admin/floating-actions";
 import {
     CalendarBody,
     CalendarNavigationProvider,
-} from "@/components/admin/calendar-navigation.tsx";
+} from "@/components/admin/calendar-navigation";
 
 export const metadata: Metadata = {
     title: "Kalendář",

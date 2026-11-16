@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { BUSINESS_INFO } from "@/lib/business-info.ts";
+import { BUSINESS_INFO } from "@/lib/business-info";
 
 // Vercel 308-redirects the bare apex domain to www, so URLs listed here
 // must point straight at www – otherwise search engines see a redirect

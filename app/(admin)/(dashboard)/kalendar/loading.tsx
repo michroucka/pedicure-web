@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton.tsx";
-import { CalendarBodySkeleton } from "@/components/admin/calendar-body-skeleton.tsx";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarBodySkeleton } from "@/components/admin/calendar-body-skeleton";
 
 export default function KalendarLoading() {
     return (

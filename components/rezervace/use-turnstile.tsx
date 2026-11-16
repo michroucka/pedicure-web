@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
-import { BUSINESS_INFO } from "@/lib/business-info.ts";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BUSINESS_INFO } from "@/lib/business-info";
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 

@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { prisma } from "../lib/prisma.ts";
+import { prisma } from "../lib/prisma";
 
 const MONDAY = 1;
 const FRIDAY = 5;

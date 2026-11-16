@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { prisma } from "./prisma.ts";
-import { createBooking } from "./create-booking.ts";
-import { createGroupBooking } from "./create-group-booking.ts";
-import { moveGroupBooking } from "./move-booking.ts";
-import { cancelBooking } from "./cancel-booking.ts";
-import { getBookingGroupByToken } from "./get-booking-group-by-token.ts";
+import { prisma } from "./prisma";
+import { createBooking } from "./create-booking";
+import { createGroupBooking } from "./create-group-booking";
+import { moveGroupBooking } from "./move-booking";
+import { cancelBooking } from "./cancel-booking";
+import { getBookingGroupByToken } from "./get-booking-group-by-token";
 
 // outsideHours: true for moves – same reason as move-booking.test.ts: these
 // tests are about which rows the token resolves to, not availability.

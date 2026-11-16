@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayOverrideSchema, daySchema } from "./schema.ts";
+import { dayOverrideSchema, daySchema } from "./schema";
 
 const overlapping = [
     { startTime: "09:00", endTime: "12:00" },

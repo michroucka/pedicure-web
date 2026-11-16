@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { prisma } from "../lib/prisma.ts";
-import { normalizePhoneForMatch } from "../lib/utils.ts";
-import type { Client } from "../lib/generated/prisma/client.ts";
+import { prisma } from "../lib/prisma";
+import { normalizePhoneForMatch } from "../lib/utils";
+import type { Client } from "../lib/generated/prisma/client";
 
 // Merges clients that share an exact (case-sensitive) name, as long as
 // they can't be two different people: within one name, all clients without

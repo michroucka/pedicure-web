@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import type { DayButton } from "react-day-picker";
-import { CalendarDayButton } from "@/components/ui/calendar.tsx";
-import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
+import { CalendarDayButton } from "@/components/ui/calendar";
+import { ExceptionDot } from "@/components/admin/exception-dot";
 
 // Shared Calendar DayButton override: renders the same blocked/extra-open
 // dot as the dostupnost exceptions tab, driven by DayPicker `modifiers`

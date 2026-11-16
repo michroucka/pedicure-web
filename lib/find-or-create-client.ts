@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma.ts";
-import { findClient } from "@/lib/find-client.ts";
-import type { Client } from "@/lib/generated/prisma/client.ts";
+import { prisma } from "@/lib/prisma";
+import { findClient } from "@/lib/find-client";
+import type { Client } from "@/lib/generated/prisma/client";
 
 export async function findOrCreateClient(
     phone: string | undefined,

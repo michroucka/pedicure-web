@@ -1,4 +1,4 @@
-import { SectionWave } from "@/components/marketing/section-wave.tsx";
+import { SectionWave } from "@/components/marketing/section-wave";
 
 const TIPS = [
     {

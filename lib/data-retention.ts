@@ -1,4 +1,4 @@
-import type { BookingStatus } from "@/lib/generated/prisma/enums.ts";
+import type { BookingStatus } from "@/lib/generated/prisma/enums";
 
 // How long client records are kept after their last visit. Matches the
 // general 3-year limitation period (§ 629 OZ), so a claim can still be backed

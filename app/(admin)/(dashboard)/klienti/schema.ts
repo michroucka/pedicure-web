@@ -4,7 +4,7 @@ import {
     nameSchema,
     noteSchema,
     optionalEmailSchema,
-} from "@/lib/validation.ts";
+} from "@/lib/validation";
 
 export const updateClientInputSchema = z.object({
     name: nameSchema,

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
-import { auth } from "@/auth.ts";
+import { auth } from "@/auth";
 import type { NextAuthRequest } from "next-auth";
-import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 
 // Domain-based routing: the admin routes (kalendar/dostupnost/klienti/login)
 // have no shared URL prefix, so they only make sense reachable through

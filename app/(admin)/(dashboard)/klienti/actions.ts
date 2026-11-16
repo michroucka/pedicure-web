@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma.ts";
-import { requireAdmin } from "@/lib/require-admin.ts";
-import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
-import { idSchema } from "@/lib/validation.ts";
-import { updateClientInputSchema } from "./schema.ts";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/require-admin";
+import { normalizeExtraMinutes } from "@/lib/extra-time";
+import { idSchema } from "@/lib/validation";
+import { updateClientInputSchema } from "./schema";
 
 const NOT_FOUND_ERROR = "Klient nebyl nalezen.";
 

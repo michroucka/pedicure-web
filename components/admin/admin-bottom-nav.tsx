@@ -8,7 +8,7 @@ import {
     Settings,
     UsersRound,
 } from "lucide-react";
-import { cn } from "@/lib/utils.ts";
+import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
     { href: "/kalendar", label: "Kalendář", icon: CalendarCheck },

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input.tsx";
-import { ClientEditDialog } from "@/components/admin/client-edit-dialog.tsx";
+import { Input } from "@/components/ui/input";
+import { ClientEditDialog } from "@/components/admin/client-edit-dialog";
 import { Clock, Phone, Search } from "lucide-react";
-import { normalizeForSearch } from "@/lib/utils.ts";
-import type { Client } from "@/lib/generated/prisma/client.ts";
+import { normalizeForSearch } from "@/lib/utils";
+import type { Client } from "@/lib/generated/prisma/client";
 
 export type ClientListItem = Client & { upcomingBookings: number };
 

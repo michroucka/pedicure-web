@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info.ts";
+import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info";
 import {
     BACKUP_RETENTION_DAYS,
     CLIENT_RETENTION_YEARS,
-} from "@/lib/data-retention.ts";
+} from "@/lib/data-retention";
 
 export const metadata: Metadata = {
     title: "Ochrana osobních údajů",

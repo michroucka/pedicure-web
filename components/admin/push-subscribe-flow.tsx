@@ -1,6 +1,6 @@
 "use client";
 
-import { Switch } from "@/components/ui/switch.tsx";
+import { Switch } from "@/components/ui/switch";
 import {
     Field,
     FieldContent,
@@ -8,11 +8,11 @@ import {
     FieldGroup,
     FieldLabel,
     FieldTitle,
-} from "@/components/ui/field.tsx";
-import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
+} from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { deletePushSubscriptionAction } from "@/app/(admin)/(dashboard)/nastaveni/actions.ts";
-import { subscribeAndSave } from "@/lib/push-client.ts";
+import { deletePushSubscriptionAction } from "@/app/(admin)/(dashboard)/nastaveni/actions";
+import { subscribeAndSave } from "@/lib/push-client";
 
 function requestNotificationPermission() {
     return new Promise((resolve, reject) => {

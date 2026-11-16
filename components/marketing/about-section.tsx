@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { SectionWave } from "@/components/marketing/section-wave.tsx";
+import { SectionWave } from "@/components/marketing/section-wave";
 
 const PRINCIPLES = [
     "pečlivém a individuálním přístupu",

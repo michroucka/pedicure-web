@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { formatPhoneNumber } from "@/lib/utils.ts";
+import { formatPhoneNumber } from "@/lib/utils";
 
 export const PHONE_RE = /^(\+420 )?\d{3} \d{3} \d{3}$/;
 

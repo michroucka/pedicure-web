@@ -9,23 +9,20 @@ import {
     localDateToUtcMidnight,
     getCzechToday,
     getCzechNowMinutes,
-} from "@/lib/utils.ts";
-import {
-    categorizeExceptions,
-    computeClosedRanges,
-} from "@/lib/availability.ts";
-import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
-import { ExceptionDot } from "@/components/admin/exception-dot.tsx";
+} from "@/lib/utils";
+import { categorizeExceptions, computeClosedRanges } from "@/lib/availability";
+import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
+import { ExceptionDot } from "@/components/admin/exception-dot";
 import {
     BookingCard,
     SERVICE_COLORS,
     isBookingPast,
     type BookingItem,
-} from "@/components/admin/booking-card.tsx";
+} from "@/components/admin/booking-card";
 import type {
     AvailabilityException,
     Service,
-} from "@/lib/generated/prisma/client.ts";
+} from "@/lib/generated/prisma/client";
 
 const PX_PER_MIN = 2;
 

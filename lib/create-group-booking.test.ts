@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { prisma } from "./prisma.ts";
-import { createBooking } from "./create-booking.ts";
-import { createGroupBooking } from "./create-group-booking.ts";
+import { prisma } from "./prisma";
+import { createBooking } from "./create-booking";
+import { createGroupBooking } from "./create-group-booking";
 
 describe("createBooking / createGroupBooking", () => {
     let clientId: string;

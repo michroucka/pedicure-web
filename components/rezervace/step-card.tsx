@@ -6,7 +6,7 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@/components/ui/accordion.tsx";
+} from "@/components/ui/accordion";
 import { UsersRound, CalendarDays, Clock } from "lucide-react";
 
 const STEPS = [

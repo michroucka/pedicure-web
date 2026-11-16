@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "@/lib/prisma.ts";
-import { createBooking } from "@/lib/create-booking.ts";
-import { createGroupBooking } from "@/lib/create-group-booking.ts";
-import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
+import { prisma } from "@/lib/prisma";
+import { createBooking } from "@/lib/create-booking";
+import { createGroupBooking } from "@/lib/create-group-booking";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email";
 import {
     cancelBookingByTokenAction,
     getRescheduleDaysAction,
     getRescheduleSlotsAction,
     moveBookingByTokenAction,
-} from "./actions.ts";
+} from "./actions";
 
 // revalidatePath and after() both need an active Next.js request context,
 // which a plain vitest run doesn't have – mock them out like any other
@@ -19,8 +19,8 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/server", () => ({
     after: vi.fn((callback: () => unknown) => callback()),
 }));
-vi.mock("@/lib/send-push.ts", () => ({ sendPushNotification: vi.fn() }));
-vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
+vi.mock("@/lib/send-push", () => ({ sendPushNotification: vi.fn() }));
+vi.mock("@/lib/send-booking-confirmation-email", () => ({
     sendBookingMovedEmail: vi.fn(),
 }));
 

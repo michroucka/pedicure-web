@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { format } from "date-fns";
-import { CalendarBodySkeleton } from "@/components/admin/calendar-body-skeleton.tsx";
+import { CalendarBodySkeleton } from "@/components/admin/calendar-body-skeleton";
 
 // Changing ?date= keeps us on the same route, so Next.js never re-runs
 // kalendar/loading.tsx – the old day/week would stay on screen until the

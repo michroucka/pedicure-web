@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { auth, signIn } from "@/auth.ts";
+import { auth, signIn } from "@/auth";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card.tsx";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { PasswordInput } from "@/components/password-input.tsx";
-import { LoginSubmitButton } from "@/components/admin/login-submit-button.tsx";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import { Card, CardContent } from "@/components/ui/card";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
+import { LoginSubmitButton } from "@/components/admin/login-submit-button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Lock, User } from "lucide-react";
 
 export const metadata: Metadata = {

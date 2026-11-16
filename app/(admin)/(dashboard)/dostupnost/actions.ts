@@ -1,16 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma.ts";
-import { requireAdmin } from "@/lib/require-admin.ts";
-import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/require-admin";
+import { getBookingPersonName } from "@/lib/get-booking-person-name";
 import {
     diffDayBlocks,
     toRecurringRows,
     type TimeSlot,
-} from "@/lib/availability.ts";
-import { parseTime, toDateOnly, addUtcDays } from "@/lib/utils.ts";
-import { dateStrSchema } from "@/lib/validation.ts";
+} from "@/lib/availability";
+import { parseTime, toDateOnly, addUtcDays } from "@/lib/utils";
+import { dateStrSchema } from "@/lib/validation";
 import {
     availabilitySchema,
     blockedRangesSchema,
@@ -19,7 +19,7 @@ import {
     type AvailabilityFormData,
     type DayOverrideFormData,
     type CloseRangeFormData,
-} from "./schema.ts";
+} from "./schema";
 
 export async function saveRecurringAvailability(data: AvailabilityFormData) {
     await requireAdmin();

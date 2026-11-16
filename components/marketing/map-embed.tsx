@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button.tsx";
-import { BUSINESS_INFO } from "@/lib/business-info.ts";
+import { Button } from "@/components/ui/button";
+import { BUSINESS_INFO } from "@/lib/business-info";
 
 // mapy.com takes x = longitude, y = latitude.
 const MAP_QUERY = `x=${BUSINESS_INFO.geo.longitude}&y=${BUSINESS_INFO.geo.latitude}&z=17&source=firm&id=${BUSINESS_INFO.mapyFirmId}`;

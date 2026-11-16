@@ -1,4 +1,4 @@
-import { addUtcDays, getCzechToday } from "./utils.ts";
+import { addUtcDays, getCzechToday } from "./utils";
 
 // How far ahead the date pickers (booking wizard, reschedule via magic
 // link) fetch available days in one request. The server caps the range it

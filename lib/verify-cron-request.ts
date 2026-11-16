@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { secretEquals } from "@/lib/secret-equals.ts";
+import { secretEquals } from "@/lib/secret-equals";
 
 // Vercel Cron calls every cron route with `Authorization: Bearer $CRON_SECRET`
 // (set automatically once the CRON_SECRET env var exists on the project).

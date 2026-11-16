@@ -1,12 +1,8 @@
 "use client";
 
-import { cn, formatTime } from "@/lib/utils.ts";
-import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
-import type {
-    Booking,
-    Client,
-    Service,
-} from "@/lib/generated/prisma/client.ts";
+import { cn, formatTime } from "@/lib/utils";
+import { getBookingPersonName } from "@/lib/get-booking-person-name";
+import type { Booking, Client, Service } from "@/lib/generated/prisma/client";
 
 export type BookingItem = Booking & { client: Client; service: Service };
 

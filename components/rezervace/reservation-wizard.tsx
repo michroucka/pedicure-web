@@ -1,18 +1,18 @@
 "use client";
 
-import { Service } from "@/lib/generated/prisma/client.ts";
+import { Service } from "@/lib/generated/prisma/client";
 import { useState } from "react";
-import { StepCard } from "@/components/rezervace/step-card.tsx";
-import { PersonsStep } from "@/components/rezervace/persons-step.tsx";
-import { DateStep } from "@/components/rezervace/date-step.tsx";
-import { TimeSlotStep } from "@/components/rezervace/time-slot-step.tsx";
+import { StepCard } from "@/components/rezervace/step-card";
+import { PersonsStep } from "@/components/rezervace/persons-step";
+import { DateStep } from "@/components/rezervace/date-step";
+import { TimeSlotStep } from "@/components/rezervace/time-slot-step";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import { formatTime } from "@/lib/utils.ts";
-import { Button } from "@/components/ui/button.tsx";
+import { formatTime } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
-import { parseServiceIdsParam } from "@/lib/booking-url.ts";
+import { parseServiceIdsParam } from "@/lib/booking-url";
 
 export function ReservationWizard({ services }: { services: Service[] }) {
     const router = useRouter();

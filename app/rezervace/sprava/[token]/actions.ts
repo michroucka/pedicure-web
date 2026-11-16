@@ -1,28 +1,28 @@
 "use server";
 
-import { getBookingGroupByToken } from "@/lib/get-booking-group-by-token.ts";
-import { cancelBooking, cancelGroupBooking } from "@/lib/cancel-booking.ts";
+import { getBookingGroupByToken } from "@/lib/get-booking-group-by-token";
+import { cancelBooking, cancelGroupBooking } from "@/lib/cancel-booking";
 import {
     moveBooking,
     moveGroupBooking,
     SlotUnavailableError,
-} from "@/lib/move-booking.ts";
-import { canClientModifyBooking } from "@/lib/booking-modification-window.ts";
-import { getAvailableSlots } from "@/lib/get-available-slots.ts";
-import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
-import { toDateOnly } from "@/lib/utils.ts";
+} from "@/lib/move-booking";
+import { canClientModifyBooking } from "@/lib/booking-modification-window";
+import { getAvailableSlots } from "@/lib/get-available-slots";
+import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range";
+import { toDateOnly } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
-import type { BookingWithRelations } from "@/lib/get-booking-group-by-token.ts";
+import type { BookingWithRelations } from "@/lib/get-booking-group-by-token";
 import { after } from "next/server";
-import { sendPushNotification } from "@/lib/send-push.ts";
-import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
+import { sendPushNotification } from "@/lib/send-push";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email";
 import {
     adminCalendarUrl,
     formatPushDateTime,
-} from "@/lib/booking-push-format.ts";
-import { dateRangeSchema } from "@/app/rezervace/schema.ts";
-import { dateStrSchema, startTimeSchema } from "@/lib/validation.ts";
-import { tokenSchema } from "./schema.ts";
+} from "@/lib/booking-push-format";
+import { dateRangeSchema } from "@/app/rezervace/schema";
+import { dateStrSchema, startTimeSchema } from "@/lib/validation";
+import { tokenSchema } from "./schema";
 
 const NOT_FOUND_ERROR = "Rezervace nebyla nalezena.";
 const WINDOW_PASSED_ERROR =

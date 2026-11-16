@@ -2,13 +2,13 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { getAvailableSlotsAction } from "@/app/rezervace/actions.ts";
-import { formatTime } from "@/lib/utils.ts";
-import { Button } from "@/components/ui/button.tsx";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
-import { Spinner } from "@/components/ui/spinner.tsx";
+import { getAvailableSlotsAction } from "@/app/rezervace/actions";
+import { formatTime } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle, CalendarX } from "lucide-react";
-import { parseServiceIdsParam } from "@/lib/booking-url.ts";
+import { parseServiceIdsParam } from "@/lib/booking-url";
 
 export function TimeSlotStep({
     onSelectAction,

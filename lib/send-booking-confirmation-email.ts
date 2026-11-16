@@ -1,19 +1,15 @@
-import { getResendClient } from "@/lib/resend-client.ts";
-import { BUSINESS_INFO, EMAIL_FROM } from "@/lib/business-info.ts";
+import { getResendClient } from "@/lib/resend-client";
+import { BUSINESS_INFO, EMAIL_FROM } from "@/lib/business-info";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import {
     BookingConfirmationEmail,
     type BookingEmailVariant,
-} from "@/emails/booking-confirmation.tsx";
-import { formatTime } from "@/lib/utils.ts";
-import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
-import { prisma } from "@/lib/prisma.ts";
-import type {
-    Booking,
-    Client,
-    Service,
-} from "@/lib/generated/prisma/client.ts";
+} from "@/emails/booking-confirmation";
+import { formatTime } from "@/lib/utils";
+import { getBookingPersonName } from "@/lib/get-booking-person-name";
+import { prisma } from "@/lib/prisma";
+import type { Booking, Client, Service } from "@/lib/generated/prisma/client";
 
 const SUBJECTS: Record<BookingEmailVariant, string> = {
     created: "Potvrzení rezervace",
@@ -39,7 +35,7 @@ export async function sendBookingConfirmationEmail(
     const resend = getResendClient();
     if (!resend) {
         console.error(
-            "RESEND_API_KEY není nastaven, potvrzovací e-mail nebyl odeslán."
+            "RESEND_API_KEY is not set, confirmation email not sent."
         );
         return;
     }
@@ -70,7 +66,7 @@ export async function sendBookingConfirmationEmail(
         // not-yet-configured email send (missing/invalid RESEND_API_KEY,
         // unverified domain) must not undo it or break the confirmation
         // redirect.
-        console.error("Nepodařilo se odeslat potvrzovací e-mail:", error);
+        console.error("Failed to send confirmation email:", error);
     }
 }
 

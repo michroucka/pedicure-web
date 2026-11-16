@@ -1,5 +1,5 @@
-import { InteriorCarousel } from "@/components/marketing/interior-carousel.tsx";
-import { SectionWave } from "@/components/marketing/section-wave.tsx";
+import { InteriorCarousel } from "@/components/marketing/interior-carousel";
+import { SectionWave } from "@/components/marketing/section-wave";
 
 const REASONS = [
     {

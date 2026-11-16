@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton.tsx";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Shared by kalendar/loading.tsx (first render of the route) and by
 // CalendarBody (switching date within the route, where Next.js never

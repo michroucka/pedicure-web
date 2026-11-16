@@ -18,9 +18,7 @@ export async function verifyTurnstileToken(
 
     const secret = process.env.TURNSTILE_SECRET_KEY;
     if (!secret) {
-        console.error(
-            "TURNSTILE_SECRET_KEY není nastaven, rezervace odmítnuta."
-        );
+        console.error("TURNSTILE_SECRET_KEY is not set, booking rejected.");
         return false;
     }
     if (!token) return false;
@@ -34,16 +32,19 @@ export async function verifyTurnstileToken(
         // Cloudflare itself being down must not take online booking down
         // with it – an attacker can't cause this, only a real outage can.
         if (!response.ok) {
-            console.error("Turnstile siteverify selhal:", response.status);
+            console.error("Turnstile siteverify failed:", response.status);
             return true;
         }
         const result: SiteverifyResponse = await response.json();
         if (!result.success) {
-            console.warn("Turnstile ověření neprošlo:", result["error-codes"]);
+            console.warn(
+                "Turnstile verification failed:",
+                result["error-codes"]
+            );
         }
         return result.success;
     } catch (error) {
-        console.error("Turnstile siteverify nedostupný:", error);
+        console.error("Turnstile siteverify unreachable:", error);
         return true;
     }
 }

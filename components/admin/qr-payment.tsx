@@ -3,7 +3,7 @@ import {
     InputGroupAddon,
     InputGroupInput,
     InputGroupText,
-} from "@/components/ui/input-group.tsx";
+} from "@/components/ui/input-group";
 
 // Shared by BookingDetailDialog (amount prefilled from a booking's service
 // price) and QuickQrDialog (amount always starts empty, entered by hand) –

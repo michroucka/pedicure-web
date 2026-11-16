@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button.tsx";
-import { SectionWave } from "@/components/marketing/section-wave.tsx";
-import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
+import { Button } from "@/components/ui/button";
+import { SectionWave } from "@/components/marketing/section-wave";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 
 export function ClosingSection() {
     return (

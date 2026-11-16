@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { sendBookingConfirmationEmail } from "./send-booking-confirmation-email.ts";
-import { BookingConfirmationEmail } from "@/emails/booking-confirmation.tsx";
+import { sendBookingConfirmationEmail } from "./send-booking-confirmation-email";
+import { BookingConfirmationEmail } from "@/emails/booking-confirmation";
 
 const send = vi.fn();
 vi.mock("resend", () => ({
@@ -8,7 +8,7 @@ vi.mock("resend", () => ({
         return { emails: { send } };
     }),
 }));
-vi.mock("@/emails/booking-confirmation.tsx", () => ({
+vi.mock("@/emails/booking-confirmation", () => ({
     BookingConfirmationEmail: vi.fn(() => null),
 }));
 

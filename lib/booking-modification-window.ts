@@ -1,4 +1,4 @@
-import { getCzechNowMinutes, getCzechToday } from "./utils.ts";
+import { getCzechNowMinutes, getCzechToday } from "./utils";
 
 const ONE_DAY_MINUTES = 24 * 60;
 

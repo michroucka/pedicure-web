@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button.tsx";
+import { Button } from "@/components/ui/button";
 import { Mail, MapPin, Phone, Star } from "lucide-react";
-import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 import Image from "next/image";
-import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info.ts";
-import { MapEmbed } from "@/components/marketing/map-embed.tsx";
+import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info";
+import { MapEmbed } from "@/components/marketing/map-embed";
 
 export const metadata: Metadata = {
     title: "Kontakt",
