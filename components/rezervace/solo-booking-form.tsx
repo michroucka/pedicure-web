@@ -93,6 +93,7 @@ export function SoloBookingForm({
                         </FieldLabel>
                         <Input
                             id="name"
+                            autoComplete="name"
                             placeholder="Jana Nováková"
                             {...register("name")}
                         />
@@ -120,6 +121,7 @@ export function SoloBookingForm({
                         <Input
                             id="email"
                             type="email"
+                            autoComplete="email"
                             placeholder="jana.novakova@seznam.cz"
                             {...register("email")}
                         />
@@ -130,7 +132,7 @@ export function SoloBookingForm({
                 <PrivacyNotice />
                 {turnstile.widget}
 
-                <div className="mt-6 flex justify-between pb-6">
+                <div className="mt-6 flex justify-between">
                     <Button
                         variant="outline"
                         size="lg"

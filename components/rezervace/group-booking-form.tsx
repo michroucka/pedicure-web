@@ -97,6 +97,7 @@ export function GroupBookingForm({
                             </FieldLabel>
                             <Input
                                 id="name"
+                                autoComplete="name"
                                 placeholder="Jana Nováková"
                                 {...register("names.0")}
                             />
@@ -124,6 +125,7 @@ export function GroupBookingForm({
                             <Input
                                 id="email"
                                 type="email"
+                                autoComplete="email"
                                 placeholder="jana.novakova@seznam.cz"
                                 {...register("email")}
                             />
@@ -148,6 +150,10 @@ export function GroupBookingForm({
                                     </FieldLabel>
                                     <Input
                                         id={`names.${personIndex}`}
+                                        // Other people in the group – the
+                                        // browser would offer the user's
+                                        // own name here.
+                                        autoComplete="off"
                                         placeholder="Jméno a příjmení"
                                         {...register(`names.${personIndex}`)}
                                     />
@@ -180,7 +186,7 @@ export function GroupBookingForm({
             <PrivacyNotice />
             {turnstile.widget}
 
-            <div className="mt-6 flex justify-between pb-6">
+            <div className="mt-6 flex justify-between">
                 <Button
                     variant="outline"
                     size="lg"

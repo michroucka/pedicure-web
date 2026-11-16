@@ -154,7 +154,7 @@ export function ManageBooking({
                                 <Button
                                     key={s}
                                     type="button"
-                                    size="sm"
+                                    size="lg"
                                     variant={
                                         s === selectedSlot
                                             ? "default"

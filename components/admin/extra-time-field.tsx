@@ -36,7 +36,7 @@ export function ExtraTimeField({
     return (
         // min-h matches the input's height, so ticking the checkbox doesn't
         // make the row (and everything below it) jump
-        <div className="flex min-h-8 items-center gap-3">
+        <div className="flex min-h-10 items-center gap-3">
             <label className="flex items-center gap-2">
                 <Checkbox
                     checked={value.enabled}

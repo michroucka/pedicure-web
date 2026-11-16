@@ -67,7 +67,7 @@ export function CalendarBodySkeleton() {
                 {Array.from({ length: 5 }).map((_, i) => (
                     <div
                         key={i}
-                        className="flex min-w-48 flex-1 flex-col gap-2"
+                        className="flex min-w-32 flex-1 flex-col gap-2"
                     >
                         <Skeleton className="mx-auto h-5 w-16" />
                         <Skeleton className="flex-1 rounded-none" />

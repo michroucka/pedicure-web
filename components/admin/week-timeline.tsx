@@ -129,9 +129,12 @@ export function WeekTimeline({
                             categorizeExceptions(exceptionsByDay[dayIndex]);
 
                         return (
+                            // min-w-32 (~138px): a typical 6-day week fits
+                            // a 1024px landscape tablet without scrolling
+                            // sideways; only narrower screens scroll.
                             <div
                                 key={day.toISOString()}
-                                className="flex min-w-48 flex-1 flex-col"
+                                className="flex min-w-32 flex-1 flex-col"
                             >
                                 <div
                                     className={cn(
