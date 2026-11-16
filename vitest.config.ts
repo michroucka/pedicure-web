@@ -18,5 +18,18 @@ export default defineConfig({
         // source of flaky cross-file collisions – sequential files trade a
         // bit of speed for not having to hand out day-of-week slots forever.
         fileParallelism: false,
+        // Informational only (no thresholds) – CI prints the summary so
+        // gaps are visible, it never fails the build on a percentage.
+        coverage: {
+            provider: "v8",
+            include: [
+                "lib/**/*.ts",
+                "app/**/*.ts",
+                "auth.ts",
+                "proxy.ts",
+            ],
+            exclude: ["**/*.test.ts", "lib/generated/**"],
+            reporter: ["text-summary", "html"],
+        },
     },
 });

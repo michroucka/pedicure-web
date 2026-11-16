@@ -1,0 +1,22 @@
+# Security updates are separate from this file (repo setting "Dependabot
+# security updates") and come as soon as an advisory is published. This
+# only adds a monthly batch of regular version bumps, grouped so it's one
+# PR per ecosystem instead of one per package.
+version: 2
+updates:
+    - package-ecosystem: npm
+      directory: /
+      schedule:
+          interval: monthly
+      groups:
+          npm-minor-and-patch:
+              update-types: [minor, patch]
+      open-pull-requests-limit: 5
+
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+          interval: monthly
+      groups:
+          github-actions:
+              patterns: ["*"]

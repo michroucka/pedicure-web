@@ -29,7 +29,8 @@ jobs:
 
             - uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  # Same major as Vercel (package.json "engines").
+                  node-version: 24
                   cache: npm
 
             - run: npm ci
@@ -43,8 +44,18 @@ jobs:
             - name: Formatting
               run: npx prettier --check "**/*.{ts,tsx}"
 
+            # Coverage is informational, see vitest.config.ts. The summary
+            # lands in the job log.
             - name: Tests
-              run: npm test -- --run
+              run: npm run test:coverage
+
+            # Runs after the tests' `prisma migrate deploy`, so the test
+            # branch holds exactly what the migrations create. A schema.prisma
+            # change without a migration shows up as a diff (exit code 2).
+            # Constraints Prisma can't model (Booking_no_overlap) aren't
+            # compared, so they don't trip it.
+            - name: Schema matches migrations
+              run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
 
             # Only the framework build - the `build` script also runs
             # `prisma migrate deploy`, which belongs to the Vercel deploy.
