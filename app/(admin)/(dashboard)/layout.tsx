@@ -27,13 +27,19 @@ export default async function AdminDashboardLayout({
     }
 
     return (
-        // Top safe-area padding: the page paints under the status bar
-        // (viewportFit "cover"), and iPadOS 26 blurs whatever sits there -
-        // the keep-awake banner was half smeared. Now only plain
-        // background is under it, like the bottom nav's inset below.
-        <div className="flex h-svh flex-col pt-[env(safe-area-inset-top)]">
-            <KeepAwake />
-            <main className="flex-1 scrollbar-gutter-both overflow-y-auto pt-2">
+        // iPadOS 26 blurs the top ~40pt of an installed web app ("scroll
+        // edge effect"). WebKit skips the blur and just extends the colour
+        // when an opaque, full-width sticky element touches the top edge -
+        // that's the strip below (it also holds the keep-awake banner). The
+        // document scrolls, not <main>; only the week calendar
+        // (data-fills-viewport) pins the page to the viewport and scrolls
+        // inside, below its day navigation. Sticky page headers use top-2
+        // to sit right under the strip.
+        <div className="flex min-h-svh flex-col pt-[env(safe-area-inset-top)] [--admin-nav-height:4.625rem] has-[[data-fills-viewport]]:md:h-svh">
+            <div className="sticky top-0 z-30 bg-background pb-2">
+                <KeepAwake />
+            </div>
+            <main className="flex-1 has-[[data-fills-viewport]]:md:min-h-0">
                 {children}
             </main>
             <AdminBottomNav />

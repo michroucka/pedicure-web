@@ -259,7 +259,7 @@ export function AvailabilityForm({
             {/* Sticky above the bottom nav, so saving doesn't need a scroll
                 past all seven days; only while there is something to save. */}
             {(isDirty || isSaving) && (
-                <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur transition-[translate,opacity] duration-200 starting:translate-y-4 starting:opacity-0">
+                <div className="sticky bottom-[calc(var(--admin-nav-height)+env(safe-area-inset-bottom))] -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur transition-[translate,opacity] duration-200 starting:translate-y-4 starting:opacity-0">
                     <span className="text-sm text-muted-foreground">
                         Neuložené změny
                     </span>

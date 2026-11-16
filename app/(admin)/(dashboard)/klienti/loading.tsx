@@ -4,7 +4,7 @@ export default function ClientsLoading() {
     return (
         <div className="mx-auto w-full max-w-lg md:max-w-2xl">
             <div className="flex flex-col gap-3 px-4 pb-4">
-                <div className="pt-2 pb-1">
+                <div className="pb-1">
                     <Skeleton className="h-10 w-full rounded-2xl" />
                 </div>
                 <div className="divide-y overflow-hidden rounded-2xl border">

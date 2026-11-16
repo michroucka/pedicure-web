@@ -25,7 +25,7 @@ export function ClientList({ clients }: { clients: ClientListItem[] }) {
     return (
         <div className="flex flex-col gap-3 px-4 pb-4">
             {/* Stays reachable while scrolling a long list. */}
-            <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pt-2 pb-1">
+            <div className="sticky top-2 z-10 -mx-4 bg-background px-4 pb-1">
                 <div className="relative">
                     <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
