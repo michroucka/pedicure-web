@@ -1,4 +1,4 @@
-import webpush from "web-push";
+import * as webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 
 type PushPayload = { title: string; body: string; url?: string };
