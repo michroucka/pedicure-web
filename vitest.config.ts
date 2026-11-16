@@ -22,12 +22,7 @@ export default defineConfig({
         // gaps are visible, it never fails the build on a percentage.
         coverage: {
             provider: "v8",
-            include: [
-                "lib/**/*.ts",
-                "app/**/*.ts",
-                "auth.ts",
-                "proxy.ts",
-            ],
+            include: ["lib/**/*.ts", "app/**/*.ts", "auth.ts", "proxy.ts"],
             exclude: ["**/*.test.ts", "lib/generated/**"],
             reporter: ["text-summary", "html"],
         },
