@@ -1,4 +1,4 @@
-import { Montserrat, Playfair_Display } from "next/font/google";
+import { Fraunces, Montserrat } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
@@ -46,8 +46,9 @@ export const viewport: Viewport = {
 
 const fontSans = Montserrat({ subsets: ["latin"], variable: "--font-sans" });
 
-const fontSerif = Playfair_Display({
+const fontSerif = Fraunces({
     subsets: ["latin"],
+    style: ["normal", "italic"],
     variable: "--font-serif",
 });
 
@@ -59,6 +60,7 @@ export default function RootLayout({
     return (
         <html
             lang="cs"
+            data-scroll-behavior="smooth"
             className={cn(
                 "antialiased",
                 fontSerif.variable,

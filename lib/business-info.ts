@@ -2,7 +2,7 @@ export const OPERATOR_INFO = {
     name: "RSDr. Miroslav Roučka",
     address: "Boženy Němcové 204, 331 41 Kralovice",
     ico: "13866435",
-    registryNote: "Fyzická osoba zapsaná v živnostenském rejstříku",
+    registryNote: "fyzická osoba zapsaná v živnostenském rejstříku",
 } as const;
 
 export const BUSINESS_INFO = {
@@ -25,6 +25,12 @@ export const BUSINESS_INFO = {
     geo: { latitude: 49.9803738889, longitude: 13.4847511111 },
     // Same firm as the Firmy.cz listing, shown in the mapy.com widget.
     mapyFirmId: 14057489,
+    mapsUrl:
+        "https://mapy.com/cs/zakladni?source=firm&id=14057489&x=13.4847511&y=49.9803739&z=17",
+    profiles: {
+        google: "https://share.google/XDsBQ20HE2i1sQsJj",
+        firmy: "https://www.firmy.cz/detail/14057489-nohy-v-cajku-pedikura-kralovice-kralovice.html",
+    },
 } as const;
 
 export const EMAIL_FROM = `${BUSINESS_INFO.tagline} <rezervace@pedikurakralovice.cz>`;

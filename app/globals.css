@@ -4,7 +4,6 @@
 
 @theme inline {
     --font-heading: var(--font-serif);
-    --font-display: var(--font-display);
     --font-sans: var(--font-sans);
     --font-serif: var(--font-serif);
     --font-mono: var(--font-mono);
@@ -67,48 +66,48 @@
 }
 
 :root {
-    --background: oklch(0.9940 0 0);
+    --background: oklch(0.994 0 0);
     --foreground: oklch(0 0 0);
-    --card: oklch(0.9940 0 0);
+    --card: oklch(0.994 0 0);
     --card-foreground: oklch(0 0 0);
     --popover: oklch(0.9911 0 0);
     --popover-foreground: oklch(0 0 0);
     --primary: oklch(0.5608 0.1952 2.7932);
-    --primary-foreground: oklch(1.0000 0 0);
-    --secondary: oklch(0.2290 0.0036 228.9614);
-    --secondary-foreground: oklch(0.9540 0.0063 255.4755);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.229 0.0036 228.9614);
+    --secondary-foreground: oklch(0.954 0.0063 255.4755);
     --muted: oklch(0.9702 0 0);
     --muted-foreground: oklch(0.4386 0 0);
     --accent: oklch(0.9194 0.0402 352.1774);
     --accent-foreground: oklch(0.5608 0.1952 2.7932);
-    --destructive: oklch(0.6290 0.1902 23.0704);
-    --destructive-foreground: oklch(1.0000 0 0);
-    --danger: oklch(0.9200 0.1000 23.0704);
-    --danger-foreground: oklch(0.5800 0.2000 23.0704);
-    --success: oklch(0.9200 0.0900 156.4499);
-    --success-foreground: oklch(0.6000 0.1900 156.4499);
-    --warning: oklch(0.9200 0.1000 65.0000);
-    --warning-foreground: oklch(0.6200 0.1900 65.0000);
-    --info: oklch(0.9200 0.0800 250.1063);
-    --info-foreground: oklch(0.5500 0.1900 250.1063);
-    --border: oklch(0.9300 0.0094 286.2156);
+    --destructive: oklch(0.629 0.1902 23.0704);
+    --destructive-foreground: oklch(1 0 0);
+    --danger: oklch(0.92 0.1 23.0704);
+    --danger-foreground: oklch(0.58 0.2 23.0704);
+    --success: oklch(0.92 0.09 156.4499);
+    --success-foreground: oklch(0.6 0.19 156.4499);
+    --warning: oklch(0.92 0.1 65);
+    --warning-foreground: oklch(0.62 0.19 65);
+    --info: oklch(0.92 0.08 250.1063);
+    --info-foreground: oklch(0.55 0.19 250.1063);
+    --border: oklch(0.93 0.0094 286.2156);
     --input: oklch(0.9401 0 0);
     --ring: oklch(0 0 0);
     --chart-1: oklch(0.7459 0.1483 156.4499);
     --chart-2: oklch(0.5608 0.1952 2.7932);
     --chart-3: oklch(0.7336 0.1758 50.5517);
-    --chart-4: oklch(0.6050 0.2526 302.1776);
-    --chart-5: oklch(0.5590 0 0);
+    --chart-4: oklch(0.605 0.2526 302.1776);
+    --chart-5: oklch(0.559 0 0);
     --sidebar: oklch(0.9777 0.0051 247.8763);
     --sidebar-foreground: oklch(0 0 0);
     --sidebar-primary: oklch(0 0 0);
-    --sidebar-primary-foreground: oklch(1.0000 0 0);
+    --sidebar-primary-foreground: oklch(1 0 0);
     --sidebar-accent: oklch(0.9401 0 0);
     --sidebar-accent-foreground: oklch(0 0 0);
     --sidebar-border: oklch(0.9401 0 0);
     --sidebar-ring: oklch(0 0 0);
-    /* --font-sans/serif/display come from next/font (app/layout.tsx,
-       lib/fonts.ts) - redefining them here would override its variables
+    /* --font-sans/serif come from next/font (app/layout.tsx) - redefining
+       them here would override its variables
        and drop the size-adjusted fallback fonts that prevent layout shift
        while the real fonts load. */
     --font-mono: JetBrains Mono, ui-monospace, monospace;
@@ -116,11 +115,16 @@
     --shadow-color: #000000;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+    --shadow-sm:
+        0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow:
+        0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md:
+        0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg:
+        0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl:
+        0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
     --tracking-normal: 0em;
     --spacing: 0.27rem;
@@ -168,21 +172,48 @@ body:has(.storefront) {
         @apply bg-background text-foreground;
     }
     html {
-        @apply font-sans scrollbar-gutter-stable;
+        @apply scrollbar-gutter-stable font-sans;
     }
+    /* Pick the heading tag by document structure and override the size
+       with a class - not the other way round. */
     h1 {
-        @apply text-4xl font-medium font-display;
+        @apply font-heading text-4xl font-medium;
     }
     h2 {
-        @apply text-3xl font-semibold font-heading;
+        @apply font-heading text-3xl font-semibold;
     }
     h3 {
-        @apply text-2xl font-semibold font-heading;
+        @apply font-heading text-2xl font-semibold;
     }
     h4 {
-        @apply text-xl font-medium font-heading;
+        @apply font-heading text-xl font-medium;
     }
     h5 {
-        @apply text-lg font-medium font-heading;
+        @apply font-heading text-lg font-medium;
     }
+}
+
+/* In-page anchors (e.g. "O mně") scroll smoothly. data-scroll-behavior on
+   <html> lets Next.js switch it off for route changes, which should jump. */
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+/* Homepage sections fade and slide in once as they scroll into view.
+   Content is hidden only after RevealOnScroll has run (it sets
+   data-reveal-ready on <html>), so without JavaScript or with reduced
+   motion every section is simply visible. */
+[data-reveal-ready] .reveal {
+    opacity: 0;
+    translate: 0 2.5rem;
+    transition:
+        opacity 0.7s ease-out,
+        translate 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-reveal-ready] .reveal[data-revealed] {
+    opacity: 1;
+    translate: 0 0;
 }

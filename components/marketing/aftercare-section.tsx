@@ -28,8 +28,8 @@ export function AftercareSection() {
     return (
         <CzechText>
             <section className="relative bg-card">
-                <div className="mx-auto max-w-3xl px-4 pt-8 pb-24 sm:px-6">
-                    <h2 className="font-display text-pretty">
+                <div className="reveal mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-20">
+                    <h2 className="text-pretty">
                         Jak pečovat o nohy po pedikúře
                     </h2>
                     <p className="mt-6 max-w-prose text-base leading-relaxed text-pretty text-card-foreground/90">
@@ -39,18 +39,18 @@ export function AftercareSection() {
                         věnovat pár minut pravidelné péče i doma.
                     </p>
 
-                    <dl className="mt-10 grid gap-6 sm:grid-cols-2">
+                    <div className="mt-10 grid gap-6 sm:grid-cols-2">
                         {TIPS.map((tip) => (
                             <div key={tip.title}>
-                                <dt className="font-heading text-base font-medium">
+                                <h3 className="text-lg font-medium">
                                     {tip.title}
-                                </dt>
-                                <dd className="mt-1.5 text-sm leading-relaxed text-pretty text-muted-foreground">
+                                </h3>
+                                <p className="mt-1.5 text-sm leading-relaxed text-pretty text-muted-foreground">
                                     {tip.body}
-                                </dd>
+                                </p>
                             </div>
                         ))}
-                    </dl>
+                    </div>
 
                     <div className="mt-12 border-t border-border pt-8">
                         <h3>A kdy přijít znovu?</h3>

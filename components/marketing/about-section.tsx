@@ -16,17 +16,17 @@ export function AboutSection() {
                 id="o-mne"
                 className="relative scroll-mt-20 bg-card"
             >
-                <div className="mx-auto max-w-3xl px-4 pt-8 pb-24 sm:px-6 md:pb-30">
+                <div className="reveal mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-20">
                     <Image
                         src="/logo-light.svg"
                         alt="Nohy v cajku"
                         width={160}
                         height={160}
-                        className="float-right mb-4 ml-6 size-44 md:size-54"
+                        className="float-right mb-4 ml-6 size-40 md:size-48"
                         draggable={false}
                     />
 
-                    <h2 className="font-display">O mně</h2>
+                    <h2>O mně</h2>
                     <div className="mt-6 space-y-4 text-base leading-relaxed text-pretty text-card-foreground/90">
                         <p>
                             Pedikúra pro mě není jen práce. Je to obor, kterému
@@ -47,6 +47,12 @@ export function AboutSection() {
                             svým dlouholetým zkušenostem ráda pomohu.
                         </p>
                     </div>
+
+                    <div
+                        role="img"
+                        aria-label="Katka"
+                        className="clear-right mt-4 ml-auto aspect-433/221 w-24 -rotate-3 bg-primary mask-[url(/podpis-katka.svg)] mask-contain mask-no-repeat md:w-32"
+                    />
 
                     <p className="clear-right mt-8 text-sm font-medium tracking-wide text-muted-foreground uppercase">
                         Zakládám si na

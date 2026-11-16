@@ -27,7 +27,7 @@ export function BookingNav() {
                     <Image
                         src="/logo-banner-light.svg"
                         alt="Nohy v cajku"
-                        width={241}
+                        width={221}
                         height={60}
                         className="h-16 w-auto"
                         priority

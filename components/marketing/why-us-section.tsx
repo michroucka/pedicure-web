@@ -21,11 +21,11 @@ export function WhyUsSection() {
     return (
         <CzechText>
             <section className="relative bg-background">
-                <div className="mx-auto grid max-w-5xl gap-10 px-4 pt-8 pb-24 sm:px-6 md:grid-cols-2 md:items-center">
+                <div className="reveal mx-auto grid max-w-5xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 md:items-center md:py-20">
                     <InteriorCarousel />
 
                     <div>
-                        <h2 className="font-display text-pretty">
+                        <h2 className="text-pretty">
                             Proč právě Nohy v cajku?
                         </h2>
                         <p className="mt-6 text-base leading-relaxed text-pretty text-muted-foreground">
@@ -39,7 +39,9 @@ export function WhyUsSection() {
                         <div className="mt-8 grid gap-6">
                             {REASONS.map((reason) => (
                                 <div key={reason.title}>
-                                    <h5>{reason.title}</h5>
+                                    <h3 className="text-lg font-medium">
+                                        {reason.title}
+                                    </h3>
                                     <p className="mt-2 text-sm leading-relaxed text-pretty text-muted-foreground">
                                         {reason.body}
                                     </p>

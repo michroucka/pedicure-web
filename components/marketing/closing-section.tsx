@@ -1,20 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { SectionWave } from "@/components/marketing/section-wave";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 import { CzechText } from "@/components/czech-text";
 
 export function ClosingSection() {
     return (
-        // `data-wave-end` tells MarketingFooter the page already ends with a
-        // wave in the footer's color, so it drops its own top padding/border.
         <CzechText>
-            <section
-                data-wave-end
-                className="relative bg-background"
-            >
-                <div className="mx-auto max-w-2xl px-4 pt-8 pb-24 text-center sm:px-6">
-                    <h2 className="font-display text-pretty italic">
+            <section className="bg-background">
+                <div className="reveal mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 md:py-20">
+                    <h2 className="text-pretty italic">
                         Vaše nohy v dobrých rukou
                     </h2>
                     <p className="mx-auto mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
@@ -39,11 +33,6 @@ export function ClosingSection() {
                         </Button>
                     )}
                 </div>
-
-                <SectionWave
-                    variant="e"
-                    className="fill-card"
-                />
             </section>
         </CzechText>
     );

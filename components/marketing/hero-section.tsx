@@ -1,15 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { SectionWave } from "@/components/marketing/section-wave";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
+import { SectionWave } from "@/components/marketing/section-wave";
 import { CzechText } from "@/components/czech-text";
 
 export function HeroSection() {
     return (
         <CzechText>
-            <section className="relative overflow-hidden">
-                <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 pt-8 pb-24 sm:px-6 md:grid-cols-2">
+            <section className="relative flex min-h-[calc(100svh-4rem)] flex-col justify-center overflow-hidden md:min-h-[min(calc(100svh-5rem),56rem)]">
+                <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-4 pt-8 pb-16 sm:px-6 md:grid-cols-2 md:pb-20">
                     <div>
                         <h1 className="text-pretty italic">
                             Vaše nohy vás nosí celý život.
