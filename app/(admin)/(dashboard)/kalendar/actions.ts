@@ -12,21 +12,29 @@ import {
     SlotUnavailableError,
 } from "@/lib/move-booking";
 import { getAvailableSlots } from "@/lib/get-available-slots";
-import { hasOverlappingBooking } from "@/lib/check-booking-overlap";
+import {
+    checkOutsideHoursSlot,
+    type OutsideHoursSlotProblem,
+} from "@/lib/check-booking-overlap";
 import { findOrCreateClient } from "@/lib/find-or-create-client";
 import { createBooking } from "@/lib/create-booking";
 import { createGroupBooking } from "@/lib/create-group-booking";
-import { endsAfterMidnight, toDateOnly, getCzechToday } from "@/lib/utils";
+import { toDateOnly, getCzechToday } from "@/lib/utils";
 import { normalizeExtraMinutes } from "@/lib/extra-time";
 import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email";
 import { idSchema } from "@/lib/validation";
-import { sumServiceDurations } from "@/lib/service-duration";
 import {
     createManualBookingInputSchema,
     manualBookingSlotsInputSchema,
     moveSlotsInputSchema,
     updateBookingInputSchema,
 } from "./schema";
+
+const OUTSIDE_HOURS_ERRORS: Record<OutsideHoursSlotProblem, string> = {
+    past: "Nelze vytvořit rezervaci v minulosti.",
+    pastMidnight: PAST_MIDNIGHT_ERROR,
+    overlap: "Zvolený čas koliduje s jinou rezervací.",
+};
 
 // The admin forms validate the same things first, so this only shows up
 // for tampered input or a phone that couldn't be normalized.
@@ -362,7 +370,7 @@ export async function createManualBookingAction(input: {
     const date = toDateOnly(new Date(input.dateStr));
 
     if (date.getTime() < getCzechToday().getTime()) {
-        return { ok: false, error: "Nelze vytvořit rezervaci v minulosti." };
+        return { ok: false, error: OUTSIDE_HOURS_ERRORS.past };
     }
 
     // Every check below runs before findOrCreateClient – a rejected booking
@@ -388,31 +396,14 @@ export async function createManualBookingAction(input: {
     const extraMinutes = people.reduce((sum, p) => sum + p.extraTimeMinutes, 0);
 
     if (input.outsideHours) {
-        // Custom time entered by hand – skips the availability-window
-        // check entirely, so overlap with existing bookings needs its
-        // own explicit check here.
-        const services = await prisma.service.findMany({
-            where: { id: { in: serviceIds } },
-        });
-        const totalDuration =
-            sumServiceDurations(serviceIds, services) + extraMinutes;
-
-        // A custom time skips the availability windows, which are what
-        // normally keeps a booking inside the day.
-        if (endsAfterMidnight(input.startTime, totalDuration)) {
-            return { ok: false, error: PAST_MIDNIGHT_ERROR };
-        }
-
-        const overlaps = await hasOverlappingBooking(
+        const problem = await checkOutsideHoursSlot(
             date,
             input.startTime,
-            input.startTime + totalDuration
+            serviceIds,
+            extraMinutes
         );
-        if (overlaps) {
-            return {
-                ok: false,
-                error: "Zvolený čas koliduje s jinou rezervací.",
-            };
+        if (problem) {
+            return { ok: false, error: OUTSIDE_HOURS_ERRORS[problem] };
         }
     } else {
         const validSlots = await getAvailableSlots(
