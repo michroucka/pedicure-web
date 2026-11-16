@@ -1,4 +1,5 @@
 import { SectionWave } from "@/components/marketing/section-wave";
+import { CzechText } from "@/components/czech-text";
 
 const TIPS = [
     {
@@ -25,48 +26,50 @@ const TIPS = [
 
 export function AftercareSection() {
     return (
-        <section className="relative bg-card">
-            <div className="mx-auto max-w-3xl px-4 pt-8 pb-24 sm:px-6">
-                <h2 className="font-display text-pretty">
-                    Jak pečovat o nohy po pedikúře
-                </h2>
-                <p className="mt-6 max-w-prose text-base leading-relaxed text-pretty text-card-foreground/90">
-                    Po pedikúře si užijte pocit lehkých a upravených nohou.
-                    Dopřáli jste svým nohám profesionální péči a chcete, aby
-                    vydržely krásné, hebké a upravené co nejdéle? Stačí jim
-                    věnovat pár minut pravidelné péče i doma.
-                </p>
-
-                <dl className="mt-10 grid gap-6 sm:grid-cols-2">
-                    {TIPS.map((tip) => (
-                        <div key={tip.title}>
-                            <dt className="font-heading text-base font-medium">
-                                {tip.title}
-                            </dt>
-                            <dd className="mt-1.5 text-sm leading-relaxed text-pretty text-muted-foreground">
-                                {tip.body}
-                            </dd>
-                        </div>
-                    ))}
-                </dl>
-
-                <div className="mt-12 border-t border-border pt-8">
-                    <h3>A kdy přijít znovu?</h3>
-                    <p className="mt-3 max-w-prose text-sm leading-relaxed text-pretty text-muted-foreground">
-                        Většině klientů vyhovuje návštěva přibližně jednou za
-                        4–6 týdnů, vždy ale záleží na individuálním stavu vašich
-                        nohou a rychlosti, s jakou se tvoří ztvrdlá kůže. Ať už
-                        chodíte na pedikúru celý život, nebo přicházíte poprvé,
-                        společně najdeme způsob péče, který bude vašim nohám
-                        vyhovovat.
+        <CzechText>
+            <section className="relative bg-card">
+                <div className="mx-auto max-w-3xl px-4 pt-8 pb-24 sm:px-6">
+                    <h2 className="font-display text-pretty">
+                        Jak pečovat o nohy po pedikúře
+                    </h2>
+                    <p className="mt-6 max-w-prose text-base leading-relaxed text-pretty text-card-foreground/90">
+                        Po pedikúře si užijte pocit lehkých a upravených nohou.
+                        Dopřáli jste svým nohám profesionální péči a chcete, aby
+                        vydržely krásné, hebké a upravené co nejdéle? Stačí jim
+                        věnovat pár minut pravidelné péče i doma.
                     </p>
-                </div>
-            </div>
 
-            <SectionWave
-                variant="d"
-                className="fill-background"
-            />
-        </section>
+                    <dl className="mt-10 grid gap-6 sm:grid-cols-2">
+                        {TIPS.map((tip) => (
+                            <div key={tip.title}>
+                                <dt className="font-heading text-base font-medium">
+                                    {tip.title}
+                                </dt>
+                                <dd className="mt-1.5 text-sm leading-relaxed text-pretty text-muted-foreground">
+                                    {tip.body}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+
+                    <div className="mt-12 border-t border-border pt-8">
+                        <h3>A kdy přijít znovu?</h3>
+                        <p className="mt-3 max-w-prose text-sm leading-relaxed text-pretty text-muted-foreground">
+                            Většině klientů vyhovuje návštěva přibližně jednou
+                            za 4–6 týdnů, vždy ale záleží na individuálním stavu
+                            vašich nohou a rychlosti, s jakou se tvoří ztvrdlá
+                            kůže. Ať už chodíte na pedikúru celý život, nebo
+                            přicházíte poprvé, společně najdeme způsob péče,
+                            který bude vašim nohám vyhovovat.
+                        </p>
+                    </div>
+                </div>
+
+                <SectionWave
+                    variant="d"
+                    className="fill-background"
+                />
+            </section>
+        </CzechText>
     );
 }
