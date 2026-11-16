@@ -38,6 +38,7 @@ export function QuickQrDialog() {
                         variant="secondary"
                         size="icon-xl"
                         className="rounded-full shadow-lg"
+                        aria-label="QR platba"
                         onClick={() => setOpen(true)}
                     >
                         <QrCode className="size-6" />

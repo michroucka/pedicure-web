@@ -2,6 +2,7 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { EXTRA_TIME_STEP, normalizeExtraMinutes } from "@/lib/extra-time";
 
 export const DEFAULT_EXTRA_MINUTES = 15;
@@ -47,39 +48,47 @@ export function ExtraTimeField({
                 <span className="text-sm">{label}</span>
             </label>
 
-            {value.enabled && (
-                <div className="flex items-center gap-2">
-                    <Input
-                        type="number"
-                        min={EXTRA_TIME_STEP}
-                        step={EXTRA_TIME_STEP}
-                        className="w-20"
-                        value={value.minutes}
-                        onChange={(e) =>
-                            onChange({
-                                ...value,
-                                minutes: Number(e.target.value) || 0,
-                            })
-                        }
-                        // step only drives the arrows – snap whatever was
-                        // typed to a multiple of 5 once she leaves the
-                        // field, so what she sees is what gets saved (the
-                        // server normalizes the same way). Ticked means
-                        // some extra time, so never below one step; 0 is
-                        // what unticking is for.
-                        onBlur={() =>
-                            onChange({
-                                ...value,
-                                minutes: Math.max(
-                                    EXTRA_TIME_STEP,
-                                    normalizeExtraMinutes(value.minutes)
-                                ),
-                            })
-                        }
-                    />
-                    <span className="text-sm text-muted-foreground">min</span>
-                </div>
-            )}
+            <div
+                // Always rendered and only faded/slid out when unticked, so
+                // it animates both ways; inert keeps the hidden input out of
+                // tab order and taps.
+                inert={!value.enabled}
+                aria-hidden={!value.enabled}
+                className={cn(
+                    "flex items-center gap-2 transition-[opacity,translate,visibility] duration-200 ease-out motion-reduce:transition-none",
+                    !value.enabled && "invisible -translate-x-2 opacity-0"
+                )}
+            >
+                <Input
+                    type="number"
+                    min={EXTRA_TIME_STEP}
+                    step={EXTRA_TIME_STEP}
+                    className="w-20"
+                    value={value.minutes}
+                    onChange={(e) =>
+                        onChange({
+                            ...value,
+                            minutes: Number(e.target.value) || 0,
+                        })
+                    }
+                    // step only drives the arrows – snap whatever was
+                    // typed to a multiple of 5 once she leaves the
+                    // field, so what she sees is what gets saved (the
+                    // server normalizes the same way). Ticked means
+                    // some extra time, so never below one step; 0 is
+                    // what unticking is for.
+                    onBlur={() =>
+                        onChange({
+                            ...value,
+                            minutes: Math.max(
+                                EXTRA_TIME_STEP,
+                                normalizeExtraMinutes(value.minutes)
+                            ),
+                        })
+                    }
+                />
+                <span className="text-sm text-muted-foreground">min</span>
+            </div>
         </div>
     );
 }

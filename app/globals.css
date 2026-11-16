@@ -273,21 +273,6 @@ body:has(.storefront) {
         animation: enter-scale 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards;
         animation-delay: calc(var(--i, 0) * 0.09s);
     }
-
-    /* Crossfade between marketing pages (PageTransition in the layout). */
-    ::view-transition-group(*),
-    ::view-transition-old(*),
-    ::view-transition-new(*) {
-        animation-duration: 0.25s;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    ::view-transition-group(*),
-    ::view-transition-old(*),
-    ::view-transition-new(*) {
-        animation: none !important;
-    }
 }
 
 /* Buttons on the public pages glow a little on hover. */

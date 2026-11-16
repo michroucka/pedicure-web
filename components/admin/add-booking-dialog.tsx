@@ -34,7 +34,7 @@ import {
     Check,
     UserRound,
     Phone,
-    Sparkles,
+    Tag,
     StickyNote,
     X,
     ChevronDownIcon,
@@ -45,6 +45,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+    cn,
     formatPhoneNumber,
     formatTime,
     normalizeForSearch,
@@ -71,6 +72,9 @@ import {
 import { NoteHealthHint } from "@/components/admin/note-health-hint";
 
 type PersonInput = {
+    // Stable React key: with index keys, removing a middle person would
+    // animate (and reuse the state of) the wrong card.
+    uid: number;
     name: string;
     serviceId: number | undefined;
     extraTime: ExtraTime;
@@ -85,7 +89,14 @@ type ClientOption = {
     active: boolean;
 };
 
+let lastPersonUid = 0;
+const nextPersonUid = () => ++lastPersonUid;
+
+// How long a removed person's card takes to fade out before it's dropped.
+const PERSON_EXIT_MS = 200;
+
 const emptyPerson = (): PersonInput => ({
+    uid: nextPersonUid(),
     name: "",
     serviceId: undefined,
     extraTime: NO_EXTRA_TIME,
@@ -231,6 +242,7 @@ export function AddBookingDialog({
         const next = [
             ...people,
             {
+                uid: nextPersonUid(),
                 name: people[0].name,
                 serviceId: undefined,
                 extraTime: NO_EXTRA_TIME,
@@ -240,10 +252,20 @@ export function AddBookingDialog({
         refreshSlots(date, next);
     }
 
+    // The card fades out first and is dropped once that's done.
+    const [leavingUid, setLeavingUid] = useState<number>();
+
     function removePerson(i: number) {
-        const next = people.filter((_, idx) => idx !== i);
-        setPeople(next);
-        refreshSlots(date, next);
+        const uid = people[i].uid;
+        setLeavingUid(uid);
+        setTimeout(() => {
+            setLeavingUid(undefined);
+            setPeople((current) => {
+                const next = current.filter((p) => p.uid !== uid);
+                refreshSlots(date, next);
+                return next;
+            });
+        }, PERSON_EXIT_MS);
     }
 
     function pickDate(d: Date | undefined) {
@@ -330,6 +352,7 @@ export function AddBookingDialog({
                         type="button"
                         size="icon-xl"
                         className="rounded-full shadow-lg"
+                        aria-label="Přidat rezervaci"
                         onClick={() => {
                             reset();
                             setOpen(true);
@@ -348,185 +371,114 @@ export function AddBookingDialog({
                     if (!o) reset();
                 }}
             >
-                <DialogContent className="max-h-[90svh] overflow-y-auto">
+                {/* Same layout as editing a booking (booking-detail-dialog):
+                    tablet = people left, date and time right; fixed height
+                    so adding a person or ticking extra time doesn't make
+                    the dialog jump; footer pinned to the bottom. */}
+                <DialogContent className="h-[90svh] max-h-[90svh] grid-rows-[auto_1fr_auto] overflow-y-hidden md:h-[min(90svh,46rem)] md:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>Přidat rezervaci</DialogTitle>
                     </DialogHeader>
 
-                    <div className="grid grid-cols-2 gap-2">
-                        {SOURCE_OPTIONS.map((opt) => (
-                            <Button
-                                key={opt.value}
-                                type="button"
-                                variant={
-                                    source === opt.value ? "default" : "outline"
-                                }
-                                onClick={() => setSource(opt.value)}
-                            >
-                                {opt.value === "PHONE" ? (
-                                    <PhoneIcon className="size-4" />
-                                ) : (
-                                    <UserRound className="size-4" />
-                                )}
-                                {opt.label}
-                            </Button>
-                        ))}
-                    </div>
-
-                    <div className="flex flex-col gap-3">
-                        <div className="flex flex-col gap-2 rounded-2xl border p-3">
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-1 text-sm font-medium">
-                                    <UserRound className="size-4" />
-                                    Hlavní kontakt{" "}
-                                    <span className="text-red-500">*</span>
-                                </span>
-                            </div>
-                            <div className="relative">
-                                <Input
-                                    placeholder="Jméno"
-                                    value={people[0].name}
-                                    onChange={(e) =>
-                                        updateMainContactName(e.target.value)
-                                    }
-                                    onFocus={() => setSuggestOpen(true)}
-                                    onBlur={() => setSuggestOpen(false)}
-                                />
-                                {suggestOpen && suggestions.length > 0 && (
-                                    <div
-                                        className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-md border bg-popover shadow-md"
-                                        // Keeps the name Input focused on tap
-                                        // so onBlur doesn't close this list
-                                        // before the click below registers.
-                                        onMouseDown={(e) => e.preventDefault()}
-                                    >
-                                        {suggestions.map((c) => (
-                                            <button
-                                                key={c.id}
-                                                type="button"
-                                                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition hover:bg-muted/50"
-                                                onClick={() => pickClient(c)}
-                                            >
-                                                <span className="truncate font-medium">
-                                                    {c.name}
-                                                </span>
-                                                {c.phone && (
-                                                    <span className="shrink-0 text-xs text-muted-foreground">
-                                                        {c.phone}
-                                                    </span>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <span className="flex items-center gap-1 text-sm font-medium">
-                                <Phone className="size-4" />
-                                Telefonní číslo
-                            </span>
-                            <Input
-                                placeholder="+420 123 456 789"
-                                value={phone}
-                                onChange={(e) => updatePhone(e.target.value)}
-                            />
-                            <span className="flex items-center gap-1 text-sm font-medium">
-                                <Sparkles className="size-4" />
-                                Služba <span className="text-red-500">*</span>
-                            </span>
-                            <Select
-                                value={
-                                    people[0].serviceId
-                                        ? String(people[0].serviceId)
-                                        : ""
-                                }
-                                onValueChange={(v) =>
-                                    updatePersonService(0, Number(v))
-                                }
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Vyberte službu" />
-                                </SelectTrigger>
-                                <SelectContent position="popper">
-                                    <SelectGroup>
-                                        <SelectLabel>Služby</SelectLabel>
-                                        {services.map((s) => (
-                                            <SelectItem
-                                                key={s.id}
-                                                value={String(s.id)}
-                                            >
-                                                {s.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-
-                            <ExtraTimeField
-                                value={people[0].extraTime}
-                                onChange={(v) => updatePersonExtraTime(0, v)}
-                            />
-
-                            <Collapsible className="rounded-md data-[state=open]:bg-muted">
-                                <CollapsibleTrigger asChild>
+                    <div className="-mx-6 flex min-h-0 scrollbar-gutter-stable flex-col gap-3 overflow-y-auto px-6 md:grid md:grid-cols-2 md:items-start md:gap-6">
+                        <div className="flex flex-col gap-3">
+                            <div className="grid grid-cols-2 gap-2">
+                                {SOURCE_OPTIONS.map((opt) => (
                                     <Button
-                                        variant="ghost"
-                                        className="group w-full"
-                                    >
-                                        <StickyNote className="size-4" />
-                                        Poznámka
-                                        <ChevronDownIcon className="ml-auto group-data-[state=open]:rotate-180" />
-                                    </Button>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="flex flex-col items-start gap-2 p-2.5 pt-0 text-sm">
-                                    <Textarea
-                                        value={note}
-                                        onChange={(e) =>
-                                            setNote(e.target.value)
+                                        key={opt.value}
+                                        type="button"
+                                        variant={
+                                            source === opt.value
+                                                ? "default"
+                                                : "outline"
                                         }
-                                    />
-                                    <NoteHealthHint />
-                                </CollapsibleContent>
-                            </Collapsible>
-                        </div>
-
-                        {people.slice(1).map((person, i) => (
-                            <div
-                                key={i + 1}
-                                className="flex flex-col gap-2 rounded-2xl border p-3"
-                            >
+                                        onClick={() => setSource(opt.value)}
+                                    >
+                                        {opt.value === "PHONE" ? (
+                                            <PhoneIcon className="size-4" />
+                                        ) : (
+                                            <UserRound className="size-4" />
+                                        )}
+                                        {opt.label}
+                                    </Button>
+                                ))}
+                            </div>
+                            <div className="flex flex-col gap-2 rounded-2xl border p-3">
                                 <div className="flex items-center justify-between">
                                     <span className="flex items-center gap-1 text-sm font-medium">
                                         <UserRound className="size-4" />
-                                        Osoba {i + 2}
+                                        Hlavní kontakt{" "}
+                                        <span className="text-red-500">*</span>
                                     </span>
-                                    {people.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={() => removePerson(i + 1)}
+                                </div>
+                                <div className="relative">
+                                    <Input
+                                        placeholder="Jméno"
+                                        value={people[0].name}
+                                        onChange={(e) =>
+                                            updateMainContactName(
+                                                e.target.value
+                                            )
+                                        }
+                                        onFocus={() => setSuggestOpen(true)}
+                                        onBlur={() => setSuggestOpen(false)}
+                                    />
+                                    {suggestOpen && suggestions.length > 0 && (
+                                        <div
+                                            className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-md border bg-popover shadow-md"
+                                            // Keeps the name Input focused on tap
+                                            // so onBlur doesn't close this list
+                                            // before the click below registers.
+                                            onMouseDown={(e) =>
+                                                e.preventDefault()
+                                            }
                                         >
-                                            <Trash2 className="size-4" />
-                                        </Button>
+                                            {suggestions.map((c) => (
+                                                <button
+                                                    key={c.id}
+                                                    type="button"
+                                                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition hover:bg-muted/50"
+                                                    onClick={() =>
+                                                        pickClient(c)
+                                                    }
+                                                >
+                                                    <span className="truncate font-medium">
+                                                        {c.name}
+                                                    </span>
+                                                    {c.phone && (
+                                                        <span className="shrink-0 text-xs text-muted-foreground">
+                                                            {c.phone}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
+                                <span className="flex items-center gap-1 text-sm font-medium">
+                                    <Phone className="size-4" />
+                                    Telefonní číslo
+                                </span>
                                 <Input
-                                    placeholder="Jméno"
-                                    value={person.name}
+                                    placeholder="+420 123 456 789"
+                                    value={phone}
                                     onChange={(e) =>
-                                        updatePersonField(i + 1, {
-                                            name: e.target.value,
-                                        })
+                                        updatePhone(e.target.value)
                                     }
                                 />
+                                <span className="flex items-center gap-1 text-sm font-medium">
+                                    <Tag className="size-4" />
+                                    Služba{" "}
+                                    <span className="text-red-500">*</span>
+                                </span>
                                 <Select
                                     value={
-                                        person.serviceId
-                                            ? String(person.serviceId)
+                                        people[0].serviceId
+                                            ? String(people[0].serviceId)
                                             : ""
                                     }
                                     onValueChange={(v) =>
-                                        updatePersonService(i + 1, Number(v))
+                                        updatePersonService(0, Number(v))
                                     }
                                 >
                                     <SelectTrigger className="w-full">
@@ -546,123 +498,237 @@ export function AddBookingDialog({
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
+
                                 <ExtraTimeField
-                                    value={person.extraTime}
+                                    value={people[0].extraTime}
                                     onChange={(v) =>
-                                        updatePersonExtraTime(i + 1, v)
+                                        updatePersonExtraTime(0, v)
                                     }
                                 />
-                            </div>
-                        ))}
 
-                        {people.length < 4 && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={addPerson}
-                            >
-                                <Plus className="size-4" />
-                                Přidat osobu
-                            </Button>
-                        )}
-
-                        <Calendar
-                            mode="single"
-                            locale={cs}
-                            selected={date}
-                            defaultMonth={date}
-                            onSelect={pickDate}
-                            disabled={(day) =>
-                                localDateToUtcMidnight(day).getTime() <
-                                localDateToUtcMidnight(new Date()).getTime()
-                            }
-                            className="w-full bg-transparent"
-                        />
-
-                        {date &&
-                        people.every((p) => p.serviceId !== undefined) ? (
-                            customTime ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">
-                                        Vlastní čas:
-                                    </span>
-                                    <TimePicker
-                                        value={customTimeValue}
-                                        onChange={pickCustomTime}
-                                        defaultValue="15:00"
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={() => {
-                                            setCustomTime(false);
-                                            setCustomTimeValue("");
-                                            setSelectedSlot(undefined);
-                                        }}
-                                    >
-                                        <X className="size-4" />
-                                    </Button>
-                                </div>
-                            ) : isLoadingSlots ? (
-                                <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
-                                    <Spinner className="size-4" />
-                                    Načítám dostupné termíny…
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-4 gap-2">
-                                    {slots?.length === 0 && (
-                                        <p className="col-span-4 text-center text-sm text-muted-foreground">
-                                            Žádné volné termíny.
-                                        </p>
-                                    )}
-                                    {slots?.map((s) => (
+                                <Collapsible className="rounded-md transition-colors duration-200 data-[state=open]:bg-muted">
+                                    <CollapsibleTrigger asChild>
                                         <Button
-                                            key={s}
-                                            type="button"
-                                            size="sm"
-                                            variant={
-                                                s === selectedSlot
-                                                    ? "default"
-                                                    : "outline"
-                                            }
-                                            onClick={() => setSelectedSlot(s)}
+                                            variant="ghost"
+                                            className="group w-full"
                                         >
-                                            {formatTime(s)}
+                                            <StickyNote className="size-4" />
+                                            Poznámka
+                                            <ChevronDownIcon className="ml-auto transition-transform duration-200 group-data-[state=open]:rotate-180" />
                                         </Button>
-                                    ))}
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        className="hover:bg-accent"
-                                        onClick={() => {
-                                            setCustomTime(true);
-                                            setSelectedSlot(undefined);
-                                        }}
-                                    >
-                                        <Plus className="size-4 text-primary" />
-                                    </Button>
-                                </div>
-                            )
-                        ) : (
-                            <p className="col-span-4 text-center text-sm text-muted-foreground">
-                                Vyplňte službu a datum.
-                            </p>
-                        )}
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent className="overflow-hidden motion-safe:data-[state=closed]:animate-collapsible-up motion-safe:data-[state=open]:animate-collapsible-down">
+                                        <div className="flex flex-col items-start gap-2 p-2.5 pt-0 text-sm">
+                                            <Textarea
+                                                value={note}
+                                                onChange={(e) =>
+                                                    setNote(e.target.value)
+                                                }
+                                            />
+                                            <NoteHealthHint />
+                                        </div>
+                                    </CollapsibleContent>
+                                </Collapsible>
+                            </div>
 
-                        {error && (
-                            <Alert variant="destructive">
-                                <AlertCircle />
-                                <AlertTitle>{error}</AlertTitle>
-                            </Alert>
-                        )}
+                            {people.slice(1).map((person, i) => (
+                                <div
+                                    key={person.uid}
+                                    className={cn(
+                                        // Fades/scales in when added
+                                        // (@starting-style) and out before
+                                        // being removed (leavingUid).
+                                        "flex origin-top flex-col gap-2 rounded-2xl border p-3 transition-[opacity,scale] duration-200 ease-out motion-reduce:transition-none starting:scale-95 starting:opacity-0",
+                                        person.uid === leavingUid &&
+                                            "pointer-events-none scale-95 opacity-0"
+                                    )}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-1 text-sm font-medium">
+                                            <UserRound className="size-4" />
+                                            Osoba {i + 2}
+                                        </span>
+                                        {people.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                onClick={() =>
+                                                    removePerson(i + 1)
+                                                }
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <Input
+                                        placeholder="Jméno"
+                                        value={person.name}
+                                        onChange={(e) =>
+                                            updatePersonField(i + 1, {
+                                                name: e.target.value,
+                                            })
+                                        }
+                                    />
+                                    <Select
+                                        value={
+                                            person.serviceId
+                                                ? String(person.serviceId)
+                                                : ""
+                                        }
+                                        onValueChange={(v) =>
+                                            updatePersonService(
+                                                i + 1,
+                                                Number(v)
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Vyberte službu" />
+                                        </SelectTrigger>
+                                        <SelectContent position="popper">
+                                            <SelectGroup>
+                                                <SelectLabel>
+                                                    Služby
+                                                </SelectLabel>
+                                                {services.map((s) => (
+                                                    <SelectItem
+                                                        key={s.id}
+                                                        value={String(s.id)}
+                                                    >
+                                                        {s.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                    <ExtraTimeField
+                                        value={person.extraTime}
+                                        onChange={(v) =>
+                                            updatePersonExtraTime(i + 1, v)
+                                        }
+                                    />
+                                </div>
+                            ))}
+
+                            {people.length < 4 && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={addPerson}
+                                >
+                                    <Plus className="size-4" />
+                                    Přidat osobu
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <Calendar
+                                mode="single"
+                                locale={cs}
+                                selected={date}
+                                defaultMonth={date}
+                                onSelect={pickDate}
+                                disabled={(day) =>
+                                    localDateToUtcMidnight(day).getTime() <
+                                    localDateToUtcMidnight(new Date()).getTime()
+                                }
+                                classNames={{
+                                    outside: "text-muted-foreground opacity-50",
+                                    // Tighter rows so the finger-sized time
+                                    // slots below fit the fixed-height dialog.
+                                    week: "mt-1 flex w-full",
+                                }}
+                                className="w-full bg-transparent p-0"
+                            />
+
+                            {date &&
+                            people.every((p) => p.serviceId !== undefined) ? (
+                                customTime ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium">
+                                            Vlastní čas:
+                                        </span>
+                                        <TimePicker
+                                            value={customTimeValue}
+                                            onChange={pickCustomTime}
+                                            defaultValue="15:00"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            onClick={() => {
+                                                setCustomTime(false);
+                                                setCustomTimeValue("");
+                                                setSelectedSlot(undefined);
+                                            }}
+                                        >
+                                            <X className="size-4" />
+                                        </Button>
+                                    </div>
+                                ) : isLoadingSlots ? (
+                                    <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                                        <Spinner className="size-4" />
+                                        Načítám dostupné termíny…
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {slots?.length === 0 && (
+                                            <p className="col-span-4 text-center text-sm text-muted-foreground">
+                                                Žádné volné termíny.
+                                            </p>
+                                        )}
+                                        {slots?.map((s) => (
+                                            <Button
+                                                key={s}
+                                                type="button"
+                                                size="lg"
+                                                variant={
+                                                    s === selectedSlot
+                                                        ? "default"
+                                                        : "outline"
+                                                }
+                                                onClick={() =>
+                                                    setSelectedSlot(s)
+                                                }
+                                            >
+                                                {formatTime(s)}
+                                            </Button>
+                                        ))}
+                                        <Button
+                                            type="button"
+                                            size="lg"
+                                            variant="outline"
+                                            className="hover:bg-accent"
+                                            onClick={() => {
+                                                setCustomTime(true);
+                                                setSelectedSlot(undefined);
+                                            }}
+                                        >
+                                            <Plus className="size-4 text-primary" />
+                                            Jiný
+                                        </Button>
+                                    </div>
+                                )
+                            ) : (
+                                <p className="col-span-4 text-center text-sm text-muted-foreground">
+                                    Vyplňte službu a datum.
+                                </p>
+                            )}
+
+                            {error && (
+                                <Alert variant="destructive">
+                                    <AlertCircle />
+                                    <AlertTitle>{error}</AlertTitle>
+                                </Alert>
+                            )}
+                        </div>
                     </div>
 
-                    <DialogFooter>
+                    <DialogFooter className="-mx-6 -mb-6 border-t bg-popover px-6 py-4">
                         <Button
                             type="button"
-                            size="lg"
                             disabled={isPending}
                             onClick={submit}
                         >

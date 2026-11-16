@@ -24,6 +24,36 @@ import { ExceptionDot } from "@/components/admin/exception-dot";
 import { useCalendarNavigation } from "@/components/admin/calendar-navigation";
 import type { AvailabilityException } from "@/lib/generated/prisma/client";
 
+// Popover fade-out duration (duration-100 in components/ui/popover.tsx)
+// plus some slack - in practice the fade runs a bit past 100 ms.
+const PICKER_CLOSE_MS = 160;
+
+// Explains the picker's dots - same colours as ExceptionDot.
+function ExceptionLegend() {
+    const items = [
+        { label: "Otevřeno navíc", extraOpen: true },
+        { label: "Zavřeno", blockedFull: true },
+        { label: "Částečně zavřeno", blockedPartial: true },
+    ];
+    return (
+        <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 border-t px-2 pt-2 pb-1 text-xs text-muted-foreground">
+            {items.map((item) => (
+                <li
+                    key={item.label}
+                    className="flex items-center gap-1.5"
+                >
+                    <ExceptionDot
+                        blockedFull={!!item.blockedFull}
+                        blockedPartial={!!item.blockedPartial}
+                        extraOpen={!!item.extraOpen}
+                    />
+                    {item.label}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
 // No more Den/Týden toggle – which one is visible is decided purely by the
 // lg breakpoint (className below), same as everywhere else this app splits
 // mobile/tablet-portrait from tablet-landscape/desktop. Both nav bars (and
@@ -50,6 +80,14 @@ function NavBar({
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
     const { startNavigation } = useCalendarNavigation();
+    // The picker's own copy of the date, taken when it opens. Picking a day
+    // updates `date` at once, and the closing picker would redraw the new
+    // week's highlight mid fade-out - a visible flash.
+    const [pickerDate, setPickerDate] = useState(date);
+    const shownWeekStart = startOfWeekUtc(localDateToUtcMidnight(pickerDate));
+    const shownWeekDays = Array.from({ length: 7 }, (_, i) =>
+        addUtcDays(shownWeekStart, i)
+    );
 
     function goTo(d: Date) {
         const params = new URLSearchParams({ date: format(d, "yyyy-MM-dd") });
@@ -64,6 +102,9 @@ function NavBar({
                     type="button"
                     variant="outline"
                     size="icon"
+                    aria-label={
+                        step === 7 ? "Předchozí týden" : "Předchozí den"
+                    }
                     onClick={() => goTo(addDays(date, -step))}
                 >
                     <ChevronLeft className="size-4" />
@@ -71,7 +112,10 @@ function NavBar({
 
                 <Popover
                     open={open}
-                    onOpenChange={setOpen}
+                    onOpenChange={(isOpen) => {
+                        if (isOpen) setPickerDate(date);
+                        setOpen(isOpen);
+                    }}
                 >
                     <div className="relative overflow-visible">
                         <PopoverTrigger asChild>
@@ -93,24 +137,52 @@ function NavBar({
                         <Calendar
                             mode="single"
                             locale={cs}
-                            selected={date}
-                            defaultMonth={date}
+                            // Week view highlights the whole shown week
+                            // (shownWeek below) - a single selected day
+                            // would misstate what's on screen.
+                            selected={step === 7 ? undefined : pickerDate}
+                            defaultMonth={pickerDate}
                             onSelect={(d) => {
                                 if (!d) return;
-                                goTo(d);
+                                // Close first, navigate once the fade-out is
+                                // done: the navigation's re-render (calendar
+                                // to skeleton, ~80 ms) would otherwise stall
+                                // the animation half-way. startTransition
+                                // was tried instead - it flickered in a
+                                // different way.
                                 setOpen(false);
+                                setTimeout(() => goTo(d), PICKER_CLOSE_MS);
                             }}
-                            modifiers={modifiers}
+                            modifiers={{
+                                ...modifiers,
+                                ...(step === 7 && {
+                                    shownWeek: shownWeekDays,
+                                    shownWeekStart: shownWeekDays[0],
+                                    shownWeekEnd: shownWeekDays[6],
+                                }),
+                            }}
+                            modifiersClassNames={{
+                                shownWeek: "bg-primary/10 rounded-none!",
+                                shownWeekStart: "rounded-l-(--cell-radius)!",
+                                shownWeekEnd: "rounded-r-(--cell-radius)!",
+                            }}
+                            classNames={{
+                                // The default muted text alone barely sets
+                                // other months apart from this one.
+                                outside: "text-muted-foreground opacity-50",
+                            }}
                             components={{ DayButton: ExceptionDayButton }}
-                            className="bg-transparent"
+                            // ~44 px days: tapped with a finger on the tablet.
+                            className="bg-transparent [--cell-size:--spacing(11)]"
                         />
+                        <ExceptionLegend />
                     </PopoverContent>
                 </Popover>
-
                 <Button
                     type="button"
                     variant="outline"
                     size="icon"
+                    aria-label={step === 7 ? "Další týden" : "Další den"}
                     onClick={() => goTo(addDays(date, step))}
                 >
                     <ChevronRight className="size-4" />

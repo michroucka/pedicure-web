@@ -33,9 +33,9 @@ function findSamePageSection(href: string, pathname: string) {
 }
 
 // Updates the address bar without telling Next.js. Its patched
-// history.replaceState treats the change as a navigation - a React transition
-// that plays the page crossfade (<ViewTransition>) over the smooth scroll,
-// freezing and flashing the page. Next's own history state is kept as is.
+// history.replaceState treats the change as a navigation (a React
+// transition re-rendering the page) in the middle of the smooth scroll.
+// Next's own history state is kept as is.
 function replaceUrlQuietly(href: string) {
     History.prototype.replaceState.call(
         window.history,
