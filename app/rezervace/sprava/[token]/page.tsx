@@ -68,7 +68,7 @@ export default async function SpravaPage({
                                 {format(moved.date, "d. MMMM yyyy", {
                                     locale: cs,
                                 })}{" "}
-                                v {formatTime(moved.startTime)}–
+                                v {formatTime(moved.startTime)} –{" "}
                                 {formatTime(movedGroup.at(-1)!.endTime)}
                             </span>
                             .
@@ -79,6 +79,15 @@ export default async function SpravaPage({
                                 e-mailem.
                             </p>
                         )}
+                        <div>
+                            <Link
+                                href="/"
+                                className="mt-6 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                                <ArrowLeft className="size-4" />
+                                Zpět na web
+                            </Link>
+                        </div>
                     </div>
                 </CzechText>
             );
@@ -90,7 +99,8 @@ export default async function SpravaPage({
                     <XCircle className="mx-auto mb-2 size-10 text-muted-foreground" />
                     <h2 className="mb-2">Rezervace zrušena</h2>
                     <p className="mb-6 text-sm text-muted-foreground">
-                        Tato rezervace byla zrušena.
+                        Rezervace na {dateSummary} v{" "}
+                        {formatTime(booking.startTime)} byla zrušena.
                     </p>
                     <Button asChild>
                         <Link href="/rezervace">
@@ -98,6 +108,15 @@ export default async function SpravaPage({
                             Vytvořit novou rezervaci
                         </Link>
                     </Button>
+                    <div>
+                        <Link
+                            href="/"
+                            className="mt-6 inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            <ArrowLeft className="size-4" />
+                            Zpět na web
+                        </Link>
+                    </div>
                 </div>
             </CzechText>
         );
