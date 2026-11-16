@@ -155,7 +155,10 @@ export default async function AdminHomePage({
 
     return (
         <CalendarNavigationProvider serverDate={date}>
-            <div className="flex h-full w-full flex-col">
+            <div
+                data-fills-viewport
+                className="flex h-full w-full flex-col"
+            >
                 <div className="sticky top-0 z-10 bg-background">
                     <div className="mx-auto w-full max-w-lg">
                         <DayNav

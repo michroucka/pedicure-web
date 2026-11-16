@@ -27,13 +27,15 @@ export default async function AdminDashboardLayout({
     }
 
     return (
-        // Top safe-area padding: the page paints under the status bar
-        // (viewportFit "cover"), and iPadOS 26 blurs whatever sits there -
-        // the keep-awake banner was half smeared. Now only plain
-        // background is under it, like the bottom nav's inset below.
-        <div className="flex h-svh flex-col pt-[env(safe-area-inset-top)]">
+        // The document scrolls, not <main>: iPadOS 26 paints its blurred
+        // "scroll edge" over the top of an inner scroll container that
+        // starts at the top of the screen, which smeared the header even
+        // unscrolled. Only the week calendar (data-fills-viewport) still
+        // pins the page to the viewport - its own scroller starts below the
+        // day navigation, out of the blurred strip.
+        <div className="flex min-h-svh flex-col pt-[env(safe-area-inset-top)] [--admin-nav-height:4.625rem] has-[[data-fills-viewport]]:md:h-svh">
             <KeepAwake />
-            <main className="flex-1 scrollbar-gutter-both overflow-y-auto pt-2">
+            <main className="flex-1 pt-2 has-[[data-fills-viewport]]:md:min-h-0 has-[[data-fills-viewport]]:md:overflow-hidden">
                 {children}
             </main>
             <AdminBottomNav />

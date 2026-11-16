@@ -21,7 +21,10 @@ export function AdminBottomNav() {
     const pathname = usePathname();
 
     return (
-        <nav className="sticky bottom-0 z-10 flex border-t bg-card pb-[env(safe-area-inset-bottom)]">
+        // Fixed height (--admin-nav-height, set on the dashboard layout) so
+        // sticky bars above it, like Dostupnost's save bar, can sit exactly
+        // on top of it.
+        <nav className="sticky bottom-0 z-10 flex h-[calc(var(--admin-nav-height)+env(safe-area-inset-bottom))] border-t bg-card pb-[env(safe-area-inset-bottom)]">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                 const active =
                     href === "/kalendar"
