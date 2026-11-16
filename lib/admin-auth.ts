@@ -1,0 +1,89 @@
+import argon2 from "argon2";
+import { createHash } from "crypto";
+import { z } from "zod";
+import type { JWT } from "next-auth/jwt";
+import { prisma } from "@/lib/prisma";
+
+// Auth.js callbacks for auth.ts, kept here so they can be tested without
+// a Next.js request.
+
+declare module "@auth/core/jwt" {
+    interface JWT {
+        // Fingerprint of the AdminUser's passwordHash at the time this
+        // token was issued/last confirmed – lets the jwt callback detect
+        // a password change without ever putting the real hash in the
+        // token. Undefined only on the very first call, right after sign-in.
+        pwFingerprint?: string;
+    }
+}
+
+const credentialsSchema = z.object({
+    username: z.string().min(1).max(100),
+    // Same cap as a new password (nastaveni/actions.ts) - argon2 would
+    // otherwise hash whatever size a login request sends.
+    password: z.string().min(1).max(256),
+});
+
+// Verified against when the username doesn't exist, so a wrong username
+// takes as long as a wrong password and response time doesn't reveal which
+// usernames exist. Same argon2 defaults as real hashes (scripts/create-admin.ts);
+// the password behind it is irrelevant. Brute force itself is rate-limited
+// by the Vercel Firewall (see CLAUDE.md).
+const DUMMY_PASSWORD_HASH =
+    "$argon2id$v=19$m=65536,p=4,t=3$aT2BY23ws2Oa7dDA1Hgqaw$6hCT/FvGGIwJCMvGtRWRBFxgWOpgsv0UmHNHu1A3MoU";
+
+export function passwordFingerprint(passwordHash: string) {
+    return createHash("sha256").update(passwordHash).digest("hex");
+}
+
+export async function authorizeAdmin(credentials: unknown) {
+    const parsed = credentialsSchema.safeParse(credentials);
+    if (!parsed.success) return null;
+
+    const admin = await prisma.adminUser.findUnique({
+        where: { username: parsed.data.username },
+    });
+    if (!admin) {
+        await argon2.verify(DUMMY_PASSWORD_HASH, parsed.data.password);
+        return null;
+    }
+
+    const valid = await argon2.verify(admin.passwordHash, parsed.data.password);
+    if (!valid) return null;
+
+    return {
+        id: admin.id,
+        name: admin.username,
+        email: admin.email,
+    };
+}
+
+// With the jwt strategy, sessions aren't checked against the database by
+// default – the signed cookie alone is trusted until it expires, so a
+// deleted or edited AdminUser had no effect on an already-issued session.
+// This runs on every request and re-validates against the DB: logged out
+// (null) if the account is gone, or if its username/email/password changed
+// since this token was issued – an existing session shouldn't silently
+// pick up a changed account, it should have to log in again.
+export async function revalidateAdminToken(token: JWT): Promise<JWT | null> {
+    if (!token.sub) return null;
+
+    const admin = await prisma.adminUser.findUnique({
+        where: { id: token.sub },
+    });
+    if (!admin) return null;
+
+    const currentFingerprint = passwordFingerprint(admin.passwordHash);
+    const changedSinceIssued =
+        token.pwFingerprint !== undefined &&
+        (token.name !== admin.username ||
+            token.email !== admin.email ||
+            token.pwFingerprint !== currentFingerprint);
+
+    if (changedSinceIssued) return null;
+
+    token.name = admin.username;
+    token.email = admin.email;
+    token.pwFingerprint = currentFingerprint;
+    return token;
+}
