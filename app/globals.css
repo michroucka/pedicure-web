@@ -193,14 +193,6 @@ body:has(.storefront) {
     }
 }
 
-/* In-page anchors (e.g. "O mně") scroll smoothly. data-scroll-behavior on
-   <html> lets Next.js switch it off for route changes, which should jump. */
-@media (prefers-reduced-motion: no-preference) {
-    html {
-        scroll-behavior: smooth;
-    }
-}
-
 /* Homepage sections fade and slide in once as they scroll into view.
    Content is hidden only after RevealOnScroll has run (it sets
    data-reveal-ready on <html>), so without JavaScript or with reduced
@@ -216,4 +208,90 @@ body:has(.storefront) {
 [data-reveal-ready] .reveal[data-revealed] {
     opacity: 1;
     translate: 0 0;
+}
+
+/* Items inside a revealed section follow one after another (--i = index,
+   set inline). */
+[data-reveal-ready] .reveal .reveal-item {
+    opacity: 0;
+    translate: 0 1rem;
+    transition:
+        opacity 0.6s ease-out,
+        translate 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(0.25s + var(--i, 0) * 0.1s);
+}
+
+[data-reveal-ready] .reveal[data-revealed] .reveal-item {
+    opacity: 1;
+    translate: 0 0;
+}
+
+/* The "Katka" signature (SignatureKatka) writes itself stroke by stroke
+   once it has scrolled into view itself: each pen line in its masks
+   draws from 0 to its full length, one after another (--pen-delay). */
+@keyframes signature-pen {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+[data-reveal-ready] [data-reveal-trigger] .signature-pen {
+    stroke-dasharray: var(--pen-dash);
+    stroke-dashoffset: var(--pen-hidden-offset);
+}
+
+[data-reveal-ready] [data-reveal-trigger][data-revealed] .signature-pen {
+    animation: signature-pen var(--pen-duration) ease-in-out var(--pen-delay)
+        forwards;
+}
+
+/* Page-load entrance for what's above the fold (hero, Ceník, Kontakt):
+   staggered by --i. Pure CSS, so it plays without waiting for JavaScript.
+   "backwards", not "both": once done the animation lets go of translate,
+   or it would override hover effects on the same element (Ceník cards). */
+@keyframes enter {
+    from {
+        opacity: 0;
+        translate: 0 1.25rem;
+    }
+}
+
+@keyframes enter-scale {
+    from {
+        opacity: 0;
+        scale: 0.96;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .enter {
+        animation: enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+        animation-delay: calc(var(--i, 0) * 0.09s);
+    }
+
+    .enter-scale {
+        animation: enter-scale 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+        animation-delay: calc(var(--i, 0) * 0.09s);
+    }
+
+    /* Crossfade between marketing pages (PageTransition in the layout). */
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation-duration: 0.25s;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+}
+
+/* Buttons on the public pages glow a little on hover. */
+.storefront [data-slot="button"][data-variant="default"]:hover {
+    box-shadow: 0 8px 24px -10px
+        color-mix(in oklch, var(--primary), transparent 40%);
 }

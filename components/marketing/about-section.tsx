@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { SectionWave } from "@/components/marketing/section-wave";
 import { CzechText } from "@/components/czech-text";
+import { SignatureKatka } from "@/components/marketing/signature-katka";
 
 const PRINCIPLES = [
     "pečlivém a individuálním přístupu",
@@ -48,11 +49,7 @@ export function AboutSection() {
                         </p>
                     </div>
 
-                    <div
-                        role="img"
-                        aria-label="Katka"
-                        className="clear-right mt-4 ml-auto aspect-433/221 w-24 -rotate-3 bg-primary mask-[url(/podpis-katka.svg)] mask-contain mask-no-repeat md:w-32"
-                    />
+                    <SignatureKatka className="clear-right mt-4 ml-auto block w-24 -rotate-3 text-primary md:w-32" />
 
                     <p className="clear-right mt-8 text-sm font-medium tracking-wide text-muted-foreground uppercase">
                         Zakládám si na

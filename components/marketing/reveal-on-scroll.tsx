@@ -17,7 +17,9 @@ export function RevealOnScroll() {
         }
 
         const elements = document.querySelectorAll<HTMLElement>(
-            ".reveal:not([data-revealed])"
+            // [data-reveal-trigger]: an element that animates on its own
+            // visibility rather than its section's (the signature).
+            ".reveal:not([data-revealed]), [data-reveal-trigger]:not([data-revealed])"
         );
 
         // Anything already on screen is revealed before the hiding CSS kicks

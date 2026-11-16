@@ -7,6 +7,7 @@ import { BUSINESS_INFO } from "@/lib/business-info";
 import { MonochromeLogo } from "@/components/marketing/monochrome-logo";
 import { MapEmbed } from "@/components/marketing/map-embed";
 import { CzechText } from "@/components/czech-text";
+import { stagger } from "@/lib/stagger";
 
 export const metadata: Metadata = {
     title: "Kontakt",
@@ -32,8 +33,16 @@ export default function KontaktPage() {
         <CzechText>
             <section>
                 <div className="mx-auto max-w-5xl px-4 pt-12 pb-12 sm:px-6 md:pt-16">
-                    <h1>Kontakt</h1>
-                    <p className="mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
+                    <h1
+                        className="enter"
+                        style={stagger(0)}
+                    >
+                        Kontakt
+                    </h1>
+                    <p
+                        className="enter mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground"
+                        style={stagger(1)}
+                    >
                         Dopřejte svým nohám péči zkušených rukou. Ať už
                         potřebujete pravidelnou pedikúru, řešíte konkrétní
                         problém, nebo si chcete jednoduše dopřát chvíli pro
@@ -41,7 +50,10 @@ export default function KontaktPage() {
                     </p>
 
                     <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-12">
-                        <div>
+                        <div
+                            className="enter"
+                            style={stagger(2)}
+                        >
                             <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-4 text-sm">
                                 <dt className="flex items-center gap-1 text-muted-foreground">
                                     <Phone className="size-4" />
@@ -126,7 +138,10 @@ export default function KontaktPage() {
                             </section>
                         </div>
 
-                        <MapEmbed className="md:h-auto md:min-h-80" />
+                        <MapEmbed
+                            className="enter md:h-auto md:min-h-80"
+                            style={stagger(3)}
+                        />
                     </div>
                 </div>
             </section>

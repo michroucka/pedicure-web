@@ -32,11 +32,30 @@ function findSamePageSection(href: string, pathname: string) {
     return document.getElementById(hash);
 }
 
+// Updates the address bar without telling Next.js. Its patched
+// history.replaceState treats the change as a navigation - a React transition
+// that plays the page crossfade (<ViewTransition>) over the smooth scroll,
+// freezing and flashing the page. Next's own history state is kept as is.
+function replaceUrlQuietly(href: string) {
+    History.prototype.replaceState.call(
+        window.history,
+        window.history.state,
+        "",
+        href
+    );
+}
+
+function prefersReducedMotion() {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// Smooth only here, within the homepage - arriving from another page jumps
+// straight to the section (Next.js's own hash scroll).
 function scrollToSection(section: HTMLElement, href: string) {
-    // Smoothness comes from `scroll-behavior` in globals.css, which already
-    // respects reduced motion.
-    section.scrollIntoView();
-    window.history.replaceState(null, "", href);
+    section.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+    replaceUrlQuietly(href);
 }
 
 function useIsScrolled() {
@@ -69,6 +88,20 @@ export function MarketingNav() {
                 <Link
                     href="/"
                     className="shrink-0"
+                    onClick={(event) => {
+                        // Already home: "/" is the same page (or a hash
+                        // away), so a navigation would either do nothing or
+                        // replay the page transition. Just go back to the top.
+                        if (pathname !== "/") return;
+                        event.preventDefault();
+                        window.scrollTo({
+                            top: 0,
+                            behavior: prefersReducedMotion()
+                                ? "auto"
+                                : "smooth",
+                        });
+                        replaceUrlQuietly("/");
+                    }}
                 >
                     <Image
                         src="/logo-banner-light.svg"

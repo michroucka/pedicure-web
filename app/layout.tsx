@@ -60,7 +60,6 @@ export default function RootLayout({
     return (
         <html
             lang="cs"
-            data-scroll-behavior="smooth"
             className={cn(
                 "antialiased",
                 fontSerif.variable,

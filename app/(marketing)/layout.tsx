@@ -2,6 +2,7 @@ import type { Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ReactNode } from "react";
+import { PageTransition } from "@/components/marketing/page-transition";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { RevealOnScroll } from "@/components/marketing/reveal-on-scroll";
@@ -47,7 +48,11 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                 }}
             />
             <MarketingNav />
-            <main className="flex-1">{children}</main>
+            {/* Route changes crossfade (Next.js navigations run as React
+                transitions, which <ViewTransition> animates). */}
+            <main className="flex-1">
+                <PageTransition>{children}</PageTransition>
+            </main>
             <MarketingFooter />
             <RevealOnScroll />
             {/* Public pages only - the admin isn't traffic worth measuring,

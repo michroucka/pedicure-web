@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { InteriorCarousel } from "@/components/marketing/interior-carousel";
 import { SectionWave } from "@/components/marketing/section-wave";
 import { CzechText } from "@/components/czech-text";
@@ -37,8 +38,12 @@ export function WhyUsSection() {
                         </p>
 
                         <div className="mt-8 grid gap-6">
-                            {REASONS.map((reason) => (
-                                <div key={reason.title}>
+                            {REASONS.map((reason, i) => (
+                                <div
+                                    key={reason.title}
+                                    className="reveal-item"
+                                    style={{ "--i": i } as CSSProperties}
+                                >
                                     <h3 className="text-lg font-medium">
                                         {reason.title}
                                     </h3>

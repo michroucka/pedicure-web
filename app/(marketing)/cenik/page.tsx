@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 import { CzechText } from "@/components/czech-text";
+import { stagger } from "@/lib/stagger";
 
 export const metadata: Metadata = {
     title: "Ceník",
@@ -23,15 +24,29 @@ export default async function CenikPage() {
         <CzechText>
             <section>
                 <div className="mx-auto max-w-5xl px-4 pt-12 pb-12 sm:px-6 md:pt-16">
-                    <h1>Ceník</h1>
-                    <p className="mt-4 text-base leading-relaxed text-balance text-muted-foreground">
+                    <h1
+                        className="enter"
+                        style={stagger(0)}
+                    >
+                        Ceník
+                    </h1>
+                    <p
+                        className="enter mt-4 text-base leading-relaxed text-balance text-muted-foreground"
+                        style={stagger(1)}
+                    >
                         Díky svým zkušenostem dokážu péči přizpůsobit
                         individuálním potřebám vašich nohou.
                     </p>
 
                     <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        {services.map((service) => (
-                            <Card key={service.id}>
+                        {services.map((service, i) => (
+                            <Card
+                                key={service.id}
+                                // Hover lift: the cards are the page's content
+                                // people point at, so they feel tangible.
+                                className="enter transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/30"
+                                style={stagger(2 + i)}
+                            >
                                 <CardContent className="flex h-full flex-col">
                                     <div className="flex items-baseline justify-between gap-4">
                                         <h2 className="text-lg font-medium">
@@ -55,7 +70,10 @@ export default async function CenikPage() {
                     </div>
 
                     {BOOKING_ENABLED && (
-                        <div className="mt-10">
+                        <div
+                            className="enter mt-10"
+                            style={stagger(2 + services.length)}
+                        >
                             <Button
                                 asChild
                                 size="lg"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,13 @@ const MAP_QUERY = `x=${BUSINESS_INFO.geo.longitude}&y=${BUSINESS_INFO.geo.latitu
 // after an explicit click is that consent – no cookie banner needed.
 // The blurred backdrop is a static, self-hosted OpenStreetMap snapshot
 // (public/map-placeholder.webp) – no third-party request before the click.
-export function MapEmbed({ className }: { className?: string }) {
+export function MapEmbed({
+    className,
+    style,
+}: {
+    className?: string;
+    style?: CSSProperties;
+}) {
     const [mapState, setMapState] = useState<"idle" | "loading" | "loaded">(
         "idle"
     );
@@ -27,6 +33,7 @@ export function MapEmbed({ className }: { className?: string }) {
                 "relative isolate h-70 overflow-hidden rounded-2xl border border-border",
                 className
             )}
+            style={style}
         >
             {/* The iframe stays invisible until it has loaded, so the
                 blurred backdrop covers the blank frame instead of flashing

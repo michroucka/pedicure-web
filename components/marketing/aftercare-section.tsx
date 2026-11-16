@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { SectionWave } from "@/components/marketing/section-wave";
 import { CzechText } from "@/components/czech-text";
 
@@ -40,8 +41,12 @@ export function AftercareSection() {
                     </p>
 
                     <div className="mt-10 grid gap-6 sm:grid-cols-2">
-                        {TIPS.map((tip) => (
-                            <div key={tip.title}>
+                        {TIPS.map((tip, i) => (
+                            <div
+                                key={tip.title}
+                                className="reveal-item"
+                                style={{ "--i": i } as CSSProperties}
+                            >
                                 <h3 className="text-lg font-medium">
                                     {tip.title}
                                 </h3>
