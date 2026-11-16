@@ -93,6 +93,7 @@ export function SoloBookingForm({
                         </FieldLabel>
                         <Input
                             id="name"
+                            autoComplete="name"
                             placeholder="Jana Nováková"
                             {...register("name")}
                         />
@@ -120,6 +121,7 @@ export function SoloBookingForm({
                         <Input
                             id="email"
                             type="email"
+                            autoComplete="email"
                             placeholder="jana.novakova@seznam.cz"
                             {...register("email")}
                         />

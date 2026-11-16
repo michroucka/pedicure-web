@@ -43,7 +43,7 @@ const timePickerTriggerVariants = cva(
                 // Same box as the shadcn Input, so it sits naturally next to
                 // regular form fields.
                 default:
-                    "h-8 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 focus-visible:border-ring data-invalid:border-destructive md:text-sm dark:data-invalid:border-destructive/50",
+                    "h-10 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 focus-visible:border-ring data-invalid:border-destructive md:text-sm dark:data-invalid:border-destructive/50",
                 // Compact, borderless, muted – a small inline time label (e.g.
                 // sitting right under a Slider) rather than a standalone field.
                 ghost: "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent",
