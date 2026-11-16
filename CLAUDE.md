@@ -72,10 +72,15 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   (podmínky Vercelu zakazují přeprodej) – viz bod 8 v
   `docs/TODO-pravni-a-provoz.md`
 - **CI: GitHub Actions** (`.github/workflows/ci.yml`) – na každý PR
-  typecheck, lint, `prettier --check`, testy a `next build`. Testy běží
-  proti Neon test branchi přes GitHub secrets `TEST_DATABASE_URL`
-  a `TEST_DATABASE_URL_UNPOOLED`; nový push zruší starší běh téže větve,
-  běhy různých PR se můžou na test branchi potkat (pak spustit znovu)
+  typecheck, lint, `prettier --check`, testy s coverage (jen informativně),
+  kontrola `schema.prisma` vs. migrace a `next build`, na Node 24 jako
+  Vercel. Testy v CI běží proti vlastnímu prázdnému Postgresu (service
+  container) pro každý běh – sdílená Neon test branch se při souběžných
+  bězích (víc PR, Dependabot) přepisovala. Testy proto nesmí spoléhat na
+  data v DB (rozvrh, služby), musí si je založit samy. Lokální `npm test`
+  běží proti Neon test branchi z `.env.test`. Merge do `main` vyžaduje
+  zelený check `checks` (GitHub ruleset, admin má bypass); Dependabot
+  (`.github/dependabot.yml`) posílá měsíčně skupinové aktualizace
 
 ## Kalendářní integrace (Apple Calendar)
 

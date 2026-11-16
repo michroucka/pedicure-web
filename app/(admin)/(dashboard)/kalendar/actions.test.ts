@@ -840,6 +840,15 @@ describe("kalendar actions", () => {
 
     describe("getMoveSlotsAction", () => {
         it("uses the unsaved extra time override when previewing slots", async () => {
+            // Own opening hours for DATE's weekday, so the test doesn't
+            // depend on whatever schedule the test database happens to have.
+            const window = await prisma.recurringAvailability.create({
+                data: {
+                    dayOfWeek: DATE.getUTCDay(),
+                    startTime: 540,
+                    endTime: 1020,
+                },
+            });
             const client = await prisma.client.create({
                 data: { name: "Jana", phone },
             });
@@ -851,25 +860,28 @@ describe("kalendar actions", () => {
                 source: "PHONE",
             });
 
-            const withoutExtra = await getMoveSlotsAction(
-                booking.id,
-                null,
-                DATE_STR
-            );
-            // longer than any real opening window – nothing can fit
-            const withHugeExtra = await getMoveSlotsAction(
-                booking.id,
-                null,
-                DATE_STR,
-                undefined,
-                [24 * 60]
-            );
+            try {
+                const withoutExtra = await getMoveSlotsAction(
+                    booking.id,
+                    null,
+                    DATE_STR
+                );
+                // longer than any opening window – nothing can fit
+                const withHugeExtra = await getMoveSlotsAction(
+                    booking.id,
+                    null,
+                    DATE_STR,
+                    undefined,
+                    [24 * 60]
+                );
 
-            // DATE is a Monday – the inherited RecurringAvailability covers
-            // every weekday (see sprava/[token]/actions.test.ts), so the
-            // empty result really comes from the override
-            expect(withoutExtra.length).toBeGreaterThan(0);
-            expect(withHugeExtra).toEqual([]);
+                expect(withoutExtra.length).toBeGreaterThan(0);
+                expect(withHugeExtra).toEqual([]);
+            } finally {
+                await prisma.recurringAvailability.delete({
+                    where: { id: window.id },
+                });
+            }
         });
     });
 });
