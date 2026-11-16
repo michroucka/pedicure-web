@@ -72,7 +72,10 @@ export default async function proxy(
 
     if (isMainHost && matchesPath(pathname, ADMIN_PATHS)) {
         return NextResponse.redirect(
-            new URL(`https://${ADMIN_HOST}${pathname}`, request.url)
+            new URL(
+                `https://${ADMIN_HOST}${pathname}${request.nextUrl.search}`,
+                request.url
+            )
         );
     }
 
