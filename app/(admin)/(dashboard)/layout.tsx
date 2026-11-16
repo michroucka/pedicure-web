@@ -27,15 +27,19 @@ export default async function AdminDashboardLayout({
     }
 
     return (
-        // The document scrolls, not <main>: iPadOS 26 paints its blurred
-        // "scroll edge" over the top of an inner scroll container that
-        // starts at the top of the screen, which smeared the header even
-        // unscrolled. Only the week calendar (data-fills-viewport) still
-        // pins the page to the viewport - its own scroller starts below the
-        // day navigation, out of the blurred strip.
+        // iPadOS 26 blurs the top ~40pt of an installed web app ("scroll
+        // edge effect"). WebKit skips the blur and just extends the colour
+        // when an opaque, full-width sticky element touches the top edge -
+        // that's the strip below (it also holds the keep-awake banner). The
+        // document scrolls, not <main>; only the week calendar
+        // (data-fills-viewport) pins the page to the viewport and scrolls
+        // inside, below its day navigation. Sticky page headers use top-2
+        // to sit right under the strip.
         <div className="flex min-h-svh flex-col pt-[env(safe-area-inset-top)] [--admin-nav-height:4.625rem] has-[[data-fills-viewport]]:md:h-svh">
-            <KeepAwake />
-            <main className="flex-1 pt-2 has-[[data-fills-viewport]]:md:min-h-0 has-[[data-fills-viewport]]:md:overflow-hidden">
+            <div className="sticky top-0 z-30 bg-background pb-2">
+                <KeepAwake />
+            </div>
+            <main className="flex-1 has-[[data-fills-viewport]]:md:min-h-0">
                 {children}
             </main>
             <AdminBottomNav />

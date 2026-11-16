@@ -159,7 +159,7 @@ export default async function AdminHomePage({
                 data-fills-viewport
                 className="flex h-full w-full flex-col"
             >
-                <div className="sticky top-0 z-10 bg-background">
+                <div className="sticky top-2 z-10 bg-background">
                     <div className="mx-auto w-full max-w-lg">
                         <DayNav
                             weekStart={weekStart}
