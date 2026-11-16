@@ -50,13 +50,16 @@ export async function sendBookingConfirmationEmail(
             to: email,
             subject: SUBJECTS[variant],
             react: BookingConfirmationEmail({
-                clientName: bookings[0].client.name,
                 people: bookings.map((b) => ({
                     name: getBookingPersonName(b),
                     serviceName: b.service.name,
                 })),
                 dateLabel,
                 timeLabel,
+                totalPrice: bookings.reduce(
+                    (sum, b) => sum + b.service.price,
+                    0
+                ),
                 manageUrl,
                 variant,
             }),

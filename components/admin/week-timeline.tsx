@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
 import {
     cn,
     formatTime,
@@ -25,6 +23,10 @@ import type {
 } from "@/lib/generated/prisma/client";
 
 const PX_PER_MIN = 2;
+
+// date-fns "EEE" in Czech gives "pon, úte, čtv" - not how Czech abbreviates
+// weekdays. Indexed by getUTCDay() (Sunday = 0).
+const CZECH_WEEKDAY_SHORT = ["ne", "po", "út", "st", "čt", "pá", "so"];
 
 export function WeekTimeline({
     weekDays,
@@ -144,7 +146,7 @@ export function WeekTimeline({
                                             : "text-muted-foreground"
                                     )}
                                 >
-                                    {format(day, "EEE d.", { locale: cs })}
+                                    {`${CZECH_WEEKDAY_SHORT[day.getUTCDay()]} ${day.getUTCDate()}.`}
                                     <ExceptionDot
                                         blockedFull={blockedFull}
                                         blockedPartial={blockedPartial}

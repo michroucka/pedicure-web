@@ -23,19 +23,22 @@ type Person = { name: string; serviceName: string };
 // email's link stops working – this one carries the new link.
 export type BookingEmailVariant = "created" | "moved";
 
+// Bodies follow "Dobrý den," - Czech continues after a comma salutation in
+// lowercase; "Vaše" keeps its capital V as the polite form, not as a
+// sentence start.
 const COPY: Record<
     BookingEmailVariant,
     { preview: string; heading: string; body: string }
 > = {
     created: {
         preview: "je potvrzena",
-        heading: "Rezervace potvrzena!",
-        body: `Vaše rezervace v ${BRAND} byla úspěšně vytvořena.`,
+        heading: "Rezervace potvrzena",
+        body: "děkuji za rezervaci, těším se na Vás. Zde je její\u00a0shrnutí:",
     },
     moved: {
         preview: "– termín byl změněn",
         heading: "Rezervace přesunuta",
-        body: `Vaše rezervace v ${BRAND} byla přesunuta na nový termín. Pro správu rezervace použijte tlačítko níže.`,
+        body: "Vaše rezervace byla přesunuta na nový termín:",
     },
 };
 
@@ -44,21 +47,25 @@ const BASE_URL = BUSINESS_INFO.siteUrl;
 // Email clients fetch images over the internet when the message is opened,
 // so this has to be an absolute URL – and a raster format, since SVG
 // support in email clients (Outlook especially) is unreliable. Rasterized
-// from public/logo-light.svg into public/logo-email.png for this reason.
-const LOGO_URL = `${BASE_URL}/logo-email.png`;
+// from public/logo-banner-light.svg into public/logo-email-banner.png (3x)
+// for this reason. The older round logo-email.png stays in public/ - emails
+// already sitting in inboxes still load it.
+const LOGO_URL = `${BASE_URL}/logo-email-banner.png`;
+
+const ADDRESS = `${BUSINESS_INFO.address.street}, ${BUSINESS_INFO.address.city}`;
 
 export function BookingConfirmationEmail({
-    clientName,
     people,
     dateLabel,
     timeLabel,
+    totalPrice,
     manageUrl,
     variant = "created",
 }: {
-    clientName: string;
     people: Person[];
     dateLabel: string;
     timeLabel: string;
+    totalPrice: number;
     manageUrl: string;
     variant?: BookingEmailVariant;
 }) {
@@ -87,16 +94,23 @@ export function BookingConfirmationEmail({
                 <Container style={container}>
                     <Img
                         src={LOGO_URL}
-                        width="128"
-                        height="128"
+                        width="220"
+                        height="60"
                         alt={BUSINESS_INFO.tagline}
                         style={logo}
                     />
                     <Heading style={heading}>{copy.heading}</Heading>
-                    <Text style={text}>Dobrý den, {clientName},</Text>
+                    {/* No name: Czech needs the vocative ("Jano"), which
+                        can't be derived reliably from a typed-in name. */}
+                    <Text style={text}>Dobrý den,</Text>
                     <Text style={text}>{copy.body}</Text>
 
                     <Section style={card}>
+                        {/* When to come leads; where and how much follow,
+                            quieter, under a divider. */}
+                        <Text style={cardWhen}>
+                            {dateLabel}, {timeLabel}
+                        </Text>
                         {people.map((person, i) => (
                             <Text
                                 key={i}
@@ -105,8 +119,16 @@ export function BookingConfirmationEmail({
                                 {person.name} – {person.serviceName}
                             </Text>
                         ))}
-                        <Text style={cardLine}>{dateLabel}</Text>
-                        <Text style={cardLine}>{timeLabel}</Text>
+                        <Hr style={cardHr} />
+                        <Link
+                            href={BUSINESS_INFO.mapsUrl}
+                            style={cardLink}
+                        >
+                            {ADDRESS}
+                        </Link>
+                        <Text style={cardMuted}>
+                            Celkem {totalPrice.toLocaleString("cs-CZ")} Kč
+                        </Text>
                     </Section>
 
                     <Button
@@ -118,7 +140,14 @@ export function BookingConfirmationEmail({
 
                     <Text style={mutedText}>
                         Rezervaci můžete zrušit nebo přesunout nejpozději 24
-                        hodin před termínem.
+                        hodin před termínem. Později mi prosím zavolejte na{" "}
+                        <Link
+                            href={`tel:${BUSINESS_INFO.phone}`}
+                            style={mutedLink}
+                        >
+                            {BUSINESS_INFO.phoneDisplay}
+                        </Link>
+                        .
                     </Text>
 
                     <Hr style={hr} />
@@ -157,7 +186,7 @@ const container: React.CSSProperties = {
 
 const logo: React.CSSProperties = {
     display: "block",
-    margin: "0 auto 16px",
+    margin: "0 auto 24px",
 };
 
 const heading: React.CSSProperties = {
@@ -194,6 +223,36 @@ const cardLine: React.CSSProperties = {
     fontSize: "14px",
     lineHeight: "20px",
     margin: "0",
+};
+
+const cardWhen: React.CSSProperties = {
+    ...cardLine,
+    fontSize: "16px",
+    fontWeight: 700,
+    lineHeight: "22px",
+    margin: "0 0 8px",
+};
+
+const cardHr: React.CSSProperties = {
+    borderColor: "#5c464b",
+    margin: "12px 0",
+};
+
+const cardMuted: React.CSSProperties = {
+    ...cardLine,
+    color: "#afa294",
+};
+
+const cardLink: React.CSSProperties = {
+    ...cardMuted,
+    display: "block",
+    textDecoration: "underline",
+    textDecorationColor: "#7a6469",
+};
+
+const mutedLink: React.CSSProperties = {
+    color: "#f4e9de",
+    whiteSpace: "nowrap",
 };
 
 const button: React.CSSProperties = {
@@ -234,13 +293,13 @@ const footerSecondary: React.CSSProperties = {
 export default BookingConfirmationEmail;
 
 BookingConfirmationEmail.PreviewProps = {
-    clientName: "Jana Nováková",
     people: [
         { name: "Jana Nováková", serviceName: "Pedikúra klasik" },
         { name: "Petra Nováková", serviceName: "Pedikúra s lakem" },
     ],
     dateLabel: "29. srpna 2026",
     timeLabel: "09:00 – 10:15",
+    totalPrice: 1050,
     manageUrl:
         "https://www.pedikurakralovice.cz/rezervace/sprava/preview-token",
     variant: "created",

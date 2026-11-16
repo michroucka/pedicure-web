@@ -123,8 +123,13 @@ function SelectLabel({
 function SelectItem({
     className,
     children,
+    hint,
     ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & {
+    // Extra detail shown in the open list only - outside ItemText, so the
+    // closed trigger keeps showing just the item's label.
+    hint?: React.ReactNode;
+}) {
     return (
         <SelectPrimitive.Item
             data-slot="select-item"
@@ -140,6 +145,11 @@ function SelectItem({
                 </SelectPrimitive.ItemIndicator>
             </span>
             <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+            {hint && (
+                <span className="ml-auto text-xs text-muted-foreground">
+                    {hint}
+                </span>
+            )}
         </SelectPrimitive.Item>
     );
 }

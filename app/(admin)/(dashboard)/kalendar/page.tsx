@@ -189,7 +189,11 @@ export default async function AdminHomePage({
                 </CalendarBody>
 
                 <FloatingActions>
-                    <QuickQrDialog />
+                    <QuickQrDialog
+                        prices={[...new Set(services.map((s) => s.price))].sort(
+                            (a, b) => a - b
+                        )}
+                    />
                     <AddBookingDialog
                         services={services}
                         clients={clients}

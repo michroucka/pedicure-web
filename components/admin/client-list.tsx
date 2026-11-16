@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { ClientEditDialog } from "@/components/admin/client-edit-dialog";
-import { Clock, Phone, Search } from "lucide-react";
+import { ChevronRight, Clock, Phone, Search } from "lucide-react";
 import { normalizeForSearch } from "@/lib/utils";
 import type { Client } from "@/lib/generated/prisma/client";
 
@@ -23,15 +23,18 @@ export function ClientList({ clients }: { clients: ClientListItem[] }) {
         : clients;
 
     return (
-        <div className="flex flex-col gap-3 p-4">
-            <div className="relative">
-                <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    placeholder="Hledat podle jména nebo telefonu"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className="pl-8"
-                />
+        <div className="flex flex-col gap-3 px-4 pb-4">
+            {/* Stays reachable while scrolling a long list. */}
+            <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pt-2 pb-1">
+                <div className="relative">
+                    <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="Hledat podle jména nebo telefonu"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        className="pl-8"
+                    />
+                </div>
             </div>
 
             {filtered.length === 0 ? (
@@ -39,31 +42,32 @@ export function ClientList({ clients }: { clients: ClientListItem[] }) {
                     Žádný klient nenalezen.
                 </span>
             ) : (
-                <div className="divide-y overflow-hidden rounded-md border">
+                <div className="divide-y overflow-hidden rounded-2xl border">
                     {filtered.map((client) => (
                         <button
                             key={client.id}
                             type="button"
                             onClick={() => setSelected(client)}
-                            className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition hover:bg-muted/50"
+                            className="flex min-h-11 w-full items-center gap-3 px-4 py-1.5 text-left transition hover:bg-muted/50"
                         >
-                            <span className="min-w-0 truncate font-medium">
-                                {client.name}
-                            </span>
-                            <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex min-w-0 flex-1 items-center gap-2">
+                                <span className="truncate font-medium">
+                                    {client.name}
+                                </span>
                                 {client.extraTimeMinutes > 0 && (
-                                    <span className="flex items-center gap-1">
-                                        <Clock className="size-3.5" />+
+                                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                        <Clock className="size-3" />+
                                         {client.extraTimeMinutes} min
                                     </span>
                                 )}
-                                {client.phone && (
-                                    <span className="flex items-center gap-1">
-                                        <Phone className="size-3.5" />
-                                        {client.phone}
-                                    </span>
-                                )}
-                            </div>
+                            </span>
+                            {client.phone && (
+                                <span className="flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground">
+                                    <Phone className="size-3.5" />
+                                    {client.phone}
+                                </span>
+                            )}
+                            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                         </button>
                     ))}
                 </div>

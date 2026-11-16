@@ -1,24 +1,20 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function AvailabilityLoading() {
     return (
         <div className="mx-auto flex max-w-lg flex-col items-center p-4 lg:max-w-3xl">
-            <Skeleton className="mb-4 h-11 w-full max-w-md rounded-2xl" />
+            <Skeleton className="mb-4 h-12 w-full max-w-md rounded-full" />
 
-            <div className="w-full rounded-xl border">
-                <div className="flex flex-col gap-3 p-4 lg:grid lg:grid-cols-2 lg:gap-6">
-                    <Skeleton className="h-64 w-full rounded-md" />
-                    <div className="flex flex-col gap-3">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                            <Skeleton
-                                key={i}
-                                className="h-16 w-full rounded-2xl"
-                            />
-                        ))}
-                        <Skeleton className="h-9 w-32 rounded-md" />
+            <Card className="w-full">
+                <CardContent className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:gap-6">
+                    <div className="flex flex-col gap-2">
+                        <Skeleton className="h-95 w-full rounded-2xl" />
+                        <Skeleton className="mx-auto h-5 w-4/5 rounded-full" />
                     </div>
-                </div>
-            </div>
+                    <Skeleton className="h-12 w-full rounded-full" />
+                </CardContent>
+            </Card>
         </div>
     );
 }

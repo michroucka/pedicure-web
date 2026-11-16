@@ -19,8 +19,9 @@ import { QrPayment } from "@/components/admin/qr-payment";
 
 // For a walk-in the pedikérka hasn't logged as a booking (e.g. a friend) –
 // same QR UI as BookingDetailDialog's QR mode, but with no booking to
-// prefill the amount from, so it starts empty and autofocuses for typing.
-export function QuickQrDialog() {
+// prefill the amount from, so it starts empty with the service prices as
+// one-tap amounts.
+export function QuickQrDialog({ prices }: { prices: number[] }) {
     const [open, setOpen] = useState(false);
     const [amount, setAmount] = useState("");
 
@@ -38,6 +39,7 @@ export function QuickQrDialog() {
                         variant="secondary"
                         size="icon-xl"
                         className="rounded-full shadow-lg"
+                        aria-label="QR platba"
                         onClick={() => setOpen(true)}
                     >
                         <QrCode className="size-6" />
@@ -55,10 +57,12 @@ export function QuickQrDialog() {
                         <DialogTitle>QR platba</DialogTitle>
                     </DialogHeader>
 
+                    {/* No autofocus: with the price buttons the iPad keyboard
+                        would only pop up and cover half the screen. */}
                     <QrPayment
                         amount={amount}
                         onAmountChange={setAmount}
-                        autoFocus
+                        quickAmounts={prices}
                     />
 
                     <DialogFooter>

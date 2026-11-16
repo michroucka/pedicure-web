@@ -2,18 +2,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ClientsLoading() {
     return (
-        <div className="mx-auto w-full max-w-lg">
-            <h2 className="px-4 pt-4 text-center">Klienti</h2>
-            <div className="flex flex-col gap-3 p-4">
-                <Skeleton className="h-9 w-full rounded-md" />
-                <div className="divide-y overflow-hidden rounded-md border">
-                    {Array.from({ length: 8 }).map((_, i) => (
+        <div className="mx-auto w-full max-w-lg md:max-w-2xl">
+            <div className="flex flex-col gap-3 px-4 pb-4">
+                <div className="pt-2 pb-1">
+                    <Skeleton className="h-10 w-full rounded-2xl" />
+                </div>
+                <div className="divide-y overflow-hidden rounded-2xl border">
+                    {Array.from({ length: 10 }).map((_, i) => (
                         <div
-                            className="flex items-center justify-between gap-2 px-3 py-2"
+                            className="flex min-h-11 items-center gap-3 px-4 py-1.5"
                             key={i}
                         >
-                            <Skeleton className="h-4 w-36" />
-                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="ml-auto h-4 w-24" />
+                            <Skeleton className="size-4" />
                         </div>
                     ))}
                 </div>

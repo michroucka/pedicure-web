@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import { auth, signIn } from "@/auth";
-import { AuthError } from "next-auth";
+import Image from "next/image";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/password-input";
-import { LoginSubmitButton } from "@/components/admin/login-submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Lock, User } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { LoginForm } from "@/components/admin/login-form";
 
 export const metadata: Metadata = {
     title: {
@@ -28,27 +25,22 @@ export default async function AdminLoginPage({
         redirect("/kalendar");
     }
 
-    async function login(formData: FormData) {
-        "use server";
-        try {
-            await signIn("credentials", {
-                username: formData.get("username"),
-                password: formData.get("password"),
-                redirectTo: "/kalendar",
-            });
-        } catch (err) {
-            if (err instanceof AuthError) {
-                redirect(`/login?error=${err.type}`);
-            }
-            throw err;
-        }
-    }
-
     return (
-        <div className="mx-auto flex min-h-svh max-w-sm items-center p-4">
+        <div className="mx-auto flex min-h-svh max-w-sm flex-col items-center justify-center gap-6 p-4 pb-[15svh]">
+            <Image
+                src="/logo-banner-dark.svg"
+                alt="Nohy v cajku"
+                width={221}
+                height={60}
+                className="h-14 w-auto"
+                priority
+                draggable={false}
+            />
             <Card className="w-full">
                 <CardContent>
-                    <h2 className="mb-4 text-center">Přihlášení</h2>
+                    <h2 className="mb-4">Přihlášení</h2>
+                    {/* Errors Auth.js redirects here itself (?error=); the
+                        form shows its own failed attempts. */}
                     {error && (
                         <Alert
                             variant="destructive"
@@ -73,36 +65,7 @@ export default async function AdminLoginPage({
                             </AlertDescription>
                         </Alert>
                     )}
-                    <form action={login}>
-                        <FieldGroup>
-                            <Field>
-                                <FieldLabel htmlFor="username">
-                                    <User className="size-4" />
-                                    Uživatelské jméno
-                                </FieldLabel>
-                                <Input
-                                    id="username"
-                                    name="username"
-                                    autoComplete="username"
-                                    required
-                                    autoFocus
-                                />
-                            </Field>
-                            <Field>
-                                <FieldLabel htmlFor="password">
-                                    <Lock className="size-4" />
-                                    Heslo
-                                </FieldLabel>
-                                <PasswordInput
-                                    id="password"
-                                    name="password"
-                                    autoComplete="current-password"
-                                    required
-                                />
-                            </Field>
-                        </FieldGroup>
-                        <LoginSubmitButton />
-                    </form>
+                    <LoginForm />
                 </CardContent>
             </Card>
         </div>

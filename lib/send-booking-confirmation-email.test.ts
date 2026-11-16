@@ -26,7 +26,7 @@ function booking(overrides: {
         guestName: overrides.guestName,
         cancelToken: `token-${overrides.startTime}`,
         client: { name: "Jana Beránková", email: "jana@example.com" },
-        service: { name: overrides.serviceName },
+        service: { name: overrides.serviceName, price: 550 },
     } as EmailBooking;
 }
 
@@ -40,7 +40,7 @@ describe("sendBookingConfirmationEmail", () => {
         vi.clearAllMocks();
     });
 
-    it("lists every group member under their own name, greeting the main contact", async () => {
+    it("lists every group member under their own name with the group's total price", async () => {
         await sendBookingConfirmationEmail([
             booking({ guestName: null, startTime: 540, serviceName: "Klasik" }),
             booking({
@@ -54,7 +54,7 @@ describe("sendBookingConfirmationEmail", () => {
         expect(send.mock.calls[0][0].to).toBe("jana@example.com");
         expect(BookingConfirmationEmail).toHaveBeenCalledWith(
             expect.objectContaining({
-                clientName: "Jana Beránková",
+                totalPrice: 1100,
                 people: [
                     { name: "Jana Beránková", serviceName: "Klasik" },
                     { name: "Eva Beránková", serviceName: "Komplet" },

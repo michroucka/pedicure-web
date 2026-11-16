@@ -100,7 +100,7 @@ export async function moveBooking(
                 }
             }
 
-            return createBooking(
+            const newBooking = await createBooking(
                 {
                     clientId: booking.clientId,
                     guestName: booking.guestName,
@@ -112,6 +112,11 @@ export async function moveBooking(
                 },
                 tx
             );
+            await tx.booking.update({
+                where: { id: bookingId },
+                data: { movedToId: newBooking.id },
+            });
+            return newBooking;
         })
         .catch(rethrowSlotConflict);
 }
@@ -201,6 +206,10 @@ export async function moveGroupBooking(
                     },
                     tx
                 );
+                await tx.booking.update({
+                    where: { id: booking.id },
+                    data: { movedToId: newBooking.id },
+                });
                 startTime = newBooking.endTime;
                 created.push(newBooking);
             }

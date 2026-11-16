@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
     InputGroup,
     InputGroupAddon,
@@ -12,10 +13,14 @@ export function QrPayment({
     amount,
     onAmountChange,
     autoFocus,
+    quickAmounts,
 }: {
     amount: string;
     onAmountChange: (value: string) => void;
     autoFocus?: boolean;
+    // One-tap amounts (the service prices) so the usual case needs no
+    // typing on the tablet; the field below still takes anything else.
+    quickAmounts?: number[];
 }) {
     const amountValue = Number(amount);
     const qrUrl =
@@ -28,7 +33,9 @@ export function QrPayment({
                       amount,
                       currency: "CZK",
                       message: "Pedikúra",
-                      size: "300",
+                      // Rendered at up to 288 px; 2x for sharp edges on
+                      // the tablet's retina screen.
+                      size: "600",
                       branding: "false",
                   }
               ).toString()}`
@@ -37,20 +44,37 @@ export function QrPayment({
     return (
         <div className="flex flex-col gap-5">
             {qrUrl ? (
+                // Bigger on the tablet: the client scans it with her phone
+                // from across the desk.
                 // eslint-disable-next-line @next/next/no-img-element -- dynamic external QR image, no benefit from next/image
                 <img
                     src={qrUrl}
                     alt="QR platba"
-                    className="mx-auto rounded-lg border"
-                    width={240}
-                    height={240}
+                    className="mx-auto size-60 rounded-lg border md:size-72"
+                    width={288}
+                    height={288}
                 />
             ) : (
-                <div
-                    className="mx-auto flex items-center justify-center rounded-lg border text-center text-sm text-muted-foreground"
-                    style={{ width: 240, height: 240 }}
-                >
+                <div className="mx-auto flex size-60 items-center justify-center rounded-lg border text-center text-sm text-muted-foreground md:size-72">
                     Zadejte částku.
+                </div>
+            )}
+
+            {quickAmounts && quickAmounts.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {quickAmounts.map((value) => (
+                        <Button
+                            key={value}
+                            type="button"
+                            size="lg"
+                            variant={
+                                Number(amount) === value ? "default" : "outline"
+                            }
+                            onClick={() => onAmountChange(String(value))}
+                        >
+                            {value.toLocaleString("cs-CZ")} Kč
+                        </Button>
+                    ))}
                 </div>
             )}
 

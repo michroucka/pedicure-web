@@ -105,6 +105,12 @@ model Booking {
   cancelToken         String          @unique
   reminderSent        Boolean         @default(false)
   createdAt           DateTime        @default(now())
+  // Set on a booking cancelled by a move (lib/move-booking.ts) - points to
+  // the booking that replaced it, so its old magic link can say "moved to"
+  // instead of "cancelled".
+  movedToId           String?
+  movedTo             Booking?        @relation("BookingMove", fields: [movedToId], references: [id], onDelete: SetNull)
+  movedFrom           Booking[]       @relation("BookingMove")
 
   // Not expressible in Prisma, added by hand in a migration: exclusion
   // constraint Booking_no_overlap - no two CONFIRMED bookings on the same

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
+import { CzechText } from "@/components/czech-text";
+import { stagger } from "@/lib/stagger";
 
 export const metadata: Metadata = {
     title: "Ceník",
@@ -19,48 +21,70 @@ export default async function CenikPage() {
     });
 
     return (
-        <section>
-            <div className="mx-auto max-w-4xl px-4 pt-8 pb-12 sm:px-6">
-                <h1 className="italic">Ceník</h1>
-                <p className="mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
-                    Díky svým zkušenostem dokážu péči přizpůsobit individuálním
-                    potřebám vašich nohou.
-                </p>
+        <CzechText>
+            <section>
+                <div className="mx-auto max-w-5xl px-4 pt-12 pb-12 sm:px-6 md:pt-16">
+                    <h1
+                        className="enter"
+                        style={stagger(0)}
+                    >
+                        Ceník
+                    </h1>
+                    <p
+                        className="enter mt-4 text-base leading-relaxed text-balance text-muted-foreground"
+                        style={stagger(1)}
+                    >
+                        Díky svým zkušenostem dokážu péči přizpůsobit
+                        individuálním potřebám vašich nohou.
+                    </p>
 
-                <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {services.map((service) => (
-                        <Card key={service.id}>
-                            <CardContent className="flex h-full flex-col">
-                                <p className="font-heading text-lg font-medium">
-                                    {service.name}
-                                </p>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    {service.durationMinutes} minut
-                                </p>
-                                {service.description && (
-                                    <p className="mt-3 text-sm text-pretty text-muted-foreground">
-                                        {service.description}
+                    <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {services.map((service, i) => (
+                            <Card
+                                key={service.id}
+                                // Hover lift: the cards are the page's content
+                                // people point at, so they feel tangible.
+                                className="enter transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/30"
+                                style={stagger(2 + i)}
+                            >
+                                <CardContent className="flex h-full flex-col">
+                                    <div className="flex items-baseline justify-between gap-4">
+                                        <h2 className="text-lg font-medium">
+                                            {service.name}
+                                        </h2>
+                                        <p className="shrink-0 text-sm text-muted-foreground">
+                                            {service.durationMinutes} minut
+                                        </p>
+                                    </div>
+                                    {service.description && (
+                                        <p className="mt-3 text-sm text-pretty text-muted-foreground">
+                                            {service.description}
+                                        </p>
+                                    )}
+                                    <p className="mt-auto pt-4 text-right font-heading text-2xl text-primary">
+                                        {service.price} Kč
                                     </p>
-                                )}
-                                <p className="mt-auto pt-4 font-heading text-2xl text-primary">
-                                    {service.price} Kč
-                                </p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-
-                {BOOKING_ENABLED && (
-                    <div className="mt-10 flex justify-end">
-                        <Button
-                            asChild
-                            size="lg"
-                        >
-                            <Link href="/rezervace">Objednat se</Link>
-                        </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
-                )}
-            </div>
-        </section>
+
+                    {BOOKING_ENABLED && (
+                        <div
+                            className="enter mt-10"
+                            style={stagger(2 + services.length)}
+                        >
+                            <Button
+                                asChild
+                                size="lg"
+                                className="w-full sm:w-auto"
+                            >
+                                <Link href="/rezervace">Objednat se</Link>
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </section>
+        </CzechText>
     );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { format, addDays } from "date-fns";
+import { format, addDays, differenceInCalendarDays } from "date-fns";
 import { cs } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
@@ -11,7 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { TimePicker } from "@/components/ui/time-picker";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Plus, Trash2, Check, CalendarX } from "lucide-react";
+import {
+    AlertCircle,
+    Plus,
+    Trash2,
+    Check,
+    CalendarX,
+    CalendarDays,
+} from "lucide-react";
+import { ExceptionLegend } from "@/components/admin/exception-legend";
 import {
     localDateToUtcMidnight,
     formatTime,
@@ -55,6 +63,30 @@ function trackBoundsFor(recurringForDay: TimeSlot[], blocks: Block[]) {
         min: Math.floor(Math.min(...times) / 60) * 60,
         max: Math.ceil(Math.max(...times) / 60) * 60,
     };
+}
+
+// "18. – 22. listopadu", "28. listopadu – 3. prosince", and with years
+// only when the range crosses one.
+function formatDateRange(from: Date, to: Date): string {
+    if (differenceInCalendarDays(to, from) === 0) {
+        return format(from, "d. MMMM", { locale: cs });
+    }
+    const sameYear = from.getFullYear() === to.getFullYear();
+    const sameMonth = sameYear && from.getMonth() === to.getMonth();
+    const fromPattern = sameMonth
+        ? "d."
+        : sameYear
+          ? "d. MMMM"
+          : "d. MMMM yyyy";
+    const toPattern = sameYear ? "d. MMMM" : "d. MMMM yyyy";
+    return `${format(from, fromPattern, { locale: cs })} – ${format(to, toPattern, { locale: cs })}`;
+}
+
+// 1 den, 2-4 dny, 5+ dní.
+function formatDayCount(days: number): string {
+    if (days === 1) return "1 den";
+    if (days >= 2 && days <= 4) return `${days} dny`;
+    return `${days} dní`;
 }
 
 function newBlockId() {
@@ -288,59 +320,117 @@ export function ExceptionForm({
     }
 
     const bounds = trackBoundsFor(date ? recurringFor(date) : [], blocks);
+    const isSingleDayRange =
+        !!range?.from &&
+        !!range?.to &&
+        differenceInCalendarDays(range.to, range.from) === 0;
 
     return (
         <Card>
             <CardContent className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:gap-6">
-                {rangeMode ? (
-                    <Calendar
-                        mode="range"
-                        locale={cs}
-                        selected={range}
-                        onSelect={updateRange}
-                        disabled={(day) =>
-                            localDateToUtcMidnight(day).getTime() <
-                            minDate.getTime()
-                        }
-                        modifiers={modifiers}
-                        components={{ DayButton: ExceptionDayButton }}
-                        className="w-full bg-transparent"
-                        fixedWeeks
-                    />
-                ) : (
-                    <Calendar
-                        mode="single"
-                        locale={cs}
-                        selected={date}
-                        onSelect={updateDate}
-                        disabled={(day) =>
-                            localDateToUtcMidnight(day).getTime() <
-                            minDate.getTime()
-                        }
-                        modifiers={modifiers}
-                        components={{ DayButton: ExceptionDayButton }}
-                        className="w-full bg-transparent"
-                        fixedWeeks
-                    />
-                )}
+                <div className="flex flex-col gap-2">
+                    {rangeMode ? (
+                        <Calendar
+                            mode="range"
+                            locale={cs}
+                            selected={range}
+                            onSelect={updateRange}
+                            // Same muted-pink band as the calendar picker's
+                            // highlighted week, instead of the default grey.
+                            // A one-day range has nothing to span, so no band.
+                            classNames={{
+                                range_start: isSingleDayRange
+                                    ? ""
+                                    : "relative isolate z-0 rounded-l-(--cell-radius) bg-primary/10 after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-primary/10 last:rounded-r-(--cell-radius) last:after:hidden",
+                                range_middle:
+                                    "rounded-none bg-primary/10 first:rounded-l-(--cell-radius) last:rounded-r-(--cell-radius)",
+                                range_end: isSingleDayRange
+                                    ? ""
+                                    : "relative isolate z-0 rounded-r-(--cell-radius) bg-primary/10 after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-primary/10 first:rounded-l-(--cell-radius) first:after:hidden",
+                                day_button:
+                                    "data-[range-middle=true]:bg-transparent",
+                            }}
+                            disabled={(day) =>
+                                localDateToUtcMidnight(day).getTime() <
+                                minDate.getTime()
+                            }
+                            modifiers={modifiers}
+                            components={{ DayButton: ExceptionDayButton }}
+                            className="w-full bg-transparent"
+                            fixedWeeks
+                        />
+                    ) : (
+                        <Calendar
+                            mode="single"
+                            locale={cs}
+                            selected={date}
+                            onSelect={updateDate}
+                            disabled={(day) =>
+                                localDateToUtcMidnight(day).getTime() <
+                                minDate.getTime()
+                            }
+                            modifiers={modifiers}
+                            components={{ DayButton: ExceptionDayButton }}
+                            className="w-full bg-transparent"
+                            fixedWeeks
+                        />
+                    )}
+                    <ExceptionLegend />
+                </div>
 
                 <div className="flex h-full flex-col gap-3">
+                    {/* Always shows which mode is on - the old single
+                        toggle button's label named the other one. */}
+                    <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
+                        {[
+                            { range: false, label: "Jeden den" },
+                            { range: true, label: "Zavřít rozsah" },
+                        ].map((option) => (
+                            <Button
+                                key={option.label}
+                                type="button"
+                                variant="ghost"
+                                aria-pressed={rangeMode === option.range}
+                                className={
+                                    rangeMode === option.range
+                                        ? "bg-background shadow-sm hover:bg-background"
+                                        : "text-muted-foreground"
+                                }
+                                onClick={() =>
+                                    rangeMode !== option.range &&
+                                    toggleRangeMode()
+                                }
+                            >
+                                {option.label}
+                            </Button>
+                        ))}
+                    </div>
                     {(rangeMode ? !range?.from || !range?.to : !date) && (
-                        <p className="text-sm text-muted-foreground max-lg:text-center">
+                        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center text-sm text-muted-foreground">
+                            <CalendarDays className="size-8" />
                             {rangeMode
                                 ? "Vyber rozsah v kalendáři."
                                 : "Vyber datum v kalendáři."}
-                        </p>
+                        </div>
                     )}
 
                     {rangeMode ? (
                         !range?.from || !range?.to ? null : (
                             <>
-                                <p className="text-sm">
-                                    Zavřít {format(range.from, "d. M. yyyy")}
-                                    {" – "}
-                                    {format(range.to, "d. M. yyyy")}
-                                </p>
+                                <div>
+                                    <p className="text-base font-medium">
+                                        {formatDateRange(range.from, range.to)}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Zavřeno bude{" "}
+                                        {formatDayCount(
+                                            differenceInCalendarDays(
+                                                range.to,
+                                                range.from
+                                            ) + 1
+                                        )}
+                                    </p>
+                                </div>
 
                                 {error && (
                                     <Alert variant="destructive">
@@ -375,7 +465,6 @@ export function ExceptionForm({
 
                                 <Button
                                     type="button"
-                                    variant="destructive"
                                     disabled={isPending}
                                     onClick={submitRange}
                                 >
@@ -384,12 +473,34 @@ export function ExceptionForm({
                                     ) : (
                                         <CalendarX className="size-4" />
                                     )}
-                                    {isPending ? "Zavírám…" : "Zavřít rozsah"}
+                                    {isPending
+                                        ? "Zavírám…"
+                                        : `Zavřít ${formatDayCount(
+                                              differenceInCalendarDays(
+                                                  range.to,
+                                                  range.from
+                                              ) + 1
+                                          )}`}
                                 </Button>
                             </>
                         )
                     ) : !date ? null : (
                         <>
+                            <div>
+                                <p className="text-base font-medium first-letter:uppercase">
+                                    {format(date, "EEEE d. MMMM", {
+                                        locale: cs,
+                                    })}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {exceptionsByDate.has(
+                                        localDateToUtcMidnight(date).getTime()
+                                    )
+                                        ? "Upraveno pro tento den"
+                                        : "Podle stálé dostupnosti"}
+                                </p>
+                            </div>
+
                             {blocks.length === 0 && (
                                 <p className="text-sm text-muted-foreground">
                                     Tento den je zavřeno.
@@ -470,7 +581,7 @@ export function ExceptionForm({
                                 onClick={addBlock}
                             >
                                 <Plus className="size-4" />
-                                Blok
+                                Přidat časový blok
                             </Button>
 
                             {error && (
@@ -516,17 +627,6 @@ export function ExceptionForm({
                             </Button>
                         </>
                     )}
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="mt-auto self-end"
-                        onClick={toggleRangeMode}
-                    >
-                        <CalendarX className="size-4" />
-                        {rangeMode ? "Jeden den" : "Zavřít rozsah"}
-                    </Button>
                 </div>
             </CardContent>
         </Card>

@@ -1,5 +1,7 @@
+import type { CSSProperties } from "react";
 import { InteriorCarousel } from "@/components/marketing/interior-carousel";
 import { SectionWave } from "@/components/marketing/section-wave";
+import { CzechText } from "@/components/czech-text";
 
 const REASONS = [
     {
@@ -18,38 +20,47 @@ const REASONS = [
 
 export function WhyUsSection() {
     return (
-        <section className="relative bg-background">
-            <div className="mx-auto grid max-w-5xl gap-10 px-4 pt-8 pb-24 sm:px-6 md:grid-cols-2 md:items-center">
-                <InteriorCarousel />
+        <CzechText>
+            <section className="relative bg-background">
+                <div className="reveal mx-auto grid max-w-5xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 md:items-center md:py-20">
+                    <InteriorCarousel />
 
-                <div>
-                    <h2 className="font-display text-pretty">
-                        Proč právě Nohy v cajku?
-                    </h2>
-                    <p className="mt-6 text-base leading-relaxed text-pretty text-muted-foreground">
-                        Dvacet let v oboru znamená tisíce hodin práce,
-                        zkušeností a setkání s nejrůznějšími potřebami klientů.
-                        Vím, že neexistuje jedna univerzální péče pro všechny –
-                        proto se vždy dívám na to, co potřebují právě vaše nohy.
-                    </p>
+                    <div>
+                        <h2 className="text-pretty">
+                            Proč právě Nohy v cajku?
+                        </h2>
+                        <p className="mt-6 text-base leading-relaxed text-pretty text-muted-foreground">
+                            Dvacet let v oboru znamená tisíce hodin práce,
+                            zkušeností a setkání s nejrůznějšími potřebami
+                            klientů. Vím, že neexistuje jedna univerzální péče
+                            pro všechny – proto se vždy dívám na to, co
+                            potřebují právě vaše nohy.
+                        </p>
 
-                    <div className="mt-8 grid gap-6">
-                        {REASONS.map((reason) => (
-                            <div key={reason.title}>
-                                <h5>{reason.title}</h5>
-                                <p className="mt-2 text-sm leading-relaxed text-pretty text-muted-foreground">
-                                    {reason.body}
-                                </p>
-                            </div>
-                        ))}
+                        <div className="mt-8 grid gap-6">
+                            {REASONS.map((reason, i) => (
+                                <div
+                                    key={reason.title}
+                                    className="reveal-item"
+                                    style={{ "--i": i } as CSSProperties}
+                                >
+                                    <h3 className="text-lg font-medium">
+                                        {reason.title}
+                                    </h3>
+                                    <p className="mt-2 text-sm leading-relaxed text-pretty text-muted-foreground">
+                                        {reason.body}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <SectionWave
-                variant="c"
-                className="fill-card"
-            />
-        </section>
+                <SectionWave
+                    variant="c"
+                    className="fill-card"
+                />
+            </section>
+        </CzechText>
     );
 }

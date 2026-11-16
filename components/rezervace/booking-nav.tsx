@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { Suspense } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { StepIndicator } from "@/components/rezervace/step-indicator";
 
 const STEP_BY_PATH: Record<string, 1 | 2> = {
@@ -9,32 +11,52 @@ const STEP_BY_PATH: Record<string, 1 | 2> = {
     "/rezervace/details": 2,
 };
 
-// The manage page (/rezervace/sprava/[token]) doubles as the booking
-// confirmation, so it's the last step.
+const MANAGE_PATH_PREFIX = "/rezervace/sprava/";
+
 function getCurrentStep(pathname: string): 1 | 2 | 3 {
-    if (pathname.startsWith("/rezervace/sprava/")) return 3;
+    if (pathname.startsWith(MANAGE_PATH_PREFIX)) return 3;
     return STEP_BY_PATH[pathname] ?? 1;
+}
+
+// The manage page doubles as the booking confirmation (?created=1) - only
+// then is it step 3 of the wizard. Opened later from the e-mail it's just
+// the booking, and a fully ticked progress bar would make no sense.
+function ManagePageSteps() {
+    const searchParams = useSearchParams();
+    if (searchParams.get("created") !== "1") return null;
+    return <StepIndicator currentStep={3} />;
 }
 
 export function BookingNav() {
     const pathname = usePathname();
     const currentStep = getCurrentStep(pathname);
+    const isManagePage = pathname.startsWith(MANAGE_PATH_PREFIX);
 
     return (
         <header className="sticky top-0 z-10 bg-background pt-[env(safe-area-inset-top)]">
             <div className="mx-auto max-w-5xl px-4 sm:px-6">
                 <div className="flex items-center justify-center pt-8">
-                    <Image
-                        src="/logo-banner-light.svg"
-                        alt="Nohy v cajku"
-                        width={241}
-                        height={60}
-                        className="h-16 w-auto"
-                        priority
-                        draggable={false}
-                    />
+                    <Link href="/">
+                        <Image
+                            src="/logo-banner-light.svg"
+                            alt="Nohy v cajku"
+                            width={221}
+                            height={60}
+                            className="h-16 w-auto"
+                            priority
+                            draggable={false}
+                        />
+                    </Link>
                 </div>
-                <StepIndicator currentStep={currentStep} />
+                {isManagePage ? (
+                    // useSearchParams needs a Suspense boundary - the
+                    // static /rezervace page shares this layout.
+                    <Suspense fallback={null}>
+                        <ManagePageSteps />
+                    </Suspense>
+                ) : (
+                    <StepIndicator currentStep={currentStep} />
+                )}
             </div>
         </header>
     );

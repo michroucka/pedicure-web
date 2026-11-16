@@ -2,12 +2,13 @@
 
 import { useFormStatus } from "react-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { changePasswordAction } from "@/app/(admin)/(dashboard)/nastaveni/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { KeyRound } from "lucide-react";
+import { KeyRound, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/password-input";
 
 function SubmitButton() {
@@ -28,7 +29,52 @@ function SubmitButton() {
     );
 }
 
-export function ChangePasswordForm() {
+// Changed maybe once a year - collapsed to one row so it doesn't take
+// half of the settings page.
+export function ChangePasswordSection() {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div>
+            {/* The whole row toggles - a bigger tap target than the chevron. */}
+            <button
+                type="button"
+                aria-expanded={open}
+                aria-controls="change-password-form"
+                onClick={() => setOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/50"
+            >
+                <span className="font-heading text-base font-medium">
+                    Změna hesla
+                </span>
+                <ChevronDown
+                    className={cn(
+                        "size-5 text-muted-foreground transition-transform duration-200",
+                        open && "rotate-180"
+                    )}
+                />
+            </button>
+            <div
+                id="change-password-form"
+                inert={!open}
+                className={cn(
+                    "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+                    open
+                        ? "grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0"
+                )}
+            >
+                <div className="min-h-0 overflow-hidden">
+                    <div className="px-4 pb-4">
+                        <ChangePasswordForm />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ChangePasswordForm() {
     const [state, formAction] = useActionState(changePasswordAction, null);
 
     return (

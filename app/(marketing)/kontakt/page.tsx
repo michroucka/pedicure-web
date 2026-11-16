@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Mail, MapPin, Phone, Star } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
-import Image from "next/image";
-import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info";
+import { BUSINESS_INFO } from "@/lib/business-info";
+import { MonochromeLogo } from "@/components/marketing/monochrome-logo";
 import { MapEmbed } from "@/components/marketing/map-embed";
+import { CzechText } from "@/components/czech-text";
+import { stagger } from "@/lib/stagger";
 
 export const metadata: Metadata = {
     title: "Kontakt",
@@ -13,116 +15,136 @@ export const metadata: Metadata = {
     alternates: { canonical: "/kontakt" },
 };
 
+const REVIEW_LINKS = [
+    {
+        href: "https://g.page/r/CdZJqS_7_oGNEBM/review",
+        label: "Google",
+        logo: "/google-logo.svg",
+    },
+    {
+        href: `${BUSINESS_INFO.profiles.firmy}#pridat-hodnoceni`,
+        label: "Firmy.cz",
+        logo: "/firmy-logo.svg",
+    },
+];
+
 export default function KontaktPage() {
     return (
-        <section>
-            <div className="mx-auto max-w-2xl px-4 pt-8 pb-12 sm:px-6">
-                <h1 className="italic">Kontakt</h1>
-                <p className="mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
-                    Dopřejte svým nohám péči zkušených rukou. Ať už potřebujete
-                    pravidelnou pedikúru, řešíte konkrétní problém, nebo si
-                    chcete jednoduše dopřát chvíli pro sebe, budu se na vás
-                    těšit.
-                </p>
+        <CzechText>
+            <section>
+                <div className="mx-auto max-w-5xl px-4 pt-12 pb-12 sm:px-6 md:pt-16">
+                    <h1
+                        className="enter"
+                        style={stagger(0)}
+                    >
+                        Kontakt
+                    </h1>
+                    <p
+                        className="enter mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground"
+                        style={stagger(1)}
+                    >
+                        Dopřejte svým nohám péči zkušených rukou. Ať už
+                        potřebujete pravidelnou pedikúru, řešíte konkrétní
+                        problém, nebo si chcete jednoduše dopřát chvíli pro
+                        sebe, budu se na vás těšit.
+                    </p>
 
-                <dl className="mt-8 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-3 text-sm">
-                    <dt className="flex items-center gap-1 text-muted-foreground">
-                        <Phone className="size-4" />
-                        Telefon:
-                    </dt>
-                    <dd className="text-muted-foreground italic">
-                        <a href={`tel:${BUSINESS_INFO.phone}`}>
-                            {BUSINESS_INFO.phoneDisplay}
-                        </a>
-                    </dd>
-
-                    <dt className="flex items-center gap-1 text-muted-foreground">
-                        <Mail className="size-4" />
-                        E-Mail:
-                    </dt>
-                    <dd className="text-muted-foreground italic">
-                        <a href={`mailto:${BUSINESS_INFO.email}`}>
-                            {BUSINESS_INFO.email}
-                        </a>
-                    </dd>
-
-                    <dt className="flex items-center gap-1 text-muted-foreground">
-                        <MapPin className="size-4" />
-                        Adresa:
-                    </dt>
-                    <dd className="text-muted-foreground italic">
-                        {BUSINESS_INFO.address.street},{" "}
-                        {BUSINESS_INFO.address.city}
-                    </dd>
-                </dl>
-
-                {BOOKING_ENABLED && (
-                    <div className="mt-8 flex justify-start">
-                        <Button
-                            asChild
-                            size="lg"
+                    <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-12">
+                        <div
+                            className="enter"
+                            style={stagger(2)}
                         >
-                            <Link href="/rezervace">Objednat se</Link>
-                        </Button>
-                    </div>
-                )}
+                            <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-4 text-sm">
+                                <dt className="flex items-center gap-1 text-muted-foreground">
+                                    <Phone className="size-4" />
+                                    Telefon:
+                                </dt>
+                                <dd>
+                                    <a
+                                        href={`tel:${BUSINESS_INFO.phone}`}
+                                        className="transition-colors hover:text-primary"
+                                    >
+                                        {BUSINESS_INFO.phoneDisplay}
+                                    </a>
+                                </dd>
 
-                <MapEmbed />
+                                <dt className="flex items-center gap-1 text-muted-foreground">
+                                    <Mail className="size-4" />
+                                    E-mail:
+                                </dt>
+                                <dd>
+                                    <a
+                                        href={`mailto:${BUSINESS_INFO.email}`}
+                                        className="transition-colors hover:text-primary"
+                                    >
+                                        {BUSINESS_INFO.email}
+                                    </a>
+                                </dd>
 
-                <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4">
-                    <div className="flex items-center gap-2">
-                        <Star className="size-4 shrink-0 text-primary" />
-                        <h5>Ohodnoťte nás</h5>
-                    </div>
-                    <div className="flex gap-2">
-                        <a
-                            href="https://g.page/r/CdZJqS_7_oGNEBM/review"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Ohodnotit na Googlu"
-                            className="flex size-11 items-center justify-center rounded-full bg-muted transition-colors hover:bg-primary/10"
-                        >
-                            <Image
-                                src="/google-logo.svg"
-                                alt="Google"
-                                width={32}
-                                height={32}
-                                className="size-6.5"
-                            />
-                        </a>
-                        <a
-                            href="https://www.firmy.cz/detail/14057489-nohy-v-cajku-pedikura-kralovice-kralovice.html#pridat-hodnoceni"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Ohodnotit na Firmy.cz"
-                            className="flex size-11 items-center justify-center rounded-full bg-muted transition-colors hover:bg-primary/10"
-                        >
-                            <Image
-                                src="/firmy-logo.svg"
-                                alt="Firmy.cz"
-                                width={32}
-                                height={32}
-                                className="size-5.5"
-                            />
-                        </a>
+                                <dt className="flex items-center gap-1 text-muted-foreground">
+                                    <MapPin className="size-4" />
+                                    Adresa:
+                                </dt>
+                                <dd>
+                                    <a
+                                        href={BUSINESS_INFO.mapsUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="transition-colors hover:text-primary"
+                                    >
+                                        {BUSINESS_INFO.address.street},{" "}
+                                        {BUSINESS_INFO.address.city}
+                                    </a>
+                                </dd>
+                            </dl>
+
+                            {BOOKING_ENABLED && (
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    className="mt-8 w-full sm:w-auto"
+                                >
+                                    <Link href="/rezervace">Objednat se</Link>
+                                </Button>
+                            )}
+
+                            <section
+                                aria-labelledby="kontakt-rating"
+                                className="mt-10"
+                            >
+                                <h2
+                                    id="kontakt-rating"
+                                    className="font-sans text-sm font-medium tracking-wide text-foreground/70 uppercase"
+                                >
+                                    Ohodnoťte nás
+                                </h2>
+                                <div className="mt-4 flex flex-wrap gap-3">
+                                    {REVIEW_LINKS.map((review) => (
+                                        <a
+                                            key={review.href}
+                                            href={review.href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex h-11 items-center gap-2 rounded-full border border-border px-4 text-sm transition-colors hover:border-primary/60 hover:text-primary"
+                                        >
+                                            <MonochromeLogo
+                                                src={review.logo}
+                                                className="size-4"
+                                            />
+                                            {review.label}
+                                        </a>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+
+                        <MapEmbed
+                            className="enter md:h-auto md:min-h-80"
+                            style={stagger(3)}
+                        />
                     </div>
                 </div>
-
-                <div className="mt-10 border-t border-border/60 pt-6 text-center">
-                    <p className="text-xs font-medium text-foreground/70">
-                        Provozovatel
-                    </p>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {OPERATOR_INFO.name}
-                        <br />
-                        {OPERATOR_INFO.address}
-                        <br />
-                        IČO {OPERATOR_INFO.ico}
-                        <br />
-                        {OPERATOR_INFO.registryNote}
-                    </p>
-                </div>
-            </div>
-        </section>
+            </section>
+        </CzechText>
     );
 }

@@ -1,10 +1,10 @@
 import type { Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { fontDisplay } from "@/lib/fonts";
 import { ReactNode } from "react";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import { RevealOnScroll } from "@/components/marketing/reveal-on-scroll";
 import { PortalContainerProvider } from "@/components/portal-container";
 import { BUSINESS_INFO } from "@/lib/business-info";
 
@@ -34,17 +34,12 @@ const LOCAL_BUSINESS_JSON_LD = {
         "@type": "GeoCoordinates",
         ...BUSINESS_INFO.geo,
     },
-    sameAs: [
-        "https://share.google/XDsBQ20HE2i1sQsJj",
-        "https://www.firmy.cz/detail/14057489-nohy-v-cajku-pedikura-kralovice-kralovice.html",
-    ],
+    sameAs: [BUSINESS_INFO.profiles.google, BUSINESS_INFO.profiles.firmy],
 };
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
     return (
-        <PortalContainerProvider
-            className={`storefront flex min-h-svh flex-col bg-background text-foreground ${fontDisplay.variable}`}
-        >
+        <PortalContainerProvider className="storefront flex min-h-svh flex-col bg-background text-foreground">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
@@ -54,6 +49,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <MarketingNav />
             <main className="flex-1">{children}</main>
             <MarketingFooter />
+            <RevealOnScroll />
             {/* Public pages only - the admin isn't traffic worth measuring,
                 and it saves the tablet two scripts. */}
             <Analytics />

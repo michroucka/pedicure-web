@@ -1,7 +1,8 @@
 "use client";
 
 import { Service } from "@/lib/generated/prisma/client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import { StepCard } from "@/components/rezervace/step-card";
 import { PersonsStep } from "@/components/rezervace/persons-step";
 import { DateStep } from "@/components/rezervace/date-step";
@@ -10,9 +11,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils";
+import { formatDuration } from "@/lib/format-duration";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
+import Link from "next/link";
 import { parseServiceIdsParam } from "@/lib/booking-url";
+import { CzechText } from "@/components/czech-text";
 
 export function ReservationWizard({ services }: { services: Service[] }) {
     const router = useRouter();
@@ -57,9 +61,7 @@ export function ReservationWizard({ services }: { services: Service[] }) {
         ? `${formatTime(Number(slotParam))} – ${formatTime(Number(slotParam) + totalDuration)}`
         : "";
 
-    function cancelReservation() {
-        router.push("/");
-    }
+    const [isOpeningDetails, startDetailsTransition] = useTransition();
 
     function goToDetails() {
         if (selectedSlot === undefined || !dateParam) return;
@@ -71,71 +73,81 @@ export function ReservationWizard({ services }: { services: Service[] }) {
         if (extraMinutes > 0) {
             params.set("extraMinutes", String(extraMinutes));
         }
-        router.push(`/rezervace/details?${params.toString()}`);
+        startDetailsTransition(() => {
+            router.push(`/rezervace/details?${params.toString()}`);
+        });
     }
 
     return (
-        <div>
-            <StepCard
-                thisStep={0}
-                activeStep={step.index}
-                gen={step.gen}
-                summary={personsSummary}
-                collapsible={step.index > 0}
-            >
-                <PersonsStep
-                    services={services}
-                    onContinueAction={() => advance(1)}
-                    onChangeAction={() => step.index > 0 && advance(0)}
-                />
-            </StepCard>
-            {step.index >= 1 && (
+        <CzechText>
+            <div>
                 <StepCard
-                    thisStep={1}
+                    thisStep={0}
                     activeStep={step.index}
                     gen={step.gen}
-                    summary={dateSummary}
-                    collapsible={step.index > 1}
+                    summary={personsSummary}
+                    collapsible={step.index > 0}
                 >
-                    <DateStep onContinueAction={() => advance(2)} />
+                    <PersonsStep
+                        services={services}
+                        onContinueAction={() => advance(1)}
+                        onChangeAction={() => step.index > 0 && advance(0)}
+                    />
                 </StepCard>
-            )}
-            {step.index >= 2 && (
-                <StepCard
-                    thisStep={2}
-                    activeStep={step.index}
-                    gen={step.gen}
-                    summary={slotSummary}
-                    collapsible={selectedSlot !== undefined}
-                >
-                    <TimeSlotStep onSelectAction={() => advance(3)} />
-                </StepCard>
-            )}
+                {step.index >= 1 && (
+                    <StepCard
+                        thisStep={1}
+                        activeStep={step.index}
+                        gen={step.gen}
+                        summary={dateSummary}
+                        collapsible={step.index > 1}
+                    >
+                        <DateStep onContinueAction={() => advance(2)} />
+                    </StepCard>
+                )}
+                {step.index >= 2 && (
+                    <StepCard
+                        thisStep={2}
+                        activeStep={step.index}
+                        gen={step.gen}
+                        summary={slotSummary}
+                        headerAside={`Celkem ${formatDuration(totalDuration)}`}
+                        collapsible={selectedSlot !== undefined}
+                    >
+                        <TimeSlotStep onSelectAction={() => advance(3)} />
+                    </StepCard>
+                )}
 
-            <div className="mt-4 mb-2 flex justify-between">
-                <Button
-                    type="button"
-                    size="lg"
-                    variant="outline"
-                    onClick={cancelReservation}
-                >
-                    <X className="size-4" />
-                    Zrušit
-                </Button>
-                <Button
-                    type="button"
-                    size="lg"
-                    disabled={
-                        serviceIds.length === 0 ||
-                        !dateParam ||
-                        selectedSlot === undefined
-                    }
-                    onClick={goToDetails}
-                >
-                    <Check className="size-4" />
-                    Pokračovat
-                </Button>
+                <div className="mt-4 mb-2 flex justify-between">
+                    <Link
+                        href="/"
+                        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                        <ArrowLeft className="size-4" />
+                        Zpět na web
+                    </Link>
+                    {/* Only once a time is picked - before that the step
+                        cards have their own "Pokračovat", and two buttons
+                        with the same label doing different things confuse. */}
+                    {serviceIds.length > 0 &&
+                        dateParam &&
+                        selectedSlot !== undefined && (
+                            <Button
+                                type="button"
+                                size="lg"
+                                disabled={isOpeningDetails}
+                                onClick={goToDetails}
+                            >
+                                {isOpeningDetails ? (
+                                    <Spinner className="size-4" />
+                                ) : (
+                                    <Check className="size-4" />
+                                )}
+                                Pokračovat
+                            </Button>
+                        )}
+                </div>
             </div>
-        </div>
+        </CzechText>
     );
 }

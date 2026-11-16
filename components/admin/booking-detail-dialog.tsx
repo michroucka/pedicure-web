@@ -41,17 +41,23 @@ import {
     AlertCircle,
     Phone,
     UserRound,
-    Clock,
     Check,
     X,
     Plus,
     Pencil,
-    Sparkles,
     StickyNote,
     QrCode,
     ChevronDownIcon,
+    Globe,
+    CalendarClock,
+    Tag,
+    PhoneCall,
+    Handshake,
+    Mail,
+    type LucideIcon,
 } from "lucide-react";
 import {
+    cn,
     formatPhoneNumber,
     formatTime,
     localDateToUtcMidnight,
@@ -78,10 +84,10 @@ import {
 import { getBookingPersonName } from "@/lib/get-booking-person-name";
 import { NoteHealthHint } from "@/components/admin/note-health-hint";
 
-const SOURCE_LABELS: Record<string, string> = {
-    ONLINE: "Online",
-    PHONE: "Telefonicky",
-    IN_PERSON: "Osobně",
+const SOURCE_LABELS: Record<string, { label: string; icon: LucideIcon }> = {
+    ONLINE: { label: "Rezervace online", icon: Globe },
+    PHONE: { label: "Rezervace telefonicky", icon: PhoneCall },
+    IN_PERSON: { label: "Rezervace osobně", icon: Handshake },
 };
 
 const QR_TOTAL = "total";
@@ -325,11 +331,23 @@ export function BookingDetailDialog({
                 open={!!booking}
                 onOpenChange={(open) => !open && close()}
             >
-                <DialogContent className="max-h-[90svh] overflow-y-auto">
+                <DialogContent
+                    className={cn(
+                        "max-h-[90svh] overflow-y-auto",
+                        // Tablet: person on the left, date and time on the
+                        // right - everything in view without scrolling.
+                        // Fixed height, so ticking "Čas navíc", opening the
+                        // note or "Jiný" time, or a day with more slots
+                        // doesn't make the dialog jump; the body scrolls
+                        // instead and the footer stays at the bottom.
+                        mode === "edit" &&
+                            "h-[90svh] grid-rows-[auto_1fr_auto] overflow-y-hidden md:h-[min(90svh,46rem)] md:max-w-3xl"
+                    )}
+                >
                     <DialogHeader>
                         <DialogTitle>
                             {mode === "detail"
-                                ? "Rezervace"
+                                ? getBookingPersonName(booking)
                                 : mode === "edit"
                                   ? "Upravit rezervaci"
                                   : "QR platba"}
@@ -337,39 +355,7 @@ export function BookingDetailDialog({
                     </DialogHeader>
 
                     {mode === "detail" ? (
-                        <div className="flex flex-col gap-2 text-sm">
-                            <div className="flex items-center gap-2">
-                                <UserRound className="size-4 text-muted-foreground" />
-                                {getBookingPersonName(booking)}
-                                {booking.groupId && (
-                                    <span className="text-muted-foreground">
-                                        • Skupina
-                                    </span>
-                                )}
-                            </div>
-                            {booking.client.phone && (
-                                <div className="flex items-center gap-2">
-                                    <Phone className="size-4 text-muted-foreground" />
-                                    <a
-                                        href={toTelHref(booking.client.phone)}
-                                        className="hover:underline"
-                                    >
-                                        {booking.client.phone}
-                                    </a>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                                <Clock className="size-4 text-muted-foreground" />
-                                {formatTime(booking.startTime)} –{" "}
-                                {formatTime(booking.endTime)} •
-                                <span className="-ms-1 text-muted-foreground">
-                                    {booking.service.name}
-                                </span>
-                            </div>
-                            <div className="text-muted-foreground">
-                                {SOURCE_LABELS[booking.source]}
-                            </div>
-                        </div>
+                        <BookingDetailInfo booking={booking} />
                     ) : mode === "qr" ? (
                         <div className="flex flex-col gap-5">
                             {groupBookings.length > 1 && (
@@ -417,133 +403,57 @@ export function BookingDetailDialog({
                             />
                         </div>
                     ) : (
-                        <div className="flex flex-col gap-3">
-                            <div className="flex flex-col gap-2 rounded-2xl border p-3">
-                                <span className="flex items-center gap-1 text-sm font-medium">
-                                    <UserRound className="size-4" />
-                                    {editPeople.length > 1
-                                        ? "Hlavní kontakt"
-                                        : "Jméno"}
-                                    <span className="text-red-500">*</span>
-                                </span>
-                                <Input
-                                    placeholder="Jméno"
-                                    value={editPeople[0]?.name ?? ""}
-                                    onChange={(e) =>
-                                        updateEditPersonName(0, e.target.value)
-                                    }
-                                />
-                                <span className="flex items-center gap-1 text-sm font-medium">
-                                    <Phone className="size-4" />
-                                    Telefonní číslo
-                                </span>
-                                <Input
-                                    placeholder="+420 123 456 789"
-                                    value={editPhone}
-                                    onChange={(e) =>
-                                        setEditPhone(
-                                            formatPhoneNumber(e.target.value)
-                                        )
-                                    }
-                                />
-                                <span className="flex items-center gap-1 text-sm font-medium">
-                                    <Sparkles className="size-4" />
-                                    Služba{" "}
-                                    <span className="text-red-500">*</span>
-                                </span>
-                                <Select
-                                    value={
-                                        editPeople[0]?.serviceId
-                                            ? String(editPeople[0].serviceId)
-                                            : ""
-                                    }
-                                    onValueChange={(v) =>
-                                        updateEditPersonService(0, Number(v))
-                                    }
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Vyberte službu" />
-                                    </SelectTrigger>
-                                    <SelectContent position="popper">
-                                        <SelectGroup>
-                                            <SelectLabel>Služby</SelectLabel>
-                                            {services.map((s) => (
-                                                <SelectItem
-                                                    key={s.id}
-                                                    value={String(s.id)}
-                                                >
-                                                    {s.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-
-                                <ExtraTimeField
-                                    value={
-                                        editPeople[0]?.extraTime ??
-                                        extraTimeFromMinutes(0)
-                                    }
-                                    onChange={(v) =>
-                                        updateEditPersonExtraTime(0, v)
-                                    }
-                                />
-
-                                <Collapsible
-                                    open={isNoteOpen}
-                                    onOpenChange={setIsNoteOpen}
-                                    className="rounded-md data-[state=open]:bg-muted"
-                                >
-                                    <CollapsibleTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            className="group w-full"
-                                        >
-                                            <StickyNote className="size-4" />
-                                            Poznámka
-                                            <ChevronDownIcon className="ml-auto group-data-[state=open]:rotate-180" />
-                                        </Button>
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent className="flex flex-col items-start gap-2 p-2.5 pt-0 text-sm">
-                                        <Textarea
-                                            value={editNote}
-                                            onChange={(e) =>
-                                                setEditNote(e.target.value)
-                                            }
-                                        />
-                                        <NoteHealthHint />
-                                    </CollapsibleContent>
-                                </Collapsible>
-                            </div>
-
-                            {editPeople.slice(1).map((person, i) => (
-                                <div
-                                    key={person.bookingId}
-                                    className="flex flex-col gap-2 rounded-2xl border p-3"
-                                >
+                        <div className="-mx-6 flex min-h-0 scrollbar-gutter-stable flex-col gap-3 overflow-y-auto px-6 md:grid md:grid-cols-2 md:items-start md:gap-6">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-2 rounded-2xl border p-3">
                                     <span className="flex items-center gap-1 text-sm font-medium">
                                         <UserRound className="size-4" />
-                                        Osoba {i + 2}
+                                        {editPeople.length > 1
+                                            ? "Hlavní kontakt"
+                                            : "Jméno"}
+                                        <span className="text-red-500">*</span>
                                     </span>
                                     <Input
                                         placeholder="Jméno"
-                                        value={person.name}
+                                        value={editPeople[0]?.name ?? ""}
                                         onChange={(e) =>
                                             updateEditPersonName(
-                                                i + 1,
+                                                0,
                                                 e.target.value
                                             )
                                         }
                                     />
+                                    <span className="flex items-center gap-1 text-sm font-medium">
+                                        <Phone className="size-4" />
+                                        Telefonní číslo
+                                    </span>
+                                    <Input
+                                        placeholder="+420 123 456 789"
+                                        value={editPhone}
+                                        onChange={(e) =>
+                                            setEditPhone(
+                                                formatPhoneNumber(
+                                                    e.target.value
+                                                )
+                                            )
+                                        }
+                                    />
+                                    <span className="flex items-center gap-1 text-sm font-medium">
+                                        <Tag className="size-4" />
+                                        Služba{" "}
+                                        <span className="text-red-500">*</span>
+                                    </span>
                                     <Select
                                         value={
-                                            person.serviceId
-                                                ? String(person.serviceId)
+                                            editPeople[0]?.serviceId
+                                                ? String(
+                                                      editPeople[0].serviceId
+                                                  )
                                                 : ""
                                         }
                                         onValueChange={(v) =>
                                             updateEditPersonService(
-                                                i + 1,
+                                                0,
                                                 Number(v)
                                             )
                                         }
@@ -567,121 +477,234 @@ export function BookingDetailDialog({
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
+
                                     <ExtraTimeField
-                                        value={person.extraTime}
+                                        value={
+                                            editPeople[0]?.extraTime ??
+                                            extraTimeFromMinutes(0)
+                                        }
                                         onChange={(v) =>
-                                            updateEditPersonExtraTime(i + 1, v)
+                                            updateEditPersonExtraTime(0, v)
                                         }
                                     />
-                                </div>
-                            ))}
 
-                            <Calendar
-                                mode="single"
-                                locale={cs}
-                                selected={editDate}
-                                onSelect={pickEditDate}
-                                disabled={(day) =>
-                                    localDateToUtcMidnight(day).getTime() <
-                                    localDateToUtcMidnight(new Date()).getTime()
-                                }
-                                className="w-full bg-transparent"
-                            />
-
-                            {editDate &&
-                                (customTime ? (
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium">
-                                            Vlastní čas:
-                                        </span>
-                                        <TimePicker
-                                            value={customTimeValue}
-                                            onChange={pickCustomTime}
-                                            defaultValue="15:00"
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={() => {
-                                                setCustomTime(false);
-                                                setCustomTimeValue("");
-                                                setSelectedSlot(undefined);
-                                            }}
-                                        >
-                                            <X className="size-4" />
-                                        </Button>
-                                    </div>
-                                ) : isLoadingSlots ? (
-                                    <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
-                                        <Spinner className="size-4" />
-                                        Načítám dostupné termíny…
-                                    </div>
-                                ) : (
-                                    (() => {
-                                        const sameDate =
-                                            editDate?.getTime() ===
-                                            groupStart.date.getTime();
-                                        const displaySlots =
-                                            sameDate &&
-                                            editSlots &&
-                                            !editSlots.includes(
-                                                groupStart.startTime
-                                            )
-                                                ? [
-                                                      ...editSlots,
-                                                      groupStart.startTime,
-                                                  ].sort((a, b) => a - b)
-                                                : editSlots;
-                                        return (
-                                            <div className="grid grid-cols-4 gap-2">
-                                                {displaySlots?.length === 0 && (
-                                                    <p className="col-span-4 text-center text-sm text-muted-foreground">
-                                                        Žádné volné termíny.
-                                                    </p>
-                                                )}
-                                                {displaySlots?.map((s) => (
-                                                    <Button
-                                                        key={s}
-                                                        type="button"
-                                                        size="sm"
-                                                        variant={
-                                                            s === selectedSlot
-                                                                ? "default"
-                                                                : "outline"
-                                                        }
-                                                        onClick={() =>
-                                                            setSelectedSlot(s)
-                                                        }
-                                                    >
-                                                        {formatTime(s)}
-                                                    </Button>
-                                                ))}
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="hover:bg-accent"
-                                                    onClick={() => {
-                                                        setCustomTime(true);
-                                                        setSelectedSlot(
-                                                            undefined
-                                                        );
-                                                    }}
-                                                >
-                                                    <Plus className="size-4 text-primary" />
-                                                </Button>
+                                    <Collapsible
+                                        open={isNoteOpen}
+                                        onOpenChange={setIsNoteOpen}
+                                        className="rounded-md transition-colors duration-200 data-[state=open]:bg-muted"
+                                    >
+                                        <CollapsibleTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                className="group w-full"
+                                            >
+                                                <StickyNote className="size-4" />
+                                                Poznámka
+                                                <ChevronDownIcon className="ml-auto transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                            </Button>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent className="overflow-hidden motion-safe:data-[state=closed]:animate-collapsible-up motion-safe:data-[state=open]:animate-collapsible-down">
+                                            <div className="flex flex-col items-start gap-2 p-2.5 pt-0 text-sm">
+                                                <Textarea
+                                                    value={editNote}
+                                                    onChange={(e) =>
+                                                        setEditNote(
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                />
+                                                <NoteHealthHint />
                                             </div>
-                                        );
-                                    })()
-                                ))}
+                                        </CollapsibleContent>
+                                    </Collapsible>
+                                </div>
 
-                            {error && (
-                                <Alert variant="destructive">
-                                    <AlertCircle />
-                                    <AlertTitle>{error}</AlertTitle>
-                                </Alert>
-                            )}
+                                {editPeople.slice(1).map((person, i) => (
+                                    <div
+                                        key={person.bookingId}
+                                        className="flex flex-col gap-2 rounded-2xl border p-3"
+                                    >
+                                        <span className="flex items-center gap-1 text-sm font-medium">
+                                            <UserRound className="size-4" />
+                                            Osoba {i + 2}
+                                        </span>
+                                        <Input
+                                            placeholder="Jméno"
+                                            value={person.name}
+                                            onChange={(e) =>
+                                                updateEditPersonName(
+                                                    i + 1,
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
+                                        <Select
+                                            value={
+                                                person.serviceId
+                                                    ? String(person.serviceId)
+                                                    : ""
+                                            }
+                                            onValueChange={(v) =>
+                                                updateEditPersonService(
+                                                    i + 1,
+                                                    Number(v)
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Vyberte službu" />
+                                            </SelectTrigger>
+                                            <SelectContent position="popper">
+                                                <SelectGroup>
+                                                    <SelectLabel>
+                                                        Služby
+                                                    </SelectLabel>
+                                                    {services.map((s) => (
+                                                        <SelectItem
+                                                            key={s.id}
+                                                            value={String(s.id)}
+                                                        >
+                                                            {s.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                        <ExtraTimeField
+                                            value={person.extraTime}
+                                            onChange={(v) =>
+                                                updateEditPersonExtraTime(
+                                                    i + 1,
+                                                    v
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex flex-col gap-3">
+                                <Calendar
+                                    mode="single"
+                                    locale={cs}
+                                    selected={editDate}
+                                    onSelect={pickEditDate}
+                                    disabled={(day) =>
+                                        localDateToUtcMidnight(day).getTime() <
+                                        localDateToUtcMidnight(
+                                            new Date()
+                                        ).getTime()
+                                    }
+                                    classNames={{
+                                        outside:
+                                            "text-muted-foreground opacity-50",
+                                        // Tighter rows (default mt-2) so the
+                                        // finger-sized time slots below still
+                                        // fit the fixed-height dialog.
+                                        week: "mt-1 flex w-full",
+                                    }}
+                                    className="w-full bg-transparent p-0"
+                                />
+
+                                {editDate &&
+                                    (customTime ? (
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium">
+                                                Vlastní čas:
+                                            </span>
+                                            <TimePicker
+                                                value={customTimeValue}
+                                                onChange={pickCustomTime}
+                                                defaultValue="15:00"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                onClick={() => {
+                                                    setCustomTime(false);
+                                                    setCustomTimeValue("");
+                                                    setSelectedSlot(undefined);
+                                                }}
+                                            >
+                                                <X className="size-4" />
+                                            </Button>
+                                        </div>
+                                    ) : isLoadingSlots ? (
+                                        <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                                            <Spinner className="size-4" />
+                                            Načítám dostupné termíny…
+                                        </div>
+                                    ) : (
+                                        (() => {
+                                            const sameDate =
+                                                editDate?.getTime() ===
+                                                groupStart.date.getTime();
+                                            const displaySlots =
+                                                sameDate &&
+                                                editSlots &&
+                                                !editSlots.includes(
+                                                    groupStart.startTime
+                                                )
+                                                    ? [
+                                                          ...editSlots,
+                                                          groupStart.startTime,
+                                                      ].sort((a, b) => a - b)
+                                                    : editSlots;
+                                            return (
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {displaySlots?.length ===
+                                                        0 && (
+                                                        <p className="col-span-4 text-center text-sm text-muted-foreground">
+                                                            Žádné volné termíny.
+                                                        </p>
+                                                    )}
+                                                    {displaySlots?.map((s) => (
+                                                        <Button
+                                                            key={s}
+                                                            type="button"
+                                                            size="lg"
+                                                            variant={
+                                                                s ===
+                                                                selectedSlot
+                                                                    ? "default"
+                                                                    : "outline"
+                                                            }
+                                                            onClick={() =>
+                                                                setSelectedSlot(
+                                                                    s
+                                                                )
+                                                            }
+                                                        >
+                                                            {formatTime(s)}
+                                                        </Button>
+                                                    ))}
+                                                    <Button
+                                                        type="button"
+                                                        size="lg"
+                                                        variant="outline"
+                                                        className="hover:bg-accent"
+                                                        onClick={() => {
+                                                            setCustomTime(true);
+                                                            setSelectedSlot(
+                                                                undefined
+                                                            );
+                                                        }}
+                                                    >
+                                                        <Plus className="size-4 text-primary" />
+                                                        Jiný
+                                                    </Button>
+                                                </div>
+                                            );
+                                        })()
+                                    ))}
+
+                                {error && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle />
+                                        <AlertTitle>{error}</AlertTitle>
+                                    </Alert>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -689,7 +712,11 @@ export function BookingDetailDialog({
                         className={
                             mode === "detail"
                                 ? "flex-row flex-wrap justify-between gap-2 sm:flex-nowrap sm:justify-start"
-                                : undefined
+                                : mode === "edit"
+                                  ? // Own row under the scrolling body, so
+                                    // "Uložit" never needs scrolling to.
+                                    "-mx-6 -mb-6 border-t bg-popover px-6 py-4"
+                                  : undefined
                         }
                     >
                         {mode === "detail" ? (
@@ -822,5 +849,80 @@ export function BookingDetailDialog({
                 </AlertDialogContent>
             </AlertDialog>
         </>
+    );
+}
+
+// Read-only summary (the client's name is the dialog title): contact in
+// small print, the term as the main line - with the date, as the dialog
+// opens from any week - then the client's note, and how it was booked last.
+function BookingDetailInfo({ booking }: { booking: BookingItem }) {
+    const source = SOURCE_LABELS[booking.source];
+    const SourceIcon = source.icon;
+    const hasContact = booking.client.phone || booking.client.email;
+    // Every icon the same size and gap, so all the text lines up in one
+    // column.
+    const iconClassName = "size-4 shrink-0 text-muted-foreground";
+
+    return (
+        <div className="flex flex-col gap-4 text-sm">
+            {(hasContact || booking.groupId) && (
+                <div className="-mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
+                    {booking.groupId && <span>Skupina</span>}
+                    {booking.client.phone && (
+                        <a
+                            href={toTelHref(booking.client.phone)}
+                            className="inline-flex items-center gap-2 hover:text-foreground"
+                        >
+                            <Phone className={iconClassName} />
+                            {booking.client.phone}
+                        </a>
+                    )}
+                    {booking.client.email && (
+                        <a
+                            href={`mailto:${booking.client.email}`}
+                            className="inline-flex min-w-0 items-center gap-2 hover:text-foreground"
+                        >
+                            <Mail className={iconClassName} />
+                            <span className="truncate">
+                                {booking.client.email}
+                            </span>
+                        </a>
+                    )}
+                </div>
+            )}
+
+            <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                    <CalendarClock className={iconClassName} />
+                    <p className="text-base font-medium">
+                        {format(booking.date, "EEEEEE d. M.", { locale: cs })} ·{" "}
+                        {formatTime(booking.startTime)} –{" "}
+                        {formatTime(booking.endTime)}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Tag className={iconClassName} />
+                    <p>
+                        {booking.service.name}
+                        <span className="text-muted-foreground">
+                            {" "}
+                            · {booking.service.price.toLocaleString("cs-CZ")} Kč
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            {booking.client.note && (
+                <div className="flex gap-2">
+                    <StickyNote className={`${iconClassName} mt-0.5`} />
+                    <p className="whitespace-pre-line">{booking.client.note}</p>
+                </div>
+            )}
+
+            <p className="flex items-center gap-2 text-muted-foreground">
+                <SourceIcon className={iconClassName} />
+                {source.label}
+            </p>
+        </div>
     );
 }
