@@ -8,9 +8,22 @@ updates:
       directory: /
       schedule:
           interval: monthly
+      # A dependency goes to the first group it matches, so vitest (incl.
+      # major versions) comes first: vitest and @vitest/coverage-v8 only
+      # install together at the same version.
       groups:
+          vitest:
+              patterns: ["vitest", "@vitest/*"]
           npm-minor-and-patch:
               update-types: [minor, patch]
+      ignore:
+          # Types follow the Node major we run on (CI + Vercel, package.json
+          # "engines"), not the newest Node release.
+          - dependency-name: "@types/node"
+            versions: [">=25"]
+          # typescript-eslint doesn't support TypeScript 7 yet (lint fails).
+          - dependency-name: "typescript"
+            versions: [">=7"]
       open-pull-requests-limit: 5
 
     - package-ecosystem: github-actions
