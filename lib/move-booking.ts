@@ -2,10 +2,11 @@ import { Booking } from "@/lib/generated/prisma/client";
 import { prisma } from "./prisma";
 import { createBooking } from "./create-booking";
 import { getAvailableSlots } from "./get-available-slots";
-import { hasOverlappingBooking } from "./check-booking-overlap";
-import { endsAfterMidnight, getCzechToday } from "./utils";
+import {
+    checkOutsideHoursSlot,
+    type OutsideHoursSlotProblem,
+} from "./check-booking-overlap";
 import { isBookingSlotConflict } from "./booking-conflict-error";
-import { sumServiceDurations } from "./service-duration";
 
 export const PAST_MIDNIGHT_ERROR = "Rezervace by přesáhla půlnoc.";
 export const ALREADY_CANCELLED_ERROR = "Rezervace už byla zrušena.";
@@ -22,6 +23,13 @@ export class SlotUnavailableError extends Error {
 function rethrowSlotConflict(error: unknown): never {
     if (isBookingSlotConflict(error)) throw new SlotUnavailableError();
     throw error;
+}
+
+function throwIfSlotProblem(problem: OutsideHoursSlotProblem | null) {
+    if (problem === "pastMidnight") {
+        throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
+    }
+    if (problem) throw new SlotUnavailableError();
 }
 
 // Move = cancel the old booking + create a new one (never edited in place),
@@ -67,27 +75,15 @@ export async function moveBooking(
             // Checked after cancelling (inside the same transaction) so the
             // booking being moved never collides with its own old slot.
             if (options.outsideHours) {
-                if (newDate.getTime() < getCzechToday().getTime()) {
-                    throw new SlotUnavailableError();
-                }
-                const service = await tx.service.findUniqueOrThrow({
-                    where: { id: serviceId },
-                });
-                const duration = service.durationMinutes + extraTimeMinutes;
-                // A custom time skips the availability windows, which are what
-                // normally keeps a booking inside the day.
-                if (endsAfterMidnight(newStartTime, duration)) {
-                    throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
-                }
-                const overlaps = await hasOverlappingBooking(
-                    newDate,
-                    newStartTime,
-                    newStartTime + duration,
-                    { db: tx }
+                throwIfSlotProblem(
+                    await checkOutsideHoursSlot(
+                        newDate,
+                        newStartTime,
+                        [serviceId],
+                        extraTimeMinutes,
+                        { db: tx }
+                    )
                 );
-                if (overlaps) {
-                    throw new SlotUnavailableError();
-                }
             } else {
                 const validSlots = await getAvailableSlots(
                     newDate,
@@ -162,27 +158,15 @@ export async function moveGroupBooking(
             const totalExtraMinutes = extraTimes.reduce((sum, m) => sum + m, 0);
 
             if (options.outsideHours) {
-                if (newDate.getTime() < getCzechToday().getTime()) {
-                    throw new SlotUnavailableError();
-                }
-                const services = await tx.service.findMany({
-                    where: { id: { in: serviceIds } },
-                });
-                const groupDuration =
-                    sumServiceDurations(serviceIds, services) +
-                    totalExtraMinutes;
-                if (endsAfterMidnight(newGroupStart, groupDuration)) {
-                    throw new SlotUnavailableError(PAST_MIDNIGHT_ERROR);
-                }
-                const overlaps = await hasOverlappingBooking(
-                    newDate,
-                    newGroupStart,
-                    newGroupStart + groupDuration,
-                    { db: tx }
+                throwIfSlotProblem(
+                    await checkOutsideHoursSlot(
+                        newDate,
+                        newGroupStart,
+                        serviceIds,
+                        totalExtraMinutes,
+                        { db: tx }
+                    )
                 );
-                if (overlaps) {
-                    throw new SlotUnavailableError();
-                }
             } else {
                 const validSlots = await getAvailableSlots(
                     newDate,
