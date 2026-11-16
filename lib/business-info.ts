@@ -33,4 +33,4 @@ export const BUSINESS_INFO = {
     },
 } as const;
 
-export const EMAIL_FROM = `${BUSINESS_INFO.tagline} <rezervace@pedikurakralovice.cz>`;
+export const EMAIL_FROM = `${BUSINESS_INFO.name} <rezervace@pedikurakralovice.cz>`;

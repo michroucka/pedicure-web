@@ -53,14 +53,14 @@ const RIGHTS = [
 
 const H2 = "mt-10 text-2xl";
 const PROSE =
-    "max-w-prose text-sm leading-relaxed text-pretty text-muted-foreground";
+    "max-w-prose text-base leading-relaxed text-pretty text-muted-foreground";
 const P = `mt-3 ${PROSE}`;
 
 export default function OchranaOsobnichUdajuPage() {
     return (
         <CzechText>
             <section>
-                <div className="mx-auto max-w-5xl px-4 pt-8 pb-12 sm:px-6">
+                <div className="mx-auto max-w-5xl px-4 pt-12 pb-12 sm:px-6 md:pt-16">
                     <div className="max-w-3xl">
                         <h1 className="italic">Ochrana osobních údajů</h1>
                         <p className="mt-2 text-sm text-muted-foreground">
@@ -101,13 +101,22 @@ export default function OchranaOsobnichUdajuPage() {
                                 <p className={`mt-1 ${PROSE}`}>
                                     {item.data && (
                                         <>
-                                            Údaje: {item.data}
+                                            <span className="text-foreground">
+                                                Údaje:
+                                            </span>{" "}
+                                            {item.data}
                                             <br />
                                         </>
                                     )}
-                                    Právní základ: {item.basis}
+                                    <span className="text-foreground">
+                                        Právní základ:
+                                    </span>{" "}
+                                    {item.basis}
                                     <br />
-                                    Doba uložení: {item.retention}
+                                    <span className="text-foreground">
+                                        Doba uložení:
+                                    </span>{" "}
+                                    {item.retention}
                                 </p>
                             </div>
                         ))}
@@ -132,8 +141,8 @@ export default function OchranaOsobnichUdajuPage() {
 
                         <h2 className={H2}>Kdo k údajům má přístup</h2>
                         {/* Categories of recipients are enough (Art. 13(1)(e) GDPR).
-                    The named list is in the processing agreement
-                    (gdpr.podzpracovatele in web-dokumenty zakazka.yaml). */}
+                            The named list is in the processing agreement
+                            (gdpr.podzpracovatele in web-dokumenty zakazka.yaml). */}
                         <p className={P}>
                             K údajům má kromě správce přístup jen správce webu a
                             poskytovatelé technických služeb (hosting, databáze
@@ -158,7 +167,7 @@ export default function OchranaOsobnichUdajuPage() {
 
                         <h2 className={H2}>Vaše práva</h2>
                         <p className={P}>Máte právo:</p>
-                        <ul className="mt-3 max-w-prose list-disc space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
+                        <ul className="mt-3 max-w-prose list-disc space-y-1 pl-5 text-base leading-relaxed text-muted-foreground">
                             {RIGHTS.map((right) => (
                                 <li key={right}>{right}</li>
                             ))}
