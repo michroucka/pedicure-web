@@ -4,9 +4,6 @@ import { useEffect, useState } from "react";
 import { SunDim } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { useKeepAwakeEnabled } from "@/lib/keep-awake.ts";
-import { logKeepAwakeEvent } from "@/lib/keep-awake-log.ts";
-
-const LOCK_STATE_CHECK_INTERVAL_MS = 60_000;
 
 // Events that count as user activation on iOS. touchend rather than
 // touchstart/pointerdown (those don't activate), click/keydown for the rest.
@@ -33,13 +30,9 @@ export function KeepAwake() {
         let cancelled = false;
         let requestInFlight = false;
         let sentinel: WakeLockSentinel | null = null;
-        logKeepAwakeEvent("start");
 
-        async function acquire(trigger: string) {
-            if (document.visibilityState !== "visible") {
-                logKeepAwakeEvent(`${trigger}: přeskočeno, stránka skrytá`);
-                return;
-            }
+        async function acquire() {
+            if (document.visibilityState !== "visible") return;
             if (requestInFlight || (sentinel && !sentinel.released)) return;
             requestInFlight = true;
             try {
@@ -55,19 +48,8 @@ export function KeepAwake() {
                     return;
                 }
                 sentinel = fresh;
-                fresh.addEventListener("release", () => {
-                    logKeepAwakeEvent(
-                        `zámek uvolněn (stránka ${document.visibilityState})`
-                    );
-                });
                 setNeedsUserGesture(false);
-                logKeepAwakeEvent(`${trigger}: zámek získán`);
             } catch (error) {
-                const reason =
-                    error instanceof Error
-                        ? `${error.name}: ${error.message}`
-                        : String(error);
-                logKeepAwakeEvent(`${trigger}: získání selhalo – ${reason}`);
                 console.error("Wake lock request failed:", error);
                 if (!cancelled && isPermissionDenied(error))
                     setNeedsUserGesture(true);
@@ -77,34 +59,16 @@ export function KeepAwake() {
         }
 
         function handleUserActivation() {
-            void acquire("gesto");
+            void acquire();
         }
 
         // The browser releases the lock whenever the page is hidden
         // (switching apps, locking the iPad), so take it again on return.
         function handleVisibilityChange() {
-            logKeepAwakeEvent(`visibilitychange: ${document.visibilityState}`);
-            if (document.visibilityState === "visible")
-                void acquire("visibilitychange");
+            if (document.visibilityState === "visible") void acquire();
         }
 
-        // Catches the lock disappearing without a "release" event. Logs only
-        // state changes so the bounded log isn't flooded with heartbeats.
-        let lastLockState = "";
-        const lockStateCheck = setInterval(() => {
-            const lockState = !sentinel
-                ? "žádný"
-                : sentinel.released
-                  ? "uvolněný"
-                  : "drží";
-            if (lockState === lastLockState) return;
-            lastLockState = lockState;
-            logKeepAwakeEvent(
-                `kontrola: zámek ${lockState}, stránka ${document.visibilityState}`
-            );
-        }, LOCK_STATE_CHECK_INTERVAL_MS);
-
-        void acquire("start");
+        void acquire();
         document.addEventListener("visibilitychange", handleVisibilityChange);
         // Capture phase so a component calling stopPropagation() can't
         // swallow the tap before it reaches us.
@@ -114,8 +78,6 @@ export function KeepAwake() {
         return () => {
             cancelled = true;
             setNeedsUserGesture(false);
-            logKeepAwakeEvent("stop");
-            clearInterval(lockStateCheck);
             document.removeEventListener(
                 "visibilitychange",
                 handleVisibilityChange
@@ -135,9 +97,9 @@ export function KeepAwake() {
     return (
         <div
             role="status"
-            className="flex items-center gap-3 border-t-2 border-warning-foreground bg-warning px-4 py-3 text-foreground"
+            className="flex items-center gap-3 border-b-2 border-primary bg-primary/15 px-4 py-3 text-foreground"
         >
-            <SunDim className="size-6 shrink-0 animate-pulse text-warning-foreground motion-reduce:animate-none" />
+            <SunDim className="size-6 shrink-0 animate-pulse text-primary motion-reduce:animate-none" />
             <div className="min-w-0 flex-1">
                 <p className="text-base font-medium">Obrazovka může zhasnout</p>
                 <p className="hidden text-sm sm:block">
