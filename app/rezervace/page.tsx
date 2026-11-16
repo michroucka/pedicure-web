@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import { prisma } from "@/lib/prisma.ts";
+import { prisma } from "@/lib/prisma";
 import { Service } from "@/lib/generated/prisma/client";
-import { ReservationWizard } from "@/components/rezervace/reservation-wizard.tsx";
+import { ReservationWizard } from "@/components/rezervace/reservation-wizard";
 
 export default async function ReservationPage() {
     const availableServices: Service[] = await prisma.service.findMany({

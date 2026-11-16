@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
+import { normalizeExtraMinutes } from "@/lib/extra-time";
 
 describe("normalizeExtraMinutes", () => {
     it("keeps multiples of 5 as they are", () => {

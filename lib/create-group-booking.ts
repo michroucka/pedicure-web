@@ -1,7 +1,7 @@
-import { BookingSource } from "@/lib/generated/prisma/enums.ts";
-import { Booking } from "@/lib/generated/prisma/client.ts";
-import { createBooking } from "@/lib/create-booking.ts";
-import { prisma } from "@/lib/prisma.ts";
+import { BookingSource } from "@/lib/generated/prisma/enums";
+import { Booking } from "@/lib/generated/prisma/client";
+import { createBooking } from "@/lib/create-booking";
+import { prisma } from "@/lib/prisma";
 
 export async function createGroupBooking(
     people: {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { subscribeAndSave } from "@/lib/push-client.ts";
+import { subscribeAndSave } from "@/lib/push-client";
 
 // iOS can silently drop a push subscription while notification permission
 // stays granted, and Safari doesn't fire `pushsubscriptionchange`, so the

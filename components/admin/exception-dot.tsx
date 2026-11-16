@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils.ts";
+import { cn } from "@/lib/utils";
 
 // Same convention everywhere an AvailabilityException needs a compact
 // visual: red = blocked all day, yellow = blocked part of the day,

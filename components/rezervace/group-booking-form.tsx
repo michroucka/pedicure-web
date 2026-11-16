@@ -3,7 +3,7 @@
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { groupDataSchema } from "@/app/rezervace/schema.ts";
+import { groupDataSchema } from "@/app/rezervace/schema";
 import {
     Field,
     FieldLabel,
@@ -12,11 +12,11 @@ import {
     FieldLegend,
     FieldSet,
     FieldSeparator,
-} from "@/components/ui/field.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { PhoneInput } from "@/components/phone-input.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert.tsx";
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/phone-input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
     Check,
     ChevronLeft,
@@ -27,10 +27,10 @@ import {
     UsersRound,
 } from "lucide-react";
 import Link from "next/link";
-import { PrivacyNotice } from "@/components/rezervace/privacy-notice.tsx";
-import { useTurnstile } from "@/components/rezervace/use-turnstile.tsx";
-import { useClientExtraMinutes } from "@/components/rezervace/use-client-extra-minutes.ts";
-import { formatTime } from "@/lib/utils.ts";
+import { PrivacyNotice } from "@/components/rezervace/privacy-notice";
+import { useTurnstile } from "@/components/rezervace/use-turnstile";
+import { useClientExtraMinutes } from "@/components/rezervace/use-client-extra-minutes";
+import { formatTime } from "@/lib/utils";
 
 type GroupFormData = z.infer<typeof groupDataSchema>;
 

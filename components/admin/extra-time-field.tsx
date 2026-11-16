@@ -1,8 +1,8 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { EXTRA_TIME_STEP, normalizeExtraMinutes } from "@/lib/extra-time.ts";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { EXTRA_TIME_STEP, normalizeExtraMinutes } from "@/lib/extra-time";
 
 export const DEFAULT_EXTRA_MINUTES = 15;
 

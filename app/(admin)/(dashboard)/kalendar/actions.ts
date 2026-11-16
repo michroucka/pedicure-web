@@ -2,31 +2,31 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { prisma } from "@/lib/prisma.ts";
-import { requireAdmin } from "@/lib/require-admin.ts";
-import { isBookingSlotConflict } from "@/lib/booking-conflict-error.ts";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/require-admin";
+import { isBookingSlotConflict } from "@/lib/booking-conflict-error";
 import {
     moveBooking,
     moveGroupBooking,
     PAST_MIDNIGHT_ERROR,
     SlotUnavailableError,
-} from "@/lib/move-booking.ts";
-import { getAvailableSlots } from "@/lib/get-available-slots.ts";
-import { hasOverlappingBooking } from "@/lib/check-booking-overlap.ts";
-import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
-import { createBooking } from "@/lib/create-booking.ts";
-import { createGroupBooking } from "@/lib/create-group-booking.ts";
-import { endsAfterMidnight, toDateOnly, getCzechToday } from "@/lib/utils.ts";
-import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
-import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
-import { idSchema } from "@/lib/validation.ts";
-import { sumServiceDurations } from "@/lib/service-duration.ts";
+} from "@/lib/move-booking";
+import { getAvailableSlots } from "@/lib/get-available-slots";
+import { hasOverlappingBooking } from "@/lib/check-booking-overlap";
+import { findOrCreateClient } from "@/lib/find-or-create-client";
+import { createBooking } from "@/lib/create-booking";
+import { createGroupBooking } from "@/lib/create-group-booking";
+import { endsAfterMidnight, toDateOnly, getCzechToday } from "@/lib/utils";
+import { normalizeExtraMinutes } from "@/lib/extra-time";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email";
+import { idSchema } from "@/lib/validation";
+import { sumServiceDurations } from "@/lib/service-duration";
 import {
     createManualBookingInputSchema,
     manualBookingSlotsInputSchema,
     moveSlotsInputSchema,
     updateBookingInputSchema,
-} from "./schema.ts";
+} from "./schema";
 
 // The admin forms validate the same things first, so this only shows up
 // for tampered input or a phone that couldn't be normalized.

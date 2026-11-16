@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "@/lib/prisma.ts";
-import { getAvailableSlots } from "@/lib/get-available-slots.ts";
-import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
-import { verifyTurnstileToken } from "@/lib/turnstile.ts";
-import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit.ts";
+import { prisma } from "@/lib/prisma";
+import { getAvailableSlots } from "@/lib/get-available-slots";
+import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit";
 import {
     getAvailableDaysAction,
     getAvailableSlotsAction,
     getExtraMinutesAction,
     submitBooking,
     submitGroupBooking,
-} from "./actions.ts";
+} from "./actions";
 
 // redirect() normally throws Next.js's own NEXT_REDIRECT error to stop the
 // action – mimic that with a recognisable error so tests can assert where
@@ -28,22 +28,22 @@ vi.mock("next/navigation", () => ({
 // after() needs a Next.js request context; email + push would hit real
 // external services (Resend, Web Push).
 vi.mock("next/server", () => ({ after: vi.fn() }));
-vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
+vi.mock("@/lib/send-booking-confirmation-email", () => ({
     sendBookingConfirmationEmail: vi.fn(),
 }));
-vi.mock("@/lib/send-push.ts", () => ({ sendPushNotification: vi.fn() }));
+vi.mock("@/lib/send-push", () => ({ sendPushNotification: vi.fn() }));
 // Cloudflare is never called from tests; its own check has unit tests in
 // lib/turnstile.test.ts.
-vi.mock("@/lib/turnstile.ts", () => ({
+vi.mock("@/lib/turnstile", () => ({
     verifyTurnstileToken: vi.fn().mockResolvedValue(true),
 }));
 // Real availability on the test branch is inherited from production and
 // can change – these tests are about who gets which name/extra time, not
 // about slot computation (covered in get-available-slots.test.ts).
-vi.mock("@/lib/get-available-slots.ts", () => ({
+vi.mock("@/lib/get-available-slots", () => ({
     getAvailableSlots: vi.fn(),
 }));
-vi.mock("@/lib/get-available-days-in-range.ts", () => ({
+vi.mock("@/lib/get-available-days-in-range", () => ({
     getAvailableDaysInRange: vi.fn().mockResolvedValue([]),
 }));
 

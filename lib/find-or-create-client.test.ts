@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { prisma } from "./prisma.ts";
-import { findClient } from "./find-client.ts";
+import { prisma } from "./prisma";
+import { findClient } from "./find-client";
 import {
     findOrCreateClient,
     reloadClient,
     upsertMatchedClient,
-} from "./find-or-create-client.ts";
+} from "./find-or-create-client";
 
 // findClient matches by phone across the whole shared test branch, so
 // each test uses its own random number – a fixed one (e.g. "999999999",

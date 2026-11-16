@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Switch } from "@/components/ui/switch.tsx";
+import { Switch } from "@/components/ui/switch";
 import {
     Field,
     FieldContent,
@@ -9,8 +9,8 @@ import {
     FieldGroup,
     FieldLabel,
     FieldTitle,
-} from "@/components/ui/field.tsx";
-import { setKeepAwakeEnabled, useKeepAwakeEnabled } from "@/lib/keep-awake.ts";
+} from "@/components/ui/field";
+import { setKeepAwakeEnabled, useKeepAwakeEnabled } from "@/lib/keep-awake";
 
 // Browser support never changes at runtime – nothing to subscribe to.
 function subscribeToNothing() {

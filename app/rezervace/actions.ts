@@ -1,28 +1,25 @@
 "use server";
 
-import { prisma } from "@/lib/prisma.ts";
-import { normalizeForSearch } from "@/lib/utils.ts";
-import {
-    reloadClient,
-    upsertMatchedClient,
-} from "@/lib/find-or-create-client.ts";
-import { findClient } from "@/lib/find-client.ts";
-import { normalizeExtraMinutes } from "@/lib/extra-time.ts";
-import { createBooking } from "@/lib/create-booking.ts";
+import { prisma } from "@/lib/prisma";
+import { normalizeForSearch } from "@/lib/utils";
+import { reloadClient, upsertMatchedClient } from "@/lib/find-or-create-client";
+import { findClient } from "@/lib/find-client";
+import { normalizeExtraMinutes } from "@/lib/extra-time";
+import { createBooking } from "@/lib/create-booking";
 import { redirect } from "next/navigation";
-import { isBookingSlotConflict } from "@/lib/booking-conflict-error.ts";
-import { createGroupBooking } from "@/lib/create-group-booking.ts";
-import { getAvailableSlots } from "@/lib/get-available-slots.ts";
-import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range.ts";
-import { sendBookingConfirmationEmail } from "@/lib/send-booking-confirmation-email.ts";
+import { isBookingSlotConflict } from "@/lib/booking-conflict-error";
+import { createGroupBooking } from "@/lib/create-group-booking";
+import { getAvailableSlots } from "@/lib/get-available-slots";
+import { getAvailableDaysInRange } from "@/lib/get-available-days-in-range";
+import { sendBookingConfirmationEmail } from "@/lib/send-booking-confirmation-email";
 import { after } from "next/server";
-import { sendPushNotification } from "@/lib/send-push.ts";
+import { sendPushNotification } from "@/lib/send-push";
 import {
     adminCalendarUrl,
     formatPushDateTime,
-} from "@/lib/booking-push-format.ts";
-import { verifyTurnstileToken } from "@/lib/turnstile.ts";
-import { hasReachedOnlineBookingLimit } from "@/lib/online-booking-limit.ts";
+} from "@/lib/booking-push-format";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { hasReachedOnlineBookingLimit } from "@/lib/online-booking-limit";
 import { z } from "zod";
 import {
     contactLookupSchema,
@@ -31,8 +28,8 @@ import {
     groupDataSchema,
     soloContextSchema,
     soloDataSchema,
-} from "@/app/rezervace/schema.ts";
-import { serviceIdsSchema } from "@/lib/validation.ts";
+} from "@/app/rezervace/schema";
+import { serviceIdsSchema } from "@/lib/validation";
 
 // Builds the redirect back to the slot picker when a chosen slot can't be
 // booked. Distinguishes two causes so the message (and the slot list itself,

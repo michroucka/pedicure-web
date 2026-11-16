@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { prisma } from "./prisma.ts";
-import { createBooking } from "./create-booking.ts";
-import { createGroupBooking } from "./create-group-booking.ts";
+import { prisma } from "./prisma";
+import { createBooking } from "./create-booking";
+import { createGroupBooking } from "./create-group-booking";
 import {
     ALREADY_CANCELLED_ERROR,
     moveBooking,
     moveGroupBooking,
     PAST_MIDNIGHT_ERROR,
     SlotUnavailableError,
-} from "./move-booking.ts";
+} from "./move-booking";
 
 // outsideHours: true throughout – the normal path validates the target slot
 // against RecurringAvailability, which this branch inherited from

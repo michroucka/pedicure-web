@@ -8,10 +8,10 @@ import {
     it,
     vi,
 } from "vitest";
-import { prisma } from "./prisma.ts";
-import { getAvailableSlots } from "./get-available-slots.ts";
-import { HORIZON_DAYS } from "./booking-horizon.ts";
-import { addUtcDays } from "./utils.ts";
+import { prisma } from "./prisma";
+import { getAvailableSlots } from "./get-available-slots";
+import { HORIZON_DAYS } from "./booking-horizon";
+import { addUtcDays } from "./utils";
 
 // Saturday, far enough in the future not to collide with anything real.
 // Production only has recurring availability on weekdays (Mon-Fri), so

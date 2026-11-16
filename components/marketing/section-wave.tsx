@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils.ts";
+import { cn } from "@/lib/utils";
 
 // Each variant is a differently-shaped wave (from Haikei, cropped to just
 // the wave band of the exported canvas) so the five section seams on the

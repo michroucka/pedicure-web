@@ -4,37 +4,37 @@ import { useState, useTransition } from "react";
 import { format, addDays } from "date-fns";
 import { cs } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
-import { Calendar } from "@/components/ui/calendar.tsx";
-import { ExceptionDayButton } from "@/components/admin/exception-day-button.tsx";
-import { Card, CardContent } from "@/components/ui/card.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Slider } from "@/components/ui/slider.tsx";
-import { TimePicker } from "@/components/ui/time-picker.tsx";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import { Calendar } from "@/components/ui/calendar";
+import { ExceptionDayButton } from "@/components/admin/exception-day-button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { TimePicker } from "@/components/ui/time-picker";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Plus, Trash2, Check, CalendarX } from "lucide-react";
 import {
     localDateToUtcMidnight,
     formatTime,
     parseTime,
     roundToQuarterHour,
-} from "@/lib/utils.ts";
+} from "@/lib/utils";
 import {
     saveDayOverride,
     checkDayOverrideConflicts,
     saveCloseRange,
     checkRangeConflicts,
     type ExceptionConflict,
-} from "@/app/(admin)/(dashboard)/dostupnost/actions.ts";
+} from "@/app/(admin)/(dashboard)/dostupnost/actions";
 import {
     diffDayBlocks,
     resolveDayTimeSlots,
     type TimeSlot,
-} from "@/lib/availability.ts";
+} from "@/lib/availability";
 import type {
     AvailabilityException,
     RecurringAvailability,
 } from "@/lib/generated/prisma/client";
-import { Spinner } from "@/components/ui/spinner.tsx";
+import { Spinner } from "@/components/ui/spinner";
 
 const SLIDER_STEP = 15;
 // Fallback track bounds when a day has no blocks yet to derive a range

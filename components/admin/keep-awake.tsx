@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { SunDim } from "lucide-react";
-import { Button } from "@/components/ui/button.tsx";
-import { useKeepAwakeEnabled } from "@/lib/keep-awake.ts";
+import { Button } from "@/components/ui/button";
+import { useKeepAwakeEnabled } from "@/lib/keep-awake";
 
 // Events that count as user activation on iOS. touchend rather than
 // touchstart/pointerdown (those don't activate), click/keydown for the rest.

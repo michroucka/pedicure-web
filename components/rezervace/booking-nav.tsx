@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { StepIndicator } from "@/components/rezervace/step-indicator.tsx";
+import { StepIndicator } from "@/components/rezervace/step-indicator";
 
 const STEP_BY_PATH: Record<string, 1 | 2> = {
     "/rezervace": 1,

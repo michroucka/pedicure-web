@@ -1,26 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "@/lib/prisma.ts";
-import { createBooking } from "@/lib/create-booking.ts";
-import { createGroupBooking } from "@/lib/create-group-booking.ts";
-import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email.ts";
+import { prisma } from "@/lib/prisma";
+import { createBooking } from "@/lib/create-booking";
+import { createGroupBooking } from "@/lib/create-group-booking";
+import { sendBookingMovedEmail } from "@/lib/send-booking-confirmation-email";
 import {
     cancelBookingAction,
     createManualBookingAction,
     getMoveSlotsAction,
     updateBookingAction,
-} from "./actions.ts";
+} from "./actions";
 
 // revalidatePath and after() need a Next.js request context; after() runs
 // its callback right away so the moved email can be asserted.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 // Actions call requireAdmin() first; there is no session in tests.
-vi.mock("@/lib/require-admin.ts", () => ({
+vi.mock("@/lib/require-admin", () => ({
     requireAdmin: vi.fn(async () => "admin"),
 }));
 vi.mock("next/server", () => ({
     after: vi.fn((callback: () => unknown) => callback()),
 }));
-vi.mock("@/lib/send-booking-confirmation-email.ts", () => ({
+vi.mock("@/lib/send-booking-confirmation-email", () => ({
     sendBookingMovedEmail: vi.fn(),
 }));
 

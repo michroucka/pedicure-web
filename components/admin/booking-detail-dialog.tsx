@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from "@/components/ui/dialog.tsx";
+} from "@/components/ui/dialog";
 import {
     AlertDialog,
     AlertDialogContent,
@@ -19,12 +19,12 @@ import {
     AlertDialogFooter,
     AlertDialogCancel,
     AlertDialogAction,
-} from "@/components/ui/alert-dialog.tsx";
-import { Calendar } from "@/components/ui/calendar.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { TimePicker } from "@/components/ui/time-picker.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
+} from "@/components/ui/alert-dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { TimePicker } from "@/components/ui/time-picker";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -33,10 +33,10 @@ import {
     SelectLabel,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select.tsx";
-import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
-import { QrPayment } from "@/components/admin/qr-payment.tsx";
-import { Spinner } from "@/components/ui/spinner.tsx";
+} from "@/components/ui/select";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { QrPayment } from "@/components/admin/qr-payment";
+import { Spinner } from "@/components/ui/spinner";
 import {
     AlertCircle,
     Phone,
@@ -56,27 +56,27 @@ import {
     formatTime,
     localDateToUtcMidnight,
     toTelHref,
-} from "@/lib/utils.ts";
+} from "@/lib/utils";
 import {
     cancelBookingAction,
     getMoveSlotsAction,
     updateBookingAction,
-} from "@/app/(admin)/(dashboard)/kalendar/actions.ts";
-import type { BookingItem } from "@/components/admin/booking-card.tsx";
-import type { Service } from "@/lib/generated/prisma/client.ts";
+} from "@/app/(admin)/(dashboard)/kalendar/actions";
+import type { BookingItem } from "@/components/admin/booking-card";
+import type { Service } from "@/lib/generated/prisma/client";
 import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
-} from "@/components/ui/collapsible.tsx";
+} from "@/components/ui/collapsible";
 import {
     ExtraTimeField,
     extraTimeFromMinutes,
     extraTimeToMinutes,
     type ExtraTime,
-} from "@/components/admin/extra-time-field.tsx";
-import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
-import { NoteHealthHint } from "@/components/admin/note-health-hint.tsx";
+} from "@/components/admin/extra-time-field";
+import { getBookingPersonName } from "@/lib/get-booking-person-name";
+import { NoteHealthHint } from "@/components/admin/note-health-hint";
 
 const SOURCE_LABELS: Record<string, string> = {
     ONLINE: "Online",

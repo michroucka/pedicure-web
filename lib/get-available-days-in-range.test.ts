@@ -8,10 +8,10 @@ import {
     it,
     vi,
 } from "vitest";
-import { prisma } from "./prisma.ts";
-import { getAvailableDaysInRange } from "./get-available-days-in-range.ts";
-import { HORIZON_DAYS } from "./booking-horizon.ts";
-import { addUtcDays } from "./utils.ts";
+import { prisma } from "./prisma";
+import { getAvailableDaysInRange } from "./get-available-days-in-range";
+import { HORIZON_DAYS } from "./booking-horizon";
+import { addUtcDays } from "./utils";
 
 // dayOfWeek 0 (Sunday) exclusively – RecurringAvailability has no date
 // column, only dayOfWeek, so two test files touching the same dayOfWeek

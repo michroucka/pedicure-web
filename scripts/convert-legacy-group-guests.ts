@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { prisma } from "../lib/prisma.ts";
+import { prisma } from "../lib/prisma";
 
 // Converts group bookings made before Booking.guestName existed, where a
 // non-main group member got their own Client: the booking is moved under

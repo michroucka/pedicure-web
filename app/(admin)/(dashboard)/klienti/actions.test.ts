@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "@/lib/prisma.ts";
-import { createBooking } from "@/lib/create-booking.ts";
-import { findOrCreateClient } from "@/lib/find-or-create-client.ts";
-import { deleteClientAction, updateClientAction } from "./actions.ts";
+import { prisma } from "@/lib/prisma";
+import { createBooking } from "@/lib/create-booking";
+import { findOrCreateClient } from "@/lib/find-or-create-client";
+import { deleteClientAction, updateClientAction } from "./actions";
 
 // revalidatePath needs a Next.js request context.
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 // Actions call requireAdmin() first; there is no session in tests.
-vi.mock("@/lib/require-admin.ts", () => ({
+vi.mock("@/lib/require-admin", () => ({
     requireAdmin: vi.fn(async () => "admin"),
 }));
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { RegisterServiceWorker } from "@/components/admin/register-service-worker.tsx";
+import { RegisterServiceWorker } from "@/components/admin/register-service-worker";
 
 // Sits above both /login and (dashboard) so "Add to Home Screen" behaves
 // the same regardless of which admin page was open when it happened –

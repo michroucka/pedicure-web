@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sumServiceDurations } from "./service-duration.ts";
+import { sumServiceDurations } from "./service-duration";
 
 describe("sumServiceDurations", () => {
     const services = [

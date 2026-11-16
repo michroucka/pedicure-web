@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import { CalendarPlus } from "lucide-react";
-import { signOut } from "@/auth.ts";
+import { signOut } from "@/auth";
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { LogoutButton } from "@/components/admin/logout-button.tsx";
-import { ChangePasswordForm } from "@/components/admin/change-password-form.tsx";
-import { PushSubscribeFlow } from "@/components/admin/push-subscribe-flow.tsx";
-import { KeepAwakeToggle } from "@/components/admin/keep-awake-toggle.tsx";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/admin/logout-button";
+import { ChangePasswordForm } from "@/components/admin/change-password-form";
+import { PushSubscribeFlow } from "@/components/admin/push-subscribe-flow";
+import { KeepAwakeToggle } from "@/components/admin/keep-awake-toggle";
 
 export const metadata: Metadata = {
     title: "Nastavení",

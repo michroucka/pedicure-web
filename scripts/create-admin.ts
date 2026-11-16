@@ -1,6 +1,6 @@
 import "dotenv/config";
 import argon2 from "argon2";
-import { prisma } from "../lib/prisma.ts";
+import { prisma } from "../lib/prisma";
 
 async function main() {
     const [username, email, password] = process.argv.slice(2);

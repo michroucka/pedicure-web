@@ -1,8 +1,8 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/ui/button.tsx";
-import { Spinner } from "@/components/ui/spinner.tsx";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { LogOut } from "lucide-react";
 
 export function LogoutButton() {

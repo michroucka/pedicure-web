@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma.ts";
-import { addUtcDays, formatTime, getCzechToday } from "@/lib/utils.ts";
-import { AvailabilityForm } from "@/components/admin/availability-form.tsx";
-import { ExceptionForm } from "@/components/admin/exception-form.tsx";
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs.tsx";
+import { prisma } from "@/lib/prisma";
+import { addUtcDays, formatTime, getCzechToday } from "@/lib/utils";
+import { AvailabilityForm } from "@/components/admin/availability-form";
+import { ExceptionForm } from "@/components/admin/exception-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarClock, Repeat } from "lucide-react";
-import { saveRecurringAvailability } from "./actions.ts";
+import { saveRecurringAvailability } from "./actions";
 
 export const metadata: Metadata = {
     title: "Dostupnost",

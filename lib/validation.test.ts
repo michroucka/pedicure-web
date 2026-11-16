@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminPhoneSchema, optionalEmailSchema } from "@/lib/validation.ts";
+import { adminPhoneSchema, optionalEmailSchema } from "@/lib/validation";
 
 describe("adminPhoneSchema", () => {
     it("normalizes numbers stored in an older shape", () => {

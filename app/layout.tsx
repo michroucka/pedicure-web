@@ -5,7 +5,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
-import { BUSINESS_INFO } from "@/lib/business-info.ts";
+import { BUSINESS_INFO } from "@/lib/business-info";
 
 const DESCRIPTION = `Pedikúra v Kralovicích s dvacetiletou praxí. ${BUSINESS_INFO.practitioner} nabízí individuální a šetrnou péči o nohy – od pravidelné pedikúry po řešení problematických chodidel.`;
 

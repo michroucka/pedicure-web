@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma.ts";
-import { Button } from "@/components/ui/button.tsx";
-import { Card, CardContent } from "@/components/ui/card.tsx";
-import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
+import { prisma } from "@/lib/prisma";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 
 export const metadata: Metadata = {
     title: "Ceník",

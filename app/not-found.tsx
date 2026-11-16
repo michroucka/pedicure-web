@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SearchX } from "lucide-react";
-import { Button } from "@/components/ui/button.tsx";
-import { MarketingNav } from "@/components/marketing/marketing-nav.tsx";
-import { MarketingFooter } from "@/components/marketing/marketing-footer.tsx";
-import { PortalContainerProvider } from "@/components/portal-container.tsx";
-import { fontDisplay } from "@/lib/fonts.ts";
+import { Button } from "@/components/ui/button";
+import { MarketingNav } from "@/components/marketing/marketing-nav";
+import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import { PortalContainerProvider } from "@/components/portal-container";
+import { fontDisplay } from "@/lib/fonts";
 
 export const metadata: Metadata = {
     title: "Stránka nenalezena",

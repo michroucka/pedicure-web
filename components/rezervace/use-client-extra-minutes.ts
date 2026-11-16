@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getExtraMinutesAction } from "@/app/rezervace/actions.ts";
+import { getExtraMinutesAction } from "@/app/rezervace/actions";
 
 const LOOKUP_DEBOUNCE_MS = 400;
 

@@ -1,11 +1,11 @@
-import { Booking } from "@/lib/generated/prisma/client.ts";
-import { prisma } from "./prisma.ts";
-import { createBooking } from "./create-booking.ts";
-import { getAvailableSlots } from "./get-available-slots.ts";
-import { hasOverlappingBooking } from "./check-booking-overlap.ts";
-import { endsAfterMidnight, getCzechToday } from "./utils.ts";
-import { isBookingSlotConflict } from "./booking-conflict-error.ts";
-import { sumServiceDurations } from "./service-duration.ts";
+import { Booking } from "@/lib/generated/prisma/client";
+import { prisma } from "./prisma";
+import { createBooking } from "./create-booking";
+import { getAvailableSlots } from "./get-available-slots";
+import { hasOverlappingBooking } from "./check-booking-overlap";
+import { endsAfterMidnight, getCzechToday } from "./utils";
+import { isBookingSlotConflict } from "./booking-conflict-error";
+import { sumServiceDurations } from "./service-duration";
 
 export const PAST_MIDNIGHT_ERROR = "Rezervace by přesáhla půlnoc.";
 export const ALREADY_CANCELLED_ERROR = "Rezervace už byla zrušena.";

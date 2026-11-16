@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { verifyTurnstileToken } = await import("./turnstile.ts");
+const { verifyTurnstileToken } = await import("./turnstile");
 
 describe("verifyTurnstileToken", () => {
     afterEach(() => {

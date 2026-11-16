@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth.ts";
-import { AdminBottomNav } from "@/components/admin/admin-bottom-nav.tsx";
-import { PushResubscribe } from "@/components/admin/push-resubscribe.tsx";
-import { KeepAwake } from "@/components/admin/keep-awake.tsx";
+import { auth } from "@/auth";
+import { AdminBottomNav } from "@/components/admin/admin-bottom-nav";
+import { PushResubscribe } from "@/components/admin/push-resubscribe";
+import { KeepAwake } from "@/components/admin/keep-awake";
 
 export const metadata: Metadata = {
     title: {

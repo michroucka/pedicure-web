@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name";
 
 describe("getBookingPersonName", () => {
     it("returns the guest name for a non-main group member", () => {

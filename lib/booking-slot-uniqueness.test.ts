@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { prisma } from "./prisma.ts";
-import { createBooking } from "./create-booking.ts";
-import { cancelBooking } from "./cancel-booking.ts";
-import { isBookingSlotConflict } from "./booking-conflict-error.ts";
+import { prisma } from "./prisma";
+import { createBooking } from "./create-booking";
+import { cancelBooking } from "./cancel-booking";
+import { isBookingSlotConflict } from "./booking-conflict-error";
 
 // Runs against the isolated Neon "test" branch (see .env.test / package.json's
 // pretest + test scripts) – real rows get committed here, not rolled back,

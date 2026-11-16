@@ -1,5 +1,5 @@
-import { prisma } from "./prisma.ts";
-import type { Prisma } from "@/lib/generated/prisma/client.ts";
+import { prisma } from "./prisma";
+import type { Prisma } from "@/lib/generated/prisma/client";
 
 // Used only for bookings created outside the normal availability-window
 // flow (admin "vlastní čas"), where getAvailableSlots/computeGaps never

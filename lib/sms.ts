@@ -1,4 +1,4 @@
-import { toE164 } from "./utils.ts";
+import { toE164 } from "./utils";
 
 const API_URL = "https://api.smsmngr.com/v2/message";
 const CREDIT_URL = "https://rest-api.smsmngr.com/v1/credit";
@@ -28,7 +28,7 @@ export async function getSmsCreditCzk(): Promise<number | null> {
         });
         if (!response.ok) {
             console.error(
-                "Nepodařilo se zjistit kredit SMS brány:",
+                "Failed to fetch SMS gateway credit:",
                 response.status,
                 await response.text()
             );
@@ -38,7 +38,7 @@ export async function getSmsCreditCzk(): Promise<number | null> {
         const result: CreditResponse = await response.json();
         return Number(result.credit.credit_czk);
     } catch (error) {
-        console.error("Nepodařilo se zjistit kredit SMS brány:", error);
+        console.error("Failed to fetch SMS gateway credit:", error);
         return null;
     }
 }
@@ -49,7 +49,7 @@ export async function getSmsCreditCzk(): Promise<number | null> {
 export async function sendSms(phone: string, body: string): Promise<boolean> {
     const apiKey = process.env.SMSMANAGER_API_KEY;
     if (!apiKey) {
-        console.error("SMSMANAGER_API_KEY není nastaven, SMS nebyla odeslána.");
+        console.error("SMSMANAGER_API_KEY is not set, SMS not sent.");
         return false;
     }
 
@@ -68,7 +68,7 @@ export async function sendSms(phone: string, body: string): Promise<boolean> {
 
         if (!response.ok) {
             console.error(
-                "Odeslání SMS selhalo:",
+                "Sending SMS failed:",
                 response.status,
                 await response.text()
             );
@@ -81,13 +81,13 @@ export async function sendSms(phone: string, body: string): Promise<boolean> {
         // though the request itself was accepted.
         const result: MessageResponse = await response.json();
         if (result.rejected.length > 0) {
-            console.error("SMS byla odmítnuta:", result);
+            console.error("SMS rejected:", result);
             return false;
         }
 
         return true;
     } catch (error) {
-        console.error("Odeslání SMS selhalo:", error);
+        console.error("Sending SMS failed:", error);
         return false;
     }
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { Input } from "@/components/ui/input.tsx";
+import { Input } from "@/components/ui/input";
 import { ComponentProps } from "react";
-import { formatPhoneNumber } from "@/lib/utils.ts";
+import { formatPhoneNumber } from "@/lib/utils";
 
 export function PhoneInput(props: ComponentProps<typeof Input>) {
     return (

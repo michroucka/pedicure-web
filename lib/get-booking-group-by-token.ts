@@ -1,9 +1,5 @@
-import { prisma } from "./prisma.ts";
-import type {
-    Booking,
-    Client,
-    Service,
-} from "@/lib/generated/prisma/client.ts";
+import { prisma } from "./prisma";
+import type { Booking, Client, Service } from "@/lib/generated/prisma/client";
 
 export type BookingWithRelations = Booking & {
     client: Client;

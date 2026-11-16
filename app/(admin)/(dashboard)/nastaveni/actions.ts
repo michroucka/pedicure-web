@@ -1,9 +1,9 @@
 "use server";
 
 import { z } from "zod";
-import { signOut } from "@/auth.ts";
-import { prisma } from "@/lib/prisma.ts";
-import { requireAdmin } from "@/lib/require-admin.ts";
+import { signOut } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/require-admin";
 import argon2 from "argon2";
 
 const changePasswordSchema = z

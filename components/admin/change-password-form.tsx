@@ -1,14 +1,14 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { Spinner } from "@/components/ui/spinner.tsx";
+import { Spinner } from "@/components/ui/spinner";
 import { useActionState } from "react";
-import { changePasswordAction } from "@/app/(admin)/(dashboard)/nastaveni/actions.ts";
-import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field.tsx";
-import { Button } from "@/components/ui/button.tsx";
+import { changePasswordAction } from "@/app/(admin)/(dashboard)/nastaveni/actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
-import { PasswordInput } from "@/components/password-input.tsx";
+import { PasswordInput } from "@/components/password-input";
 
 function SubmitButton() {
     const { pending } = useFormStatus();

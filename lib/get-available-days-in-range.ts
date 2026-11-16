@@ -1,13 +1,13 @@
-import { prisma } from "./prisma.ts";
-import { toDateOnly, getCzechToday } from "./utils.ts";
+import { prisma } from "./prisma";
+import { toDateOnly, getCzechToday } from "./utils";
 import {
     computeAvailableSlots,
     resolveDayTimeSlots,
     type Exception,
     type TimeSlot,
-} from "./availability.ts";
-import { sumServiceDurations } from "./service-duration.ts";
-import { getLastBookableDay } from "./booking-horizon.ts";
+} from "./availability";
+import { sumServiceDurations } from "./service-duration";
+import { getLastBookableDay } from "./booking-horizon";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function getAvailableDaysInRange(

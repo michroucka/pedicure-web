@@ -1,5 +1,5 @@
 import { createEvents, type DateArray, type EventAttributes } from "ics";
-import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
+import { getBookingPersonName } from "@/lib/get-booking-person-name";
 
 type BookingWithRelations = {
     date: Date;

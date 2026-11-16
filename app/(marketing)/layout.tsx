@@ -1,12 +1,12 @@
 import type { Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { fontDisplay } from "@/lib/fonts.ts";
+import { fontDisplay } from "@/lib/fonts";
 import { ReactNode } from "react";
-import { MarketingNav } from "@/components/marketing/marketing-nav.tsx";
-import { MarketingFooter } from "@/components/marketing/marketing-footer.tsx";
-import { PortalContainerProvider } from "@/components/portal-container.tsx";
-import { BUSINESS_INFO } from "@/lib/business-info.ts";
+import { MarketingNav } from "@/components/marketing/marketing-nav";
+import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import { PortalContainerProvider } from "@/components/portal-container";
+import { BUSINESS_INFO } from "@/lib/business-info";
 
 export const viewport: Viewport = {
     themeColor: "#38252A",

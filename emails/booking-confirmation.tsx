@@ -12,7 +12,7 @@ import {
     Section,
     Text,
 } from "@react-email/components";
-import { BUSINESS_INFO } from "../lib/business-info.ts";
+import { BUSINESS_INFO } from "../lib/business-info";
 
 const BRAND = `${BUSINESS_INFO.name} – ${BUSINESS_INFO.tagline}`;
 

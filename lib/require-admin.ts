@@ -1,5 +1,5 @@
 import "server-only";
-import { auth } from "@/auth.ts";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
 // First line of every admin server action. proxy.ts isn't enough on its

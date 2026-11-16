@@ -1,13 +1,13 @@
-import { prisma } from "./prisma.ts";
-import { toDateOnly, getCzechToday, getCzechNowMinutes } from "./utils.ts";
+import { prisma } from "./prisma";
+import { toDateOnly, getCzechToday, getCzechNowMinutes } from "./utils";
 import {
     computeAvailableSlots,
     resolveDayTimeSlots,
     type Exception,
     type TimeSlot,
-} from "./availability.ts";
-import { sumServiceDurations } from "./service-duration.ts";
-import { getLastBookableDay } from "./booking-horizon.ts";
+} from "./availability";
+import { sumServiceDurations } from "./service-duration";
+import { getLastBookableDay } from "./booking-horizon";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 export async function getAvailableSlots(

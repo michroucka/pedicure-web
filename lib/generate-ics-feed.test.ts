@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateIcsFeed } from "@/lib/generate-ics-feed.ts";
+import { generateIcsFeed } from "@/lib/generate-ics-feed";
 
 describe("generateIcsFeed", () => {
     it("generates an event with the correct date and time", () => {

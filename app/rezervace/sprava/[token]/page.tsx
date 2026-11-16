@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
-import { getBookingGroupByToken } from "@/lib/get-booking-group-by-token.ts";
-import { canClientModifyBooking } from "@/lib/booking-modification-window.ts";
+import { getBookingGroupByToken } from "@/lib/get-booking-group-by-token";
+import { canClientModifyBooking } from "@/lib/booking-modification-window";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import { formatTime } from "@/lib/utils.ts";
-import { getBookingPersonName } from "@/lib/get-booking-person-name.ts";
-import { Card, CardContent } from "@/components/ui/card.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
+import { formatTime } from "@/lib/utils";
+import { getBookingPersonName } from "@/lib/get-booking-person-name";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
     ArrowLeft,
     CalendarDays,
@@ -17,7 +17,7 @@ import {
     UserRound,
     XCircle,
 } from "lucide-react";
-import { ManageBooking } from "@/components/rezervace/manage-booking.tsx";
+import { ManageBooking } from "@/components/rezervace/manage-booking";
 import Link from "next/link";
 
 export default async function SpravaPage({

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button.tsx";
-import { BOOKING_ENABLED } from "@/lib/booking-enabled.ts";
+import { Button } from "@/components/ui/button";
+import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 
 const NAV_LINKS = [
     { href: "/#o-mne", label: "O mně" },

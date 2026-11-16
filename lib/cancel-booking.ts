@@ -1,5 +1,5 @@
-import { Booking } from "@/lib/generated/prisma/client.ts";
-import { prisma } from "./prisma.ts";
+import { Booking } from "@/lib/generated/prisma/client";
+import { prisma } from "./prisma";
 
 export async function cancelBooking(id: string): Promise<Booking> {
     return prisma.booking.update({

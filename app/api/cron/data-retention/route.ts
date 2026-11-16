@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma.ts";
-import { getCzechToday } from "@/lib/utils.ts";
-import { getExpiredClientIds } from "@/lib/data-retention.ts";
-import { verifyCronRequest } from "@/lib/verify-cron-request.ts";
+import { prisma } from "@/lib/prisma";
+import { getCzechToday } from "@/lib/utils";
+import { getExpiredClientIds } from "@/lib/data-retention";
+import { verifyCronRequest } from "@/lib/verify-cron-request";
 
 // Deletes clients (with all their bookings) that are past the retention
 // period promised in the privacy policy. Runs monthly via Vercel Cron

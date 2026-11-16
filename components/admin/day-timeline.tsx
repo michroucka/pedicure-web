@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatTime, getCzechToday, getCzechNowMinutes } from "@/lib/utils.ts";
-import { computeClosedRanges } from "@/lib/availability.ts";
-import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog.tsx";
+import { formatTime, getCzechToday, getCzechNowMinutes } from "@/lib/utils";
+import { computeClosedRanges } from "@/lib/availability";
+import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
 import {
     BookingCard,
     SERVICE_COLORS,
     isBookingPast,
     type BookingItem,
-} from "@/components/admin/booking-card.tsx";
-import type { Service } from "@/lib/generated/prisma/client.ts";
+} from "@/components/admin/booking-card";
+import type { Service } from "@/lib/generated/prisma/client";
 
 const PX_PER_MIN = 2.25;
 

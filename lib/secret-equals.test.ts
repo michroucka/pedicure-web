@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { secretEquals } from "./secret-equals.ts";
+import { secretEquals } from "./secret-equals";
 
 describe("secretEquals", () => {
     it("matches only the exact secret", () => {

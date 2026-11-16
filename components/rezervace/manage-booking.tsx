@@ -13,20 +13,20 @@ import {
     AlertDialogFooter,
     AlertDialogCancel,
     AlertDialogAction,
-} from "@/components/ui/alert-dialog.tsx";
-import { Calendar } from "@/components/ui/calendar.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Alert, AlertTitle } from "@/components/ui/alert.tsx";
-import { Spinner } from "@/components/ui/spinner.tsx";
+} from "@/components/ui/alert-dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle, ArrowRightLeft, Check, X } from "lucide-react";
-import { formatTime, localDateToUtcMidnight } from "@/lib/utils.ts";
-import { HORIZON_DAYS } from "@/lib/booking-horizon.ts";
+import { formatTime, localDateToUtcMidnight } from "@/lib/utils";
+import { HORIZON_DAYS } from "@/lib/booking-horizon";
 import {
     cancelBookingByTokenAction,
     getRescheduleDaysAction,
     getRescheduleSlotsAction,
     moveBookingByTokenAction,
-} from "@/app/rezervace/sprava/[token]/actions.ts";
+} from "@/app/rezervace/sprava/[token]/actions";
 
 export function ManageBooking({
     token,

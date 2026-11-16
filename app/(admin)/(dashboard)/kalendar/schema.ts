@@ -7,7 +7,7 @@ import {
     noteSchema,
     optionalEmailSchema,
     startTimeSchema,
-} from "@/lib/validation.ts";
+} from "@/lib/validation";
 
 // Normalized by normalizeExtraMinutes in the actions – only the type and a
 // sane upper bound are checked here.

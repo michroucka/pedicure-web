@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import argon2 from "argon2";
 import { createHash } from "crypto";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma.ts";
+import { prisma } from "@/lib/prisma";
 
 declare module "@auth/core/jwt" {
     interface JWT {

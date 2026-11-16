@@ -1,4 +1,4 @@
-import { Prisma } from "@/lib/generated/prisma/client.ts";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 // Postgres SQLSTATE for an exclusion constraint violation (Booking_no_overlap).
 const EXCLUSION_VIOLATION = "23P01";

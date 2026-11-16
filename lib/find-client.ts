@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma.ts";
-import { normalizePhoneForMatch } from "@/lib/utils.ts";
-import type { Client } from "@/lib/generated/prisma/client.ts";
+import { prisma } from "@/lib/prisma";
+import { normalizePhoneForMatch } from "@/lib/utils";
+import type { Client } from "@/lib/generated/prisma/client";
 
 // Single source of the client-matching rule: by phone when there is one,
 // otherwise by exact name. Used by findOrCreateClient (on submit) and, as
