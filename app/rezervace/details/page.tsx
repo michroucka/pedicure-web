@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { submitBooking, submitGroupBooking } from "@/app/rezervace/actions";
 import { prisma } from "@/lib/prisma";
@@ -5,7 +6,13 @@ import { SoloBookingForm } from "@/components/rezervace/solo-booking-form";
 import { GroupBookingForm } from "@/components/rezervace/group-booking-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, UsersRound, CalendarDays, Clock } from "lucide-react";
+import {
+    AlertCircle,
+    Banknote,
+    UsersRound,
+    CalendarDays,
+    Clock,
+} from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils";
@@ -19,19 +26,34 @@ import { normalizeExtraMinutes } from "@/lib/extra-time";
 import { MAX_UPCOMING_ONLINE_BOOKINGS } from "@/lib/online-booking-limit";
 import { BUSINESS_INFO } from "@/lib/business-info";
 import { parseServiceIdsParam } from "@/lib/booking-url";
+import { CzechText } from "@/components/czech-text";
 
 // Set by submitBooking/submitGroupBooking (see detailsErrorUrl).
-const SUBMIT_ERRORS: Record<string, { title: string; description: string }> = {
-    verification: {
-        title: "Ověření se nezdařilo",
-        description:
-            "Nepodařilo se ověřit, že rezervaci odesílá člověk. Zkuste ji prosím odeslat znovu.",
-    },
-    booking_limit: {
-        title: "Příliš mnoho rezervací",
-        description: `Na tento telefon nebo e-mail už jsou vytvořené ${MAX_UPCOMING_ONLINE_BOOKINGS} nadcházející rezervace. Pro další termín nám prosím zavolejte na ${BUSINESS_INFO.phoneDisplay}.`,
-    },
-};
+const SUBMIT_ERRORS: Record<string, { title: string; description: ReactNode }> =
+    {
+        verification: {
+            title: "Ověření se nezdařilo",
+            description:
+                "Nepodařilo se ověřit, že rezervaci odesílá člověk. Zkuste ji prosím odeslat znovu.",
+        },
+        booking_limit: {
+            title: "Příliš mnoho rezervací",
+            description: (
+                <>
+                    Na tento telefon nebo e-mail už jsou vytvořené{" "}
+                    {MAX_UPCOMING_ONLINE_BOOKINGS} nadcházející rezervace. Pro
+                    další termín nám prosím zavolejte na{" "}
+                    <a
+                        href={`tel:${BUSINESS_INFO.phone}`}
+                        className="whitespace-nowrap underline underline-offset-2"
+                    >
+                        {BUSINESS_INFO.phoneDisplay}
+                    </a>
+                    .
+                </>
+            ),
+        },
+    };
 
 export default async function DetailsPage({
     searchParams,
@@ -76,6 +98,13 @@ export default async function DetailsPage({
         (id) => availableServices.find((s) => s.id === id)?.name ?? ""
     );
 
+    // serviceIds can repeat (two people, same service) - sum per person.
+    const totalPrice = serviceIds.reduce(
+        (sum, id) =>
+            sum + (availableServices.find((s) => s.id === id)?.price ?? 0),
+        0
+    );
+
     const backHref = `/rezervace?date=${date}&services=${services}&slot=${slot}`;
 
     const totalDuration = sumServiceDurations(serviceIds, availableServices);
@@ -83,62 +112,68 @@ export default async function DetailsPage({
     const timeSummary = `${formatTime(startTime)} – ${formatTime(startTime + totalDuration + knownExtraMinutes)}`;
 
     return (
-        <div className="mx-auto max-w-md">
-            {error && Object.hasOwn(SUBMIT_ERRORS, error) && (
-                <Alert
-                    variant="warning"
-                    className="mb-4"
-                >
-                    <AlertCircle />
-                    <AlertTitle>{SUBMIT_ERRORS[error].title}</AlertTitle>
-                    <AlertDescription>
-                        {SUBMIT_ERRORS[error].description}
-                    </AlertDescription>
-                </Alert>
-            )}
-            <Card className="mb-6">
-                <CardContent className="flex flex-col gap-2 text-sm">
-                    <div className="flex items-center gap-2">
-                        <UsersRound className="size-4 text-muted-foreground" />
-                        {serviceNames.join(" • ")}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <CalendarDays className="size-4 text-muted-foreground" />
-                        {dateSummary}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Clock className="size-4 text-muted-foreground" />
-                        {timeSummary}
-                    </div>
-                </CardContent>
-            </Card>
+        <CzechText>
+            <div className="mx-auto max-w-md">
+                {error && Object.hasOwn(SUBMIT_ERRORS, error) && (
+                    <Alert
+                        variant="warning"
+                        className="mb-4"
+                    >
+                        <AlertCircle />
+                        <AlertTitle>{SUBMIT_ERRORS[error].title}</AlertTitle>
+                        <AlertDescription>
+                            {SUBMIT_ERRORS[error].description}
+                        </AlertDescription>
+                    </Alert>
+                )}
+                <Card className="mb-6">
+                    <CardContent className="flex flex-col gap-2 text-sm">
+                        <div className="flex items-center gap-2">
+                            <UsersRound className="size-4 text-muted-foreground" />
+                            {serviceNames.join(" • ")}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <CalendarDays className="size-4 text-muted-foreground" />
+                            {dateSummary}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Clock className="size-4 text-muted-foreground" />
+                            {timeSummary}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Banknote className="size-4 text-muted-foreground" />
+                            Celkem {totalPrice.toLocaleString("cs-CZ")} Kč
+                        </div>
+                    </CardContent>
+                </Card>
 
-            {serviceIds.length === 1 ? (
-                <SoloBookingForm
-                    boundSubmitAction={submitBooking.bind(null, {
-                        date: bookingDate,
-                        serviceId: serviceIds[0],
-                        startTime: startTime,
-                    })}
-                    backHref={backHref}
-                    startTime={startTime}
-                    durationMinutes={totalDuration}
-                    initialExtraMinutes={knownExtraMinutes}
-                />
-            ) : (
-                <GroupBookingForm
-                    boundSubmitAction={submitGroupBooking.bind(null, {
-                        date: bookingDate,
-                        serviceIds,
-                        startTime: startTime,
-                    })}
-                    serviceNames={serviceNames}
-                    backHref={backHref}
-                    startTime={startTime}
-                    durationMinutes={totalDuration}
-                    initialExtraMinutes={knownExtraMinutes}
-                />
-            )}
-        </div>
+                {serviceIds.length === 1 ? (
+                    <SoloBookingForm
+                        boundSubmitAction={submitBooking.bind(null, {
+                            date: bookingDate,
+                            serviceId: serviceIds[0],
+                            startTime: startTime,
+                        })}
+                        backHref={backHref}
+                        startTime={startTime}
+                        durationMinutes={totalDuration}
+                        initialExtraMinutes={knownExtraMinutes}
+                    />
+                ) : (
+                    <GroupBookingForm
+                        boundSubmitAction={submitGroupBooking.bind(null, {
+                            date: bookingDate,
+                            serviceIds,
+                            startTime: startTime,
+                        })}
+                        serviceNames={serviceNames}
+                        backHref={backHref}
+                        startTime={startTime}
+                        durationMinutes={totalDuration}
+                        initialExtraMinutes={knownExtraMinutes}
+                    />
+                )}
+            </div>
+        </CzechText>
     );
 }

@@ -58,7 +58,7 @@ export default function KontaktPage() {
 
                                 <dt className="flex items-center gap-1 text-muted-foreground">
                                     <Mail className="size-4" />
-                                    E-Mail:
+                                    E-mail:
                                 </dt>
                                 <dd>
                                     <a

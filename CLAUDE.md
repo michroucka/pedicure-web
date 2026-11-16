@@ -195,6 +195,11 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
   `Service.durationMinutes`. Online ho dostane jen hlavní kontakt (z jeho
   klienta), hosté 0; v adminu se zadává u každé osoby zvlášť (u hlavního
   kontaktu se při vytvoření zapíše i zpět do `Client.extraTimeMinutes`)
+- `movedToId` (nullable, FK na Booking) – u rezervace zrušené přesunem
+  ukazuje na tu, která ji nahradila. Starý magic link (zůstává klientovi
+  v e-mailu) díky tomu ukáže „Rezervace přesunuta“ s novým termínem
+  (`findMovedBookingGroup`, sleduje i opakované přesuny), ne „zrušena“.
+  Spravovat jde dál jen přes nový odkaz
 - `guestName` – jméno člena skupiny, který není hlavní kontakt (viz
   Skupinové rezervace); `null` = jméno se bere z klienta. Zobrazované
   jméno osoby vždy přes `getBookingPersonName` (`guestName ?? client.name`),

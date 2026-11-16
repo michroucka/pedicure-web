@@ -17,6 +17,7 @@ import { getAvailableDaysAction } from "@/app/rezervace/actions";
 import { Spinner } from "@/components/ui/spinner";
 import { HORIZON_DAYS } from "@/lib/booking-horizon";
 import { parseServiceIdsParam } from "@/lib/booking-url";
+import { CzechText } from "@/components/czech-text";
 
 // The next HORIZON_DAYS are fetched once per service selection instead of
 // once per visible month – browsing a few months back/forth then costs
@@ -130,34 +131,36 @@ export function DateStep({
     }
 
     return (
-        <div>
-            {isLoading && (
-                <div className="mb-2 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Spinner className="size-4" />
-                    Načítání dostupných termínů…
-                </div>
-            )}
-            <Calendar
-                mode="single"
-                locale={cs}
-                selected={date}
-                onSelect={(d) => {
-                    if (!d) return;
-                    updateParam("date", format(d, "yyyy-MM-dd"));
-                    onContinueAction();
-                }}
-                disabled={(day) =>
-                    !availableSet.has(localDateToUtcMidnight(day).getTime())
-                }
-                month={currentMonth}
-                onMonthChange={setCurrentMonth}
-                fixedWeeks
-                className={cn(
-                    "w-full bg-transparent",
-                    isLoading && "pointer-events-none opacity-50"
+        <CzechText>
+            <div>
+                {isLoading && (
+                    <div className="mb-2 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Spinner className="size-4" />
+                        Načítání dostupných termínů…
+                    </div>
                 )}
-                required
-            />
-        </div>
+                <Calendar
+                    mode="single"
+                    locale={cs}
+                    selected={date}
+                    onSelect={(d) => {
+                        if (!d) return;
+                        updateParam("date", format(d, "yyyy-MM-dd"));
+                        onContinueAction();
+                    }}
+                    disabled={(day) =>
+                        !availableSet.has(localDateToUtcMidnight(day).getTime())
+                    }
+                    month={currentMonth}
+                    onMonthChange={setCurrentMonth}
+                    fixedWeeks
+                    className={cn(
+                        "w-full bg-transparent",
+                        isLoading && "pointer-events-none opacity-50"
+                    )}
+                    required
+                />
+            </div>
+        </CzechText>
     );
 }

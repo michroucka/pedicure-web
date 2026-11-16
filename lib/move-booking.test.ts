@@ -9,6 +9,7 @@ import {
     PAST_MIDNIGHT_ERROR,
     SlotUnavailableError,
 } from "./move-booking";
+import { findMovedBookingGroup } from "./find-moved-booking";
 
 // outsideHours: true throughout – the normal path validates the target slot
 // against RecurringAvailability, which this branch inherited from
@@ -360,5 +361,109 @@ describe("moveBooking / moveGroupBooking", () => {
         );
 
         expect(moved[moved.length - 1].endTime).toBe(660);
+    });
+
+    it("links each cancelled booking to the one that replaced it", async () => {
+        const solo = await createBooking({
+            clientId: clientIds[0],
+            serviceId: serviceIds[0],
+            date: testDate,
+            startTime: 540,
+            source: "ONLINE",
+        });
+        const movedSolo = await moveBooking(solo.id, otherDate, 540, {
+            outsideHours: true,
+        });
+        expect(
+            (await prisma.booking.findUniqueOrThrow({ where: { id: solo.id } }))
+                .movedToId
+        ).toBe(movedSolo.id);
+
+        const group = await createGroupBooking(
+            [
+                {
+                    clientId: clientIds[1],
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[0],
+                },
+                {
+                    clientId: clientIds[1],
+                    extraTimeMinutes: 0,
+                    serviceId: serviceIds[1],
+                },
+            ],
+            testDate,
+            700,
+            "ONLINE"
+        );
+        const movedGroup = await moveGroupBooking(
+            group[0].groupId!,
+            otherDate,
+            700,
+            {
+                outsideHours: true,
+            }
+        );
+        const oldGroup = await prisma.booking.findMany({
+            where: { id: { in: group.map((b) => b.id) } },
+            orderBy: { startTime: "asc" },
+        });
+        expect(oldGroup.map((b) => b.movedToId)).toEqual(
+            movedGroup.map((b) => b.id)
+        );
+    });
+
+    it("finds where a moved booking ended up, following repeated moves", async () => {
+        const original = await createBooking({
+            clientId: clientIds[0],
+            serviceId: serviceIds[0],
+            date: testDate,
+            startTime: 540,
+            source: "ONLINE",
+        });
+        const first = await moveBooking(original.id, otherDate, 540, {
+            outsideHours: true,
+        });
+        const second = await moveBooking(first.id, otherDate, 600, {
+            outsideHours: true,
+        });
+
+        const found = await findMovedBookingGroup(original.id);
+        expect(found?.map((b) => b.id)).toEqual([second.id]);
+    });
+
+    it("treats a moved booking that was cancelled afterwards as cancelled", async () => {
+        const original = await createBooking({
+            clientId: clientIds[0],
+            serviceId: serviceIds[0],
+            date: testDate,
+            startTime: 540,
+            source: "ONLINE",
+        });
+        const moved = await moveBooking(original.id, otherDate, 540, {
+            outsideHours: true,
+        });
+        await prisma.booking.update({
+            where: { id: moved.id },
+            data: { status: "CANCELLED" },
+        });
+
+        expect(await findMovedBookingGroup(original.id)).toBeNull();
+    });
+
+    it("returns null for a booking that was simply cancelled", async () => {
+        const original = await createBooking({
+            clientId: clientIds[0],
+            serviceId: serviceIds[0],
+            date: testDate,
+            startTime: 540,
+            source: "ONLINE",
+        });
+        await prisma.booking.update({
+            where: { id: original.id },
+            data: { status: "CANCELLED" },
+        });
+
+        expect(await findMovedBookingGroup(original.id)).toBeNull();
     });
 });

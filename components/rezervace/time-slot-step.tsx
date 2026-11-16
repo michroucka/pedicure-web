@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle, CalendarX } from "lucide-react";
 import { parseServiceIdsParam } from "@/lib/booking-url";
+import { CzechText } from "@/components/czech-text";
 
 export function TimeSlotStep({
     onSelectAction,
@@ -61,60 +62,66 @@ export function TimeSlotStep({
     }
 
     return (
-        <div>
-            {error === "slot_taken" && (
-                <Alert
-                    variant="warning"
-                    className="mb-4"
-                >
-                    <AlertCircle />
-                    <AlertTitle>Termín nedostupný</AlertTitle>
-                    <AlertDescription>
-                        Tento termín již není dostupný. Vyberte prosím jiný čas.
-                    </AlertDescription>
-                </Alert>
-            )}
-            {error === "extra_time_conflict" && (
-                <Alert
-                    variant="warning"
-                    className="mb-4"
-                >
-                    <AlertCircle />
-                    <AlertTitle>Termín nedostupný</AlertTitle>
-                    <AlertDescription>
-                        Podle vašich předchozích návštěv počítáme s{" "}
-                        {extraMinutes} min navíc a s tím se tento termín už
-                        nevejde před další rezervaci. Vyberte prosím jiný čas.
-                    </AlertDescription>
-                </Alert>
-            )}
-            {isLoading ? (
-                <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
-                    <Spinner className="size-6" />
-                    Načítání dostupných termínů…
-                </div>
-            ) : availableSlots?.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
-                    <CalendarX className="size-6" />
-                    Pro tento den už nejsou volné žádné termíny.
-                    <br />
-                    Vyberte prosím jiné datum.
-                </div>
-            ) : (
-                <div className="grid grid-cols-4 gap-2 lg:grid-cols-5">
-                    {availableSlots?.map((s) => (
-                        <Button
-                            key={s}
-                            type="button"
-                            variant={s === selectedSlot ? "default" : "outline"}
-                            size="lg"
-                            onClick={() => selectSlot(s)}
-                        >
-                            {formatTime(s)}
-                        </Button>
-                    ))}
-                </div>
-            )}
-        </div>
+        <CzechText>
+            <div>
+                {error === "slot_taken" && (
+                    <Alert
+                        variant="warning"
+                        className="mb-4"
+                    >
+                        <AlertCircle />
+                        <AlertTitle>Termín nedostupný</AlertTitle>
+                        <AlertDescription>
+                            Tento termín již není dostupný. Vyberte prosím jiný
+                            čas.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                {error === "extra_time_conflict" && (
+                    <Alert
+                        variant="warning"
+                        className="mb-4"
+                    >
+                        <AlertCircle />
+                        <AlertTitle>Termín nedostupný</AlertTitle>
+                        <AlertDescription>
+                            Podle vašich předchozích návštěv počítáme s{" "}
+                            {extraMinutes} min navíc a s tím se tento termín už
+                            nevejde před další rezervaci. Vyberte prosím jiný
+                            čas.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                {isLoading ? (
+                    <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
+                        <Spinner className="size-6" />
+                        Načítání dostupných termínů…
+                    </div>
+                ) : availableSlots?.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
+                        <CalendarX className="size-6" />
+                        Pro tento den už nejsou volné žádné termíny.
+                        <br />
+                        Vyberte prosím jiné datum.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-4 gap-2 lg:grid-cols-5">
+                        {availableSlots?.map((s) => (
+                            <Button
+                                key={s}
+                                type="button"
+                                variant={
+                                    s === selectedSlot ? "default" : "outline"
+                                }
+                                size="lg"
+                                onClick={() => selectSlot(s)}
+                            >
+                                {formatTime(s)}
+                            </Button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </CzechText>
     );
 }

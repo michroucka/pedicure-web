@@ -8,6 +8,8 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { UsersRound, CalendarDays, Clock } from "lucide-react";
+import { CzechText } from "@/components/czech-text";
+import { cn } from "@/lib/utils";
 
 const STEPS = [
     { label: "Kdo přijde?", icon: UsersRound },
@@ -21,6 +23,7 @@ export function StepCard({
     activeStep,
     gen,
     summary,
+    headerAside,
     collapsible,
 }: {
     children: ReactNode;
@@ -28,6 +31,8 @@ export function StepCard({
     activeStep: number;
     gen: number;
     summary?: string;
+    // Extra detail on the right of the header while the step is open.
+    headerAside?: ReactNode;
     collapsible: boolean;
 }) {
     const [open, setOpen] = useState(thisStep === activeStep);
@@ -41,26 +46,43 @@ export function StepCard({
     }
 
     return (
-        <Accordion
-            type="single"
-            collapsible={collapsible}
-            value={open ? thisStep.toString() : ""}
-            onValueChange={(v) => {
-                setOpen(!!v);
-            }}
-            className="mb-2"
-        >
-            <AccordionItem value={thisStep?.toString()}>
-                <AccordionTrigger
-                    className={`hover:no-underline ${collapsible ? "" : "[&_[data-slot=accordion-trigger-icon]]:hidden"}`}
-                >
-                    <span className="flex items-center gap-2">
-                        <Icon className="size-4 shrink-0" />
-                        {!open && summary ? summary : STEPS[thisStep].label}
-                    </span>
-                </AccordionTrigger>
-                <AccordionContent>{children}</AccordionContent>
-            </AccordionItem>
-        </Accordion>
+        <CzechText>
+            <Accordion
+                type="single"
+                collapsible={collapsible}
+                value={open ? thisStep.toString() : ""}
+                onValueChange={(v) => {
+                    setOpen(!!v);
+                }}
+                className="mb-2"
+            >
+                <AccordionItem value={thisStep?.toString()}>
+                    <AccordionTrigger
+                        className={cn(
+                            "hover:no-underline",
+                            !collapsible &&
+                                "[&_[data-slot=accordion-trigger-icon]]:hidden",
+                            // The chevron is pushed right with ml-auto; with an
+                            // aside the aside takes that role, or the free
+                            // space would be split between the two.
+                            open &&
+                                headerAside &&
+                                "[&_[data-slot=accordion-trigger-icon]]:ml-0"
+                        )}
+                    >
+                        <span className="flex items-center gap-2">
+                            <Icon className="size-4 shrink-0" />
+                            {!open && summary ? summary : STEPS[thisStep].label}
+                        </span>
+                        {open && headerAside && (
+                            <span className="ms-auto self-center text-xs font-normal text-muted-foreground">
+                                {headerAside}
+                            </span>
+                        )}
+                    </AccordionTrigger>
+                    <AccordionContent>{children}</AccordionContent>
+                </AccordionItem>
+            </Accordion>
+        </CzechText>
     );
 }
