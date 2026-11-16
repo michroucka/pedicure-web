@@ -5,12 +5,7 @@ on:
     push:
         branches: [main]
 
-# A new push to the same branch/PR cancels its older run. A single global
-# group would serialize all runs on the shared Neon test branch, but GitHub
-# keeps only one pending run per group and silently cancels the rest, so
-# PRs ended up with cancelled checks. Runs of different PRs can therefore
-# overlap on the test branch - fine for one developer, re-run if two ever
-# collide.
+# A new push to the same branch/PR cancels its older run.
 concurrency:
     group: ci-${{ github.ref }}
     cancel-in-progress: true
@@ -18,18 +13,35 @@ concurrency:
 jobs:
     checks:
         runs-on: ubuntu-latest
+        # Every run gets its own empty Postgres, so parallel runs (several
+        # PRs, Dependabot) can't overwrite each other's test data the way
+        # they did on one shared Neon test branch. No secrets needed either,
+        # which Dependabot runs don't get by default. Tests write real rows
+        # and `prisma migrate deploy` (pretest) builds the schema first; the
+        # build reads services from it for static pages.
+        services:
+            postgres:
+                image: postgres:17
+                env:
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: pedicure_test
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
         env:
-            # Neon "test" branch, never dev/prod: tests write real rows and
-            # `npm test` runs `prisma migrate deploy` against it first. The
-            # build reads services from the DB for static pages too.
-            DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-            DATABASE_URL_UNPOOLED: ${{ secrets.TEST_DATABASE_URL_UNPOOLED }}
+            DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pedicure_test
+            DATABASE_URL_UNPOOLED: postgresql://postgres:postgres@localhost:5432/pedicure_test
         steps:
             - uses: actions/checkout@v4
 
             - uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  # Same major as Vercel (package.json "engines").
+                  node-version: 24
                   cache: npm
 
             - run: npm ci
@@ -43,8 +55,18 @@ jobs:
             - name: Formatting
               run: npx prettier --check "**/*.{ts,tsx}"
 
+            # Coverage is informational, see vitest.config.ts. The summary
+            # lands in the job log.
             - name: Tests
-              run: npm test -- --run
+              run: npm run test:coverage
+
+            # Runs after the tests' `prisma migrate deploy`, so the database
+            # holds exactly what the migrations create. A schema.prisma
+            # change without a migration shows up as a diff (exit code 2).
+            # Constraints Prisma can't model (Booking_no_overlap) aren't
+            # compared, so they don't trip it.
+            - name: Schema matches migrations
+              run: npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
 
             # Only the framework build - the `build` script also runs
             # `prisma migrate deploy`, which belongs to the Vercel deploy.
