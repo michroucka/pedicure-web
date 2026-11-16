@@ -729,6 +729,17 @@ export function AddBookingDialog({
                     <DialogFooter className="-mx-6 -mb-6 border-t bg-popover px-6 py-4">
                         <Button
                             type="button"
+                            variant="outline"
+                            disabled={isPending}
+                            onClick={() => {
+                                setOpen(false);
+                                reset();
+                            }}
+                        >
+                            Zavřít
+                        </Button>
+                        <Button
+                            type="button"
                             disabled={isPending}
                             onClick={submit}
                         >

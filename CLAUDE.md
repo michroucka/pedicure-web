@@ -340,6 +340,7 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - Preferuji stručná vysvětlení, detail jen na vyžádání.
 - Komunikace v češtině.
 - Chci rozumět každé části architektury, ne jen "ať to funguje".
-- U UI změn neověřuj sám v prohlížeči (nespouštěj dev server kvůli
-  screenshotu) – stačí typecheck/build. Vizuální kontrolu v prohlížeči si
-  dělám sám.
+- Dev server nikdy nespouštěj sám (pouštím si ho ručně v IDE). Když
+  běží na `localhost:3000`, můžeš UI změny ověřit přes Playwright – rozměry,
+  jestli se něco vejde, poskakování, fokus, chování – než napíšeš „hotovo“.
+  Konečný vizuální dojem (vkus, iPad/Safari) posuzuju já ze screenshotů.

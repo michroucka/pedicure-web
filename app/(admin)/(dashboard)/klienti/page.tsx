@@ -30,8 +30,7 @@ export default async function ClientsPage() {
     });
 
     return (
-        <div className="mx-auto w-full max-w-lg">
-            <h2 className="px-4 pt-4 text-center">Klienti</h2>
+        <div className="mx-auto w-full max-w-lg md:max-w-2xl">
             <ClientList
                 clients={clients.map(({ _count, ...c }) => ({
                     ...c,

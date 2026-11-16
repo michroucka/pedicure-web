@@ -37,17 +37,17 @@ export default async function AvailabilityPage() {
     return (
         <div className="mx-auto max-w-lg p-4 lg:max-w-3xl">
             <Tabs defaultValue="exceptions">
-                <TabsList className="mb-4 w-full max-w-md self-center">
+                <TabsList className="mb-4 h-auto! w-full max-w-md gap-1 self-center rounded-full p-1">
                     <TabsTrigger
                         value="exceptions"
-                        className="py-2 text-base"
+                        className="h-10 rounded-full py-2 text-base text-muted-foreground hover:text-foreground data-active:text-foreground data-active:shadow-sm"
                     >
                         <CalendarClock className="size-4" />
                         Úprava dne
                     </TabsTrigger>
                     <TabsTrigger
                         value="recurring"
-                        className="py-2 text-base"
+                        className="h-10 rounded-full py-2 text-base text-muted-foreground hover:text-foreground data-active:text-foreground data-active:shadow-sm"
                     >
                         <Repeat className="size-4" />
                         Stálá dostupnost

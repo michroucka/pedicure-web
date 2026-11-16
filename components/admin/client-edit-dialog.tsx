@@ -6,6 +6,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -120,7 +121,10 @@ export function ClientEditDialog({
         >
             <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
-                    <DialogTitle>Klient</DialogTitle>
+                    <DialogTitle>Upravit klienta</DialogTitle>
+                    <DialogDescription>
+                        {upcomingSummary(client.upcomingBookings)}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-3">
@@ -151,7 +155,7 @@ export function ClientEditDialog({
                     <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-1 text-sm font-medium">
                             <Mail className="size-4" />
-                            Email
+                            E-mail
                         </span>
                         <Input
                             type="email"
@@ -185,7 +189,7 @@ export function ClientEditDialog({
                     )}
                 </div>
 
-                <DialogFooter className="flex-row justify-between gap-2">
+                <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
                     <Button
                         type="button"
                         variant="destructive"
@@ -247,6 +251,12 @@ export function ClientEditDialog({
 
 // "1 naplánovanou rezervaci", "2 naplánované rezervace", "5 naplánovaných
 // rezervací" – Czech needs three forms.
+function upcomingSummary(count: number): string {
+    if (count === 0) return "Žádné nadcházející rezervace";
+    if (count <= 4) return `${count} nadcházející rezervace`;
+    return `${count} nadcházejících rezervací`;
+}
+
 function upcomingLabel(count: number): string {
     if (count === 1) return "1 naplánovanou rezervaci";
     if (count >= 2 && count <= 4) return `${count} naplánované rezervace`;

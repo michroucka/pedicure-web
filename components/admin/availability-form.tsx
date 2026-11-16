@@ -59,11 +59,13 @@ function BlockField({
     function handleChange([newStart, newEnd]: number[]) {
         setValue(
             `days.${dayIndex}.blocks.${blockIndex}.startTime`,
-            formatTime(newStart)
+            formatTime(newStart),
+            { shouldDirty: true }
         );
         setValue(
             `days.${dayIndex}.blocks.${blockIndex}.endTime`,
-            formatTime(newEnd)
+            formatTime(newEnd),
+            { shouldDirty: true }
         );
     }
 
@@ -82,7 +84,7 @@ function BlockField({
     }
 
     return (
-        <div className="flex items-center gap-3 rounded-2xl border p-3">
+        <div className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
             <div className="flex-1">
                 <Slider
                     value={[start, end]}
@@ -158,8 +160,10 @@ function DayField({
     }
 
     return (
-        <div className="rounded-2xl border p-3">
-            <div className="mb-2 flex items-center justify-between">
+        // One row per day: name and "add" on the left keep the slider at
+        // full width, and the whole week fits on a landscape tablet.
+        <div className="flex flex-col gap-2 py-3 lg:grid lg:grid-cols-[9rem_1fr] lg:gap-4">
+            <div className="flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:justify-start">
                 <span className="font-medium">{DAY_LABELS[dayOfWeek]}</span>
                 <Button
                     type="button"
@@ -168,36 +172,40 @@ function DayField({
                     onClick={addBlock}
                 >
                     <Plus className="size-4" />
-                    Blok
+                    Přidat blok
                 </Button>
             </div>
 
-            {fields.length === 0 && (
-                <p className="text-sm text-muted-foreground">Zavřeno</p>
-            )}
-
             <div className="flex flex-col gap-2">
-                {fields.map((field, blockIndex) => (
-                    <BlockField
-                        key={field.id}
-                        control={control}
-                        setValue={setValue}
-                        dayIndex={dayIndex}
-                        blockIndex={blockIndex}
-                        onRemove={() => remove(blockIndex)}
-                    />
-                ))}
-            </div>
+                {fields.length === 0 && (
+                    <p className="text-sm text-muted-foreground lg:py-2">
+                        Zavřeno
+                    </p>
+                )}
 
-            {blocksError && (
-                <Alert
-                    variant="destructive"
-                    className="mt-2"
-                >
-                    <AlertCircle />
-                    <AlertTitle>{blocksError}</AlertTitle>
-                </Alert>
-            )}
+                <div className="flex flex-col gap-2">
+                    {fields.map((field, blockIndex) => (
+                        <BlockField
+                            key={field.id}
+                            control={control}
+                            setValue={setValue}
+                            dayIndex={dayIndex}
+                            blockIndex={blockIndex}
+                            onRemove={() => remove(blockIndex)}
+                        />
+                    ))}
+                </div>
+
+                {blocksError && (
+                    <Alert
+                        variant="destructive"
+                        className="mt-2"
+                    >
+                        <AlertCircle />
+                        <AlertTitle>{blocksError}</AlertTitle>
+                    </Alert>
+                )}
+            </div>
         </div>
     );
 }
@@ -212,7 +220,13 @@ export function AvailabilityForm({
     }[];
     saveAction: (data: AvailabilityFormData) => Promise<void>;
 }) {
-    const { control, setValue, handleSubmit } = useForm<AvailabilityFormData>({
+    const {
+        control,
+        setValue,
+        handleSubmit,
+        reset,
+        formState: { isDirty },
+    } = useForm<AvailabilityFormData>({
         resolver: zodResolver(availabilitySchema),
         defaultValues: { days },
     });
@@ -221,6 +235,7 @@ export function AvailabilityForm({
     function onSubmit(data: AvailabilityFormData) {
         startTransition(async () => {
             await saveAction(data);
+            reset(data);
         });
     }
 
@@ -229,29 +244,39 @@ export function AvailabilityForm({
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-2"
         >
-            {days.map((day, index) => (
-                <DayField
-                    key={day.dayOfWeek}
-                    control={control}
-                    setValue={setValue}
-                    dayIndex={index}
-                    dayOfWeek={day.dayOfWeek}
-                />
-            ))}
+            <div className="divide-y rounded-2xl border px-4">
+                {days.map((day, index) => (
+                    <DayField
+                        key={day.dayOfWeek}
+                        control={control}
+                        setValue={setValue}
+                        dayIndex={index}
+                        dayOfWeek={day.dayOfWeek}
+                    />
+                ))}
+            </div>
 
-            <Button
-                type="submit"
-                disabled={isSaving}
-                className="mt-2"
-                size="lg"
-            >
-                {isSaving ? (
-                    <Spinner className="size-4" />
-                ) : (
-                    <Save className="size-4" />
-                )}
-                {isSaving ? "Ukládám…" : "Uložit"}
-            </Button>
+            {/* Sticky above the bottom nav, so saving doesn't need a scroll
+                past all seven days; only while there is something to save. */}
+            {(isDirty || isSaving) && (
+                <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur transition-[translate,opacity] duration-200 starting:translate-y-4 starting:opacity-0">
+                    <span className="text-sm text-muted-foreground">
+                        Neuložené změny
+                    </span>
+                    <Button
+                        type="submit"
+                        disabled={isSaving}
+                        size="lg"
+                    >
+                        {isSaving ? (
+                            <Spinner className="size-4" />
+                        ) : (
+                            <Save className="size-4" />
+                        )}
+                        {isSaving ? "Ukládám…" : "Uložit"}
+                    </Button>
+                </div>
+            )}
         </form>
     );
 }

@@ -21,38 +21,13 @@ import {
 } from "@/lib/utils";
 import { categorizeExceptions } from "@/lib/availability";
 import { ExceptionDot } from "@/components/admin/exception-dot";
+import { ExceptionLegend } from "@/components/admin/exception-legend";
 import { useCalendarNavigation } from "@/components/admin/calendar-navigation";
 import type { AvailabilityException } from "@/lib/generated/prisma/client";
 
 // Popover fade-out duration (duration-100 in components/ui/popover.tsx)
 // plus some slack - in practice the fade runs a bit past 100 ms.
 const PICKER_CLOSE_MS = 160;
-
-// Explains the picker's dots - same colours as ExceptionDot.
-function ExceptionLegend() {
-    const items = [
-        { label: "Otevřeno navíc", extraOpen: true },
-        { label: "Zavřeno", blockedFull: true },
-        { label: "Částečně zavřeno", blockedPartial: true },
-    ];
-    return (
-        <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 border-t px-2 pt-2 pb-1 text-xs text-muted-foreground">
-            {items.map((item) => (
-                <li
-                    key={item.label}
-                    className="flex items-center gap-1.5"
-                >
-                    <ExceptionDot
-                        blockedFull={!!item.blockedFull}
-                        blockedPartial={!!item.blockedPartial}
-                        extraOpen={!!item.extraOpen}
-                    />
-                    {item.label}
-                </li>
-            ))}
-        </ul>
-    );
-}
 
 // No more Den/Týden toggle – which one is visible is decided purely by the
 // lg breakpoint (className below), same as everywhere else this app splits
@@ -137,10 +112,9 @@ function NavBar({
                         <Calendar
                             mode="single"
                             locale={cs}
-                            // Week view highlights the whole shown week
-                            // (shownWeek below) - a single selected day
-                            // would misstate what's on screen.
-                            selected={step === 7 ? undefined : pickerDate}
+                            // Week view also highlights the whole shown week
+                            // (shownWeek below), on top of the picked day.
+                            selected={pickerDate}
                             defaultMonth={pickerDate}
                             onSelect={(d) => {
                                 if (!d) return;
