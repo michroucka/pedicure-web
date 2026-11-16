@@ -21,7 +21,12 @@ export default function ReservationLayout({
     return (
         <PortalContainerProvider className="storefront min-h-svh bg-background text-foreground">
             <BookingNav />
-            <div className="mt-8 max-lg:mx-4">{children}</div>
+            {/* Bottom padding for every step's action buttons, plus the iOS
+                home indicator area (the page draws under it, viewportFit
+                "cover"). */}
+            <div className="mt-8 pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] max-lg:mx-4">
+                {children}
+            </div>
             <Analytics />
             <SpeedInsights />
         </PortalContainerProvider>

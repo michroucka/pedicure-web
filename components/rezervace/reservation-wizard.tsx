@@ -112,7 +112,7 @@ export function ReservationWizard({ services }: { services: Service[] }) {
                 </StepCard>
             )}
 
-            <div className="mt-4 mb-8 flex justify-between">
+            <div className="mt-4 mb-2 flex justify-between">
                 <Button
                     type="button"
                     size="lg"

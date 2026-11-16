@@ -132,7 +132,7 @@ export function SoloBookingForm({
                 <PrivacyNotice />
                 {turnstile.widget}
 
-                <div className="mt-6 flex justify-between pb-6">
+                <div className="mt-6 flex justify-between">
                     <Button
                         variant="outline"
                         size="lg"
