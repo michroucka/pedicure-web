@@ -105,7 +105,17 @@ export default async function DetailsPage({
         0
     );
 
-    const backHref = `/rezervace?date=${date}&services=${services}&slot=${slot}`;
+    // Carries the extra time too, so the wizard doesn't offer slots the
+    // client no longer fits into.
+    const backParams = new URLSearchParams({
+        date: parsedDate.data,
+        services: services ?? "",
+        slot: String(startTime),
+    });
+    if (knownExtraMinutes > 0) {
+        backParams.set("extraMinutes", String(knownExtraMinutes));
+    }
+    const backHref = `/rezervace?${backParams}`;
 
     const totalDuration = sumServiceDurations(serviceIds, availableServices);
     const dateSummary = format(bookingDate, "EEEE d. MMMM yyyy", {

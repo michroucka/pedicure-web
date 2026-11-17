@@ -33,16 +33,18 @@ export function BookingNav() {
     const isManagePage = pathname.startsWith(MANAGE_PATH_PREFIX);
 
     return (
-        <header className="sticky top-0 z-10 bg-background pt-[env(safe-area-inset-top)]">
+        // Sticky only from tablet up - on a phone it would hold ~1/5 of the
+        // screen while picking a slot or filling the form.
+        <header className="z-10 bg-background pt-[env(safe-area-inset-top)] md:sticky md:top-0">
             <div className="mx-auto max-w-5xl px-4 sm:px-6">
-                <div className="flex items-center justify-center pt-8">
+                <div className="flex items-center justify-center pt-4 pb-3 md:pt-8 md:pb-0">
                     <Link href="/">
                         <Image
                             src="/logo-banner-light.svg"
                             alt="Nohy v cajku"
                             width={221}
                             height={60}
-                            className="h-16 w-auto"
+                            className="h-11 w-auto md:h-16"
                             priority
                             draggable={false}
                         />

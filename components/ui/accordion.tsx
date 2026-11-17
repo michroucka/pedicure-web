@@ -70,14 +70,17 @@ function AccordionContent({
     ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
     return (
+        // overflow-hidden (for the open/close animation) would clip the focus
+        // ring of a control right at the top - the content starts 4px higher
+        // and pads it back, so nothing moves.
         <AccordionPrimitive.Content
             data-slot="accordion-content"
-            className="overflow-hidden px-4 text-sm data-open:animate-accordion-down data-closed:animate-accordion-up"
+            className="-mt-1 overflow-hidden px-4 text-sm data-open:animate-accordion-down data-closed:animate-accordion-up"
             {...props}
         >
             <div
                 className={cn(
-                    "pt-0 pb-4 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
+                    "pt-1 pb-4 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
                     className
                 )}
             >
