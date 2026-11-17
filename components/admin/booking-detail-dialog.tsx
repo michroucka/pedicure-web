@@ -961,7 +961,9 @@ function EditScheduleSummary({
             </span>
             {isChanged && (
                 <span className="flex items-center gap-2 font-medium text-foreground">
-                    <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+                    {/* On a phone the new date wraps under the old one, where
+                        an arrow at the line start looks out of place. */}
+                    <ArrowRight className="size-4 shrink-0 text-muted-foreground max-md:hidden" />
                     {formatSchedule(edited)}
                 </span>
             )}
