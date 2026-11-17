@@ -46,9 +46,6 @@ export async function saveRecurringAvailability(data: AvailabilityFormData) {
     ]);
 
     revalidatePath("/dostupnost");
-    // Kontakt and the marketing footer show the usual opening hours from
-    // the recurring availability - both are static pages.
-    revalidatePath("/", "layout");
 }
 
 export type ExceptionConflict = {

@@ -3,8 +3,6 @@ import Link from "next/link";
 import { BUSINESS_INFO, OPERATOR_INFO } from "@/lib/business-info";
 import { MonochromeLogo } from "@/components/marketing/monochrome-logo";
 import { CzechText } from "@/components/czech-text";
-import { getOpeningHours } from "@/lib/opening-hours";
-import { OpeningHoursList } from "@/components/marketing/opening-hours-list";
 
 const SITE_LAUNCH_YEAR = 2026;
 
@@ -26,9 +24,8 @@ const PROFILES = [
     },
 ];
 
-export async function MarketingFooter() {
+export function MarketingFooter() {
     const { address } = BUSINESS_INFO;
-    const openingHours = await getOpeningHours();
 
     return (
         <CzechText>
@@ -98,24 +95,17 @@ export async function MarketingFooter() {
                                 </ul>
                             </section>
 
-                            {openingHours.length > 0 && (
-                                <section aria-labelledby="footer-hours">
-                                    <h2
-                                        id="footer-hours"
-                                        className={COLUMN_HEADING_CLASSES}
-                                    >
-                                        Provozní doba
-                                    </h2>
-                                    <OpeningHoursList
-                                        rows={openingHours}
-                                        className="mt-4 text-sm text-muted-foreground"
-                                    />
-                                    <p className="mt-2 max-w-44 text-xs text-muted-foreground">
-                                        Obvyklá, přesné termíny v online
-                                        rezervaci.
-                                    </p>
-                                </section>
-                            )}
+                            <section aria-labelledby="footer-hours">
+                                <h2
+                                    id="footer-hours"
+                                    className={COLUMN_HEADING_CLASSES}
+                                >
+                                    Provozní doba
+                                </h2>
+                                <p className="mt-4 text-sm text-muted-foreground">
+                                    Dle objednávek
+                                </p>
+                            </section>
 
                             <section aria-labelledby="footer-profiles">
                                 <h2
