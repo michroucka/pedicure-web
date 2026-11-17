@@ -15,6 +15,7 @@ import {
     type AvailabilityFormData,
 } from "@/app/(admin)/(dashboard)/dostupnost/schema";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { TimePicker } from "@/components/ui/time-picker";
 import { TIME_PICKER_COMMIT_DELAY_MS } from "@/lib/time-picker-commit-delay";
@@ -254,17 +255,19 @@ export function AvailabilityForm({
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-2"
         >
-            <div className="divide-y">
-                {days.map((day, index) => (
-                    <DayField
-                        key={day.dayOfWeek}
-                        control={control}
-                        setValue={setValue}
-                        dayIndex={index}
-                        dayOfWeek={day.dayOfWeek}
-                    />
-                ))}
-            </div>
+            <Card>
+                <CardContent className="divide-y">
+                    {days.map((day, index) => (
+                        <DayField
+                            key={day.dayOfWeek}
+                            control={control}
+                            setValue={setValue}
+                            dayIndex={index}
+                            dayOfWeek={day.dayOfWeek}
+                        />
+                    ))}
+                </CardContent>
+            </Card>
 
             <UnsavedChangesBar
                 isDirty={isDirty}
