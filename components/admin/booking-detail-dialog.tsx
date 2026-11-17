@@ -952,14 +952,16 @@ function EditScheduleSummary({
             edited.start !== current.start ||
             edited.end !== current.end);
     return (
-        <div className="text-sm text-muted-foreground">
-            <div className={cn(isChanged && "line-through")}>
+        // Side by side, so a change doesn't push the dialog body down (it
+        // only wraps where there's no room, i.e. on a phone).
+        <div className="flex flex-wrap items-baseline gap-x-2 text-sm text-muted-foreground">
+            <span className={cn(isChanged && "line-through")}>
                 {formatSchedule(current)}
-            </div>
+            </span>
             {isChanged && (
-                <div className="font-medium text-foreground">
-                    {formatSchedule(edited)}
-                </div>
+                <span className="font-medium text-foreground">
+                    → {formatSchedule(edited)}
+                </span>
             )}
         </div>
     );
