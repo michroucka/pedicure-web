@@ -955,7 +955,7 @@ function EditScheduleSummary({
     return (
         // Side by side, so a change doesn't push the dialog body down (it
         // only wraps where there's no room, i.e. on a phone).
-        <div className="flex flex-wrap items-baseline gap-x-2 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
             <span className={cn(isChanged && "line-through")}>
                 {formatSchedule(current)}
             </span>
