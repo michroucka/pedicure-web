@@ -127,9 +127,9 @@ export default function KontaktPage() {
                                                     </span>
                                                 </span>
                                                 {"cta" in action && (
-                                                    // On a phone it goes under the text (lined
+                                                    // On a narrow phone it goes under the text (lined
                                                     // up past the icon: size-11 + gap-x-4).
-                                                    <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground max-sm:basis-full max-sm:pl-15">
+                                                    <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground max-[25rem]:basis-full max-[25rem]:pl-15">
                                                         {action.cta}
                                                         <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                                                     </span>

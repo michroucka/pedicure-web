@@ -65,10 +65,9 @@ export function MapEmbed({
                     <>
                         <MapPin className="size-8 text-primary" />
                         <Button
-                            variant="outline"
                             size="lg"
                             onClick={() => setMapState("loading")}
-                            className="bg-background shadow-lg hover:bg-background"
+                            className="shadow-lg"
                         >
                             <MapIcon className="size-4" />
                             Zobrazit mapu
