@@ -61,9 +61,24 @@ export default async function CenikPage() {
                                             {service.description}
                                         </p>
                                     )}
-                                    <p className="mt-auto pt-4 text-right font-heading text-2xl text-primary">
-                                        {service.price} Kč
-                                    </p>
+                                    <div className="mt-auto flex items-center justify-between gap-4 pt-4">
+                                        {BOOKING_ENABLED && (
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                            >
+                                                <Link
+                                                    href={`/rezervace?services=${service.id}`}
+                                                    aria-label={`Objednat – ${service.name}`}
+                                                >
+                                                    Objednat
+                                                </Link>
+                                            </Button>
+                                        )}
+                                        <p className="ml-auto font-heading text-2xl text-primary">
+                                            {service.price} Kč
+                                        </p>
+                                    </div>
                                 </CardContent>
                             </Card>
                         ))}
