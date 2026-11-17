@@ -176,7 +176,6 @@ function DayField({
                 <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
                     onClick={addBlock}
                 >
                     <Plus className="size-4" />
