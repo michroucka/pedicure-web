@@ -26,6 +26,11 @@ export const SERVICE_COLORS = [
     "border-chart-5/25 border-l-chart-5 bg-chart-5/3",
 ];
 
+// Instead of fading the whole card (opacity made the text hard to read),
+// only the service colour goes - text keeps its contrast.
+const PAST_BOOKING_CLASS =
+    "border-border border-l-muted-foreground/40 bg-muted";
+
 export function BookingCard({
     booking,
     top,
@@ -47,8 +52,7 @@ export function BookingCard({
             onClick={onSelectAction}
             className={cn(
                 "absolute right-1 left-1 flex cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-sm border border-l-4 bg-card px-2 py-1 text-left text-sm transition hover:opacity-90",
-                colorClass,
-                past && "opacity-45"
+                past ? PAST_BOOKING_CLASS : colorClass
             )}
             style={{ top, height }}
         >

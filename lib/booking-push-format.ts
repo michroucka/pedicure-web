@@ -3,7 +3,7 @@ import { cs } from "date-fns/locale";
 import { formatTime } from "@/lib/utils";
 
 export function formatPushDateTime(date: Date, startTime: number): string {
-    return `${format(date, "d. MMMM yyyy", { locale: cs })} ${formatTime(startTime)}`;
+    return `${format(date, "EEEE d. MMMM yyyy", { locale: cs })} ${formatTime(startTime)}`;
 }
 
 export function adminCalendarUrl(date: Date): string {

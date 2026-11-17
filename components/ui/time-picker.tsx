@@ -1,7 +1,7 @@
 "use client";
 
 // Self-contained on purpose – only depends on other shadcn/ui primitives
-// (Button, Popover) + lucide-react + `cn`, no project-specific types
+// (Input, Button, Popover) + lucide-react + `cn`, no project-specific types
 // or logic. Drop the file into another shadcn project as-is.
 //
 // Behaves like <input type="time">, but:
@@ -12,15 +12,17 @@
 //   fewer swipes than one long flat list of times
 // - picking on the wheel only commits when you tap the checkmark –
 //   scrolling it around is just "dialing in" a value, same as iOS
-// - the trigger is a button, not a text field – no free typing. On mobile
-//   a text field pops the on-screen keyboard, which then covers the
-//   popover it's supposed to open. Arrow up/down still nudge by one step.
+// - typing is still free-form (any digits) independent of the wheel; it
+//   commits on blur/Enter and gets snapped to the nearest step, same as a
+//   native stepped input would reject out-of-grid values. Typed digits
+//   also live-preview on the wheel as you type.
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Check, Clock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
     Popover,
@@ -31,29 +33,27 @@ import {
 const MINUTES_PER_DAY = 24 * 60;
 const ITEM_HEIGHT = 36; // px – must match the row height class below
 const VISIBLE_ROWS = 5;
+// px of accumulated wheel delta that move the wheel by one row – below a
+// mouse notch (~100), so a notch is always exactly one step
+const WHEEL_STEP_THRESHOLD = 40;
 
 // Two looks the trigger ships with out of the box – `className` is for a
 // one-off tweak on top (e.g. `text-right`), not for rebuilding a whole
 // style from scratch at every call site.
-const timePickerTriggerVariants = cva(
-    "inline-block cursor-pointer text-left whitespace-nowrap tabular-nums outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-invalid:ring-3 data-invalid:ring-destructive/20 dark:data-invalid:ring-destructive/40",
-    {
-        variants: {
-            variant: {
-                // Same box as the shadcn Input, so it sits naturally next to
-                // regular form fields.
-                default:
-                    "h-10 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 focus-visible:border-ring data-invalid:border-destructive md:text-sm dark:data-invalid:border-destructive/50",
-                // Compact, borderless, muted – a small inline time label (e.g.
-                // sitting right under a Slider) rather than a standalone field.
-                ghost: "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-accent",
-            },
+const timePickerTriggerVariants = cva("tabular-nums", {
+    variants: {
+        variant: {
+            // The regular boxed Input look – no overrides needed.
+            default: "",
+            // Compact, borderless, muted – a small inline time label (e.g.
+            // sitting right under a Slider) rather than a standalone field.
+            ghost: "h-auto rounded-md border-none bg-transparent px-1.5 py-0.5 text-sm text-muted-foreground shadow-none transition-colors hover:bg-accent",
         },
-        defaultVariants: {
-            variant: "default",
-        },
-    }
-);
+    },
+    defaultVariants: {
+        variant: "default",
+    },
+});
 
 function clampToDay(total: number) {
     return ((total % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
@@ -72,6 +72,34 @@ function parseHHMM(value: string): number | null {
     const minutes = Number(match[2]);
     if (hours > 23 || minutes > 59) return null;
     return hours * 60 + minutes;
+}
+
+// Accepts whatever a user is likely to type: "9", "14", "905", "0905",
+// "9:5", "09:05"... and turns it into minutes-from-midnight.
+function parseTypedTime(raw: string): number | null {
+    const cleaned = raw.trim();
+    if (!cleaned) return null;
+
+    const withSeparator = /^(\d{1,2})[:.](\d{1,2})$/.exec(cleaned);
+    if (withSeparator) {
+        const hours = Number(withSeparator[1]);
+        const minutes = Number(withSeparator[2]);
+        if (hours > 23 || minutes > 59) return null;
+        return hours * 60 + minutes;
+    }
+
+    if (/^\d+$/.test(cleaned) && cleaned.length <= 4) {
+        if (cleaned.length <= 2) {
+            const hours = Number(cleaned);
+            return hours > 23 ? null : hours * 60;
+        }
+        const minutes = Number(cleaned.slice(-2));
+        const hours = Number(cleaned.slice(0, -2));
+        if (hours > 23 || minutes > 59) return null;
+        return hours * 60 + minutes;
+    }
+
+    return null;
 }
 
 // Snaps to the nearest step mark (remainder in the lower half rounds down,
@@ -106,29 +134,43 @@ function nearestIndex(values: number[], target: number) {
     return bestIndex;
 }
 
+// A looping wheel renders its values in an odd number of copies, at least
+// this many rows in total, so a short list (12 minutes) gets as much room
+// for a fast drag as the hours do. It keeps returning to the middle copy.
+const LOOP_MIN_ROWS = 120;
+
+function loopCopies(length: number) {
+    const copies = Math.max(5, Math.ceil(LOOP_MIN_ROWS / length));
+    return copies % 2 === 0 ? copies + 1 : copies;
+}
+
 // One scrollable, snap-to-row wheel (hours or minutes). The selection slot
 // is a fixed highlight band at vertical center – the content scrolls
 // underneath it, same mechanic as iOS's UIPickerView.
+//
+// With `loop` the values repeat (… 22 23 | 00 01 … 23 | 00 01 …) so the
+// wheel never hits an end: scrolling up from 00 goes on to 23. Every row
+// is a real element; after a scroll settles, the wheel jumps (without
+// animation) to the same value in the middle copy.
 function WheelColumn({
     values,
     format,
     selected,
     onSelect,
+    loop = false,
     "aria-label": ariaLabel,
 }: {
     values: number[];
     format: (value: number) => string;
     selected: number;
     onSelect: (value: number) => void;
+    loop?: boolean;
     "aria-label": string;
 }) {
     const containerRef = React.useRef<HTMLDivElement>(null);
-    // Real rendered positions, not an assumed ITEM_HEIGHT*index – CSS
-    // scroll-snap resolves its own "nearest snap point" after a scroll/
-    // scrollTo settles, and that doesn't always match a hand-computed
-    // offset (padding + snap interact in browser-specific ways). Measuring
-    // actual offsetTop/clientHeight sidesteps the mismatch entirely instead
-    // of fighting it with a more "correct" constant.
+    // Real rendered positions, not an assumed ITEM_HEIGHT*index – measuring
+    // actual offsetTop/clientHeight avoids any mismatch between a computed
+    // offset and where the browser really put the rows.
     const itemRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
     const scrollTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(
         undefined
@@ -144,11 +186,49 @@ function WheelColumn({
         startScrollTop: number;
         dragging: boolean;
     } | null>(null);
-    const targetIndex = nearestIndex(values, selected);
 
-    function scrollToIndex(index: number, smooth: boolean) {
+    // Looping a list shorter than the wheel would show one value twice at once.
+    const isLooping = loop && values.length >= VISIBLE_ROWS;
+    const copies = isLooping ? loopCopies(values.length) : 1;
+    const middleCopy = Math.floor(copies / 2);
+    const rows = React.useMemo(
+        () =>
+            Array.from(
+                { length: values.length * copies },
+                (_, i) => values[i % values.length]
+            ),
+        [values, copies]
+    );
+    const middleOffset = middleCopy * values.length;
+    const selectedIndex = nearestIndex(values, selected);
+
+    // The row currently at the center. With looping the selected value is on
+    // several rows; this says which one, so the wheel animates to the
+    // neighbouring copy (00 → 23 above it) instead of spinning a whole lap.
+    // Only read in effects and handlers, never during render.
+    const centerRowRef = React.useRef(selectedIndex + middleOffset);
+
+    function findTargetRow() {
+        if (centerRowRef.current >= rows.length) {
+            centerRowRef.current = selectedIndex + middleOffset;
+        }
+        if (!isLooping) return selectedIndex;
+        let targetRow = selectedIndex;
+        let closestDistance = Infinity;
+        for (let copy = 0; copy < copies; copy++) {
+            const row = copy * values.length + selectedIndex;
+            const distance = Math.abs(row - centerRowRef.current);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                targetRow = row;
+            }
+        }
+        return targetRow;
+    }
+
+    function scrollToRow(row: number, smooth: boolean) {
         const container = containerRef.current;
-        const item = itemRefs.current[index];
+        const item = itemRefs.current[row];
         if (!container || !item) return;
         const top =
             item.offsetTop - (container.clientHeight - item.offsetHeight) / 2;
@@ -157,18 +237,54 @@ function WheelColumn({
         }
     }
 
-    React.useEffect(() => {
-        scrollToIndex(targetIndex, hasPositionedRef.current);
+    const scrollToSelected = React.useEffectEvent(() => {
+        const targetRow = findTargetRow();
+        centerRowRef.current = targetRow;
+        scrollToRow(targetRow, hasPositionedRef.current);
         hasPositionedRef.current = true;
-    }, [targetIndex]);
+    });
+
+    React.useEffect(() => {
+        scrollToSelected();
+    }, [selectedIndex, rows]);
+
+    // Moves a looping wheel from an outer copy back to the same value in the
+    // middle copy without animation, so there is always room to keep going.
+    function recenter(row: number) {
+        const container = containerRef.current;
+        const middleRow = middleOffset + (row % values.length);
+        const from = itemRefs.current[row];
+        const to = itemRefs.current[middleRow];
+        if (!container || !from || !to || middleRow === row) return;
+        container.scrollTop += to.offsetTop - from.offsetTop;
+        centerRowRef.current = middleRow;
+    }
+
+    // While scrolling, a looping wheel that reaches its first or last copy
+    // jumps by whole copies back to the middle right away – waiting for the
+    // scroll to settle would let a fast drag run off the end. A running drag
+    // is shifted by the same amount so it continues seamlessly.
+    function keepAwayFromEnds() {
+        const container = containerRef.current;
+        if (!container) return;
+        const centerRow = Math.round(container.scrollTop / ITEM_HEIGHT);
+        const copy = Math.floor(centerRow / values.length);
+        if (copy > 0 && copy < copies - 1) return;
+        const shift = (middleCopy - copy) * values.length;
+        container.scrollTop += shift * ITEM_HEIGHT;
+        if (dragRef.current)
+            dragRef.current.startScrollTop += shift * ITEM_HEIGHT;
+        centerRowRef.current += shift;
+    }
 
     function handleScroll() {
+        if (isLooping) keepAwayFromEnds();
         clearTimeout(scrollTimer.current);
         scrollTimer.current = setTimeout(() => {
             const container = containerRef.current;
             if (!container) return;
             const center = container.scrollTop + container.clientHeight / 2;
-            let closestIndex = 0;
+            let closestRow = 0;
             let closestDiff = Infinity;
             itemRefs.current.forEach((item, i) => {
                 if (!item) return;
@@ -176,11 +292,19 @@ function WheelColumn({
                 const diff = Math.abs(itemCenter - center);
                 if (diff < closestDiff) {
                     closestDiff = diff;
-                    closestIndex = i;
+                    closestRow = i;
                 }
             });
-            const value = values[closestIndex];
-            if (value !== undefined && value !== selected) onSelect(value);
+            centerRowRef.current = closestRow;
+            if (isLooping) recenter(closestRow);
+            const value = rows[closestRow];
+            if (value !== undefined && value !== selected) {
+                onSelect(value);
+            } else {
+                // same value as before (e.g. a drag released near where it
+                // started): still snap the row exactly to the center
+                scrollToRow(centerRowRef.current, true);
+            }
         }, 80);
     }
 
@@ -191,10 +315,50 @@ function WheelColumn({
     // gestures on it get preventDefault()'d. Setting scrollTop ourselves
     // sidesteps that entirely (still fires the normal "scroll" event
     // above, so snapping/selection keeps working the same).
-    function handleWheel(e: React.WheelEvent) {
-        e.preventDefault();
-        containerRef.current?.scrollBy({ top: e.deltaY });
-    }
+    //
+    // A mouse wheel reports ~100px per notch, which scrolling by pixels
+    // turns into ~3 rows. Instead, deltas are summed and every threshold
+    // crossed moves the wheel by exactly one row (animated by the
+    // scrollToRow effect), so one notch = one value and a trackpad's many
+    // small deltas step through the values one by one. Attached by hand
+    // because React's onWheel is passive and can't preventDefault the
+    // native scroll.
+    const wheelDeltaRef = React.useRef(0);
+    const stepWheelByOneRow = React.useEffectEvent((direction: number) => {
+        const nextRow = Math.min(
+            rows.length - 1,
+            Math.max(0, centerRowRef.current + direction)
+        );
+        if (nextRow === centerRowRef.current) return;
+        centerRowRef.current = nextRow;
+        onSelect(rows[nextRow]);
+    });
+
+    React.useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        function handleWheel(e: WheelEvent) {
+            e.preventDefault();
+            const delta =
+                e.deltaMode === WheelEvent.DOM_DELTA_LINE
+                    ? e.deltaY * ITEM_HEIGHT
+                    : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
+                      ? e.deltaY * ITEM_HEIGHT * VISIBLE_ROWS
+                      : e.deltaY;
+            // a change of direction starts counting again
+            if (Math.sign(delta) !== Math.sign(wheelDeltaRef.current)) {
+                wheelDeltaRef.current = 0;
+            }
+            wheelDeltaRef.current += delta;
+            if (Math.abs(wheelDeltaRef.current) < WHEEL_STEP_THRESHOLD) return;
+
+            const direction = Math.sign(wheelDeltaRef.current);
+            wheelDeltaRef.current = 0;
+            stepWheelByOneRow(direction);
+        }
+        container.addEventListener("wheel", handleWheel, { passive: false });
+        return () => container.removeEventListener("wheel", handleWheel);
+    }, []);
 
     function handlePointerDown(e: React.PointerEvent) {
         const container = containerRef.current;
@@ -241,30 +405,39 @@ function WheelColumn({
             // scrollTop writes below (the browser kept "correcting" mid-
             // gesture to its own snap point, causing jumps/jitter).
             // Snapping to the nearest item is done entirely in JS instead:
-            // handleScroll's debounce + the scrollToIndex effect above.
+            // handleScroll's debounce + the scrollToRow effect above.
             className="touch-none [scrollbar-width:none] overflow-y-scroll [&::-webkit-scrollbar]:hidden"
             style={{
                 height: ITEM_HEIGHT * VISIBLE_ROWS,
                 paddingBlock: ITEM_HEIGHT * Math.floor(VISIBLE_ROWS / 2),
             }}
             onScroll={handleScroll}
-            onWheel={handleWheel}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
         >
-            {values.map((v, i) => (
+            {/* By value, not row: with looping, other copies of the
+                selected value are always out of view. */}
+            {rows.map((v, i) => (
                 <button
-                    key={v}
+                    key={i}
                     ref={(el) => {
                         itemRefs.current[i] = el;
                     }}
                     type="button"
                     role="option"
-                    aria-selected={i === targetIndex}
-                    className="flex h-9 w-12 shrink-0 items-center justify-center text-base tabular-nums"
-                    onClick={() => onSelect(v)}
+                    aria-selected={v === values[selectedIndex]}
+                    className={cn(
+                        "flex h-9 w-12 shrink-0 items-center justify-center text-base tabular-nums transition-colors",
+                        v === values[selectedIndex]
+                            ? "font-medium text-foreground"
+                            : "text-muted-foreground"
+                    )}
+                    onClick={() => {
+                        centerRowRef.current = i;
+                        onSelect(v);
+                    }}
                 >
                     {format(v)}
                 </button>
@@ -291,6 +464,32 @@ export interface TimePickerProps {
     placeholder?: string;
     disabled?: boolean;
     /**
+     * Allow free typing into the field (any digits, parsed + snapped to
+     * `step` on blur/Enter). Default off – the field is `readOnly` and the
+     * wheel popover is the only way to change the value.
+     */
+    allowTyping?: boolean;
+    /**
+     * Stretch the field to its container's width (e.g. a form column next to
+     * full-width inputs) instead of sizing it to its content. Default off.
+     */
+    fullWidth?: boolean;
+    /**
+     * Where the icon sits: before the time (default) or at the end of the
+     * field, like a date picker's calendar icon next to it.
+     */
+    iconPosition?: "start" | "end";
+    /**
+     * Make both wheels endless: scrolling up from 00 continues with 23 (or the
+     * last minute), like a real dial. Off by default.
+     */
+    loop?: boolean;
+    /**
+     * Milliseconds the wheel has to rest before its value commits on its own
+     * (the popover stays open). Unset = only the checkmark commits.
+     */
+    commitDelay?: number;
+    /**
      * Leading icon shown inside the trigger. Defaults to a clock icon; pass
      * `null` to render no icon at all.
      */
@@ -314,6 +513,11 @@ function TimePicker({
     defaultValue,
     placeholder = "--:--",
     disabled,
+    allowTyping = false,
+    fullWidth = false,
+    iconPosition = "start",
+    loop = false,
+    commitDelay,
     icon = <Clock className="size-4" />,
     variant,
     className,
@@ -323,9 +527,10 @@ function TimePicker({
     "aria-invalid": ariaInvalid,
 }: TimePickerProps) {
     const [open, setOpen] = React.useState(false);
+    const [draft, setDraft] = React.useState(value);
     const [pendingHour, setPendingHour] = React.useState(0);
     const [pendingMinute, setPendingMinute] = React.useState(0);
-    const triggerRef = React.useRef<HTMLButtonElement>(null);
+    const inputRef = React.useRef<HTMLInputElement>(null);
     const contentRef = React.useRef<HTMLDivElement>(null);
     const sizerRef = React.useRef<HTMLSpanElement>(null);
     const [measuredWidth, setMeasuredWidth] = React.useState<number | null>(
@@ -336,27 +541,39 @@ function TimePicker({
     // guessed width class – callers vary padding/font-size (compact inline
     // labels vs. a roomy standalone field) enough that one hardcoded width
     // never fit all of them evenly on both sides. The sizer span mirrors
-    // the trigger's real computed font so the measurement matches exactly;
-    // reading the trigger's own padding/border (rather than special-casing
+    // the input's real computed font so the measurement matches exactly;
+    // reading the input's own padding/border (rather than special-casing
     // the icon) means it stays correct automatically either way.
     React.useLayoutEffect(() => {
         const sizer = sizerRef.current;
-        const trigger = triggerRef.current;
-        if (!sizer || !trigger) return;
-        const inputStyles = window.getComputedStyle(trigger);
-        sizer.style.fontSize = inputStyles.fontSize;
-        sizer.style.fontFamily = inputStyles.fontFamily;
-        sizer.style.fontWeight = inputStyles.fontWeight;
-        sizer.style.fontStyle = inputStyles.fontStyle;
-        sizer.style.letterSpacing = inputStyles.letterSpacing;
-        sizer.style.fontVariantNumeric = inputStyles.fontVariantNumeric;
-        const horizontalExtra =
-            parseFloat(inputStyles.paddingLeft) +
-            parseFloat(inputStyles.paddingRight) +
-            parseFloat(inputStyles.borderLeftWidth) +
-            parseFloat(inputStyles.borderRightWidth);
-        setMeasuredWidth(Math.ceil(sizer.offsetWidth + horizontalExtra) + 2);
-    }, [icon, variant, className]);
+        const input = inputRef.current;
+        if (!sizer || !input) return;
+
+        function measure(sizer: HTMLSpanElement, input: HTMLInputElement) {
+            const inputStyles = window.getComputedStyle(input);
+            sizer.style.fontSize = inputStyles.fontSize;
+            sizer.style.fontFamily = inputStyles.fontFamily;
+            sizer.style.fontWeight = inputStyles.fontWeight;
+            sizer.style.fontStyle = inputStyles.fontStyle;
+            sizer.style.letterSpacing = inputStyles.letterSpacing;
+            sizer.style.fontVariantNumeric = inputStyles.fontVariantNumeric;
+            const horizontalExtra =
+                parseFloat(inputStyles.paddingLeft) +
+                parseFloat(inputStyles.paddingRight) +
+                parseFloat(inputStyles.borderLeftWidth) +
+                parseFloat(inputStyles.borderRightWidth);
+            setMeasuredWidth(
+                Math.ceil(sizer.offsetWidth + horizontalExtra) + 2
+            );
+        }
+
+        measure(sizer, input);
+        // Inside a hidden parent (e.g. an inactive tab kept mounted) the
+        // first measurement is 0 – measure again once it becomes visible.
+        const observer = new ResizeObserver(() => measure(sizer, input));
+        observer.observe(sizer);
+        return () => observer.disconnect();
+    }, [icon, iconPosition, variant, className]);
 
     // Radix's own outside-click dismissal (DismissableLayer) shares one
     // layer stack across the whole app – stacked with a Dialog's own
@@ -369,7 +586,7 @@ function TimePicker({
         if (!open) return;
         function handlePointerDown(e: PointerEvent) {
             const target = e.target as Node;
-            if (triggerRef.current?.contains(target)) return;
+            if (inputRef.current?.contains(target)) return;
             if (contentRef.current?.contains(target)) return;
             setOpen(false);
         }
@@ -418,6 +635,14 @@ function TimePicker({
         ? pendingMinute
         : minuteValues[nearestIndex(minuteValues, pendingMinute)];
 
+    // Keep the draft in sync with external value changes, but don't clobber
+    // what the user is actively typing.
+    React.useEffect(() => {
+        if (document.activeElement !== inputRef.current) {
+            setDraft(value);
+        }
+    }, [value]);
+
     function seedPending(fromMinutes: number) {
         setPendingHour(Math.floor(fromMinutes / 60));
         setPendingMinute(fromMinutes % 60);
@@ -426,27 +651,79 @@ function TimePicker({
     function handleOpenChange(next: boolean) {
         setOpen(next);
         if (next) {
-            seedPending(parseHHMM(value) ?? fallbackMinutes);
+            seedPending(
+                parseTypedTime(draft) ?? parseHHMM(value) ?? fallbackMinutes
+            );
         }
     }
 
+    function commit(raw: string) {
+        const parsed = parseTypedTime(raw);
+        if (parsed === null) {
+            setDraft(value);
+            return;
+        }
+        const rounded = Math.min(
+            maxMinutes,
+            Math.max(minMinutes, roundToStep(parsed, step))
+        );
+        const formatted = formatMinutes(rounded);
+        setDraft(formatted);
+        if (formatted !== value) onChange(formatted);
+    }
+
     function nudge(direction: 1 | -1) {
-        const base = parseHHMM(value) ?? fallbackMinutes;
+        const base = parseHHMM(draft) ?? parseHHMM(value) ?? fallbackMinutes;
         const next = Math.min(
             maxMinutes,
             Math.max(minMinutes, clampToDay(base + direction * step))
         );
-        onChange(formatMinutes(next));
+        const formatted = formatMinutes(next);
+        setDraft(formatted);
+        onChange(formatted);
     }
 
-    function confirmWheel() {
+    // Wheel changes are only "dialed in" until confirmed. With commitDelay
+    // they also commit once the wheel has rested that long (popover stays
+    // open), so leaving without the checkmark keeps the value; fast spinning
+    // keeps restarting the delay. Typing never starts it – a half-typed "14"
+    // must not turn into "14:00" while the user is still typing.
+    const wheelTouchedRef = React.useRef(false);
+
+    function selectHourFromWheel(hour: number) {
+        wheelTouchedRef.current = true;
+        setPendingHour(hour);
+    }
+
+    function selectMinuteFromWheel(minute: number) {
+        wheelTouchedRef.current = true;
+        setPendingMinute(minute);
+    }
+
+    function commitWheel() {
+        wheelTouchedRef.current = false;
         const combined = pendingHour * 60 + effectivePendingMinute;
         const rounded = Math.min(
             maxMinutes,
             Math.max(minMinutes, roundToStep(combined, step))
         );
-        onChange(formatMinutes(rounded));
+        const formatted = formatMinutes(rounded);
+        setDraft(formatted);
+        if (formatted !== value) onChange(formatted);
+    }
+
+    React.useEffect(() => {
+        if (!open || commitDelay == null || !wheelTouchedRef.current) return;
+        const timer = setTimeout(commitWheel, commitDelay);
+        return () => clearTimeout(timer);
+        // commitWheel reads the pending values listed here
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, pendingHour, effectivePendingMinute, commitDelay]);
+
+    function confirmWheel() {
+        commitWheel();
         setOpen(false);
+        inputRef.current?.blur();
     }
 
     return (
@@ -455,18 +732,26 @@ function TimePicker({
             onOpenChange={handleOpenChange}
         >
             <PopoverAnchor asChild>
-                <div className="relative inline-flex items-center">
+                <div
+                    className={cn(
+                        "relative items-center",
+                        fullWidth ? "flex w-full" : "inline-flex"
+                    )}
+                >
                     {icon !== null && (
                         <span
                             aria-hidden
-                            className="pointer-events-none absolute left-2 flex items-center text-muted-foreground"
+                            className={cn(
+                                "pointer-events-none absolute flex items-center text-muted-foreground",
+                                iconPosition === "end" ? "right-3" : "left-2"
+                            )}
                         >
                             {icon}
                         </span>
                     )}
                     {/* Invisible, out-of-flow – exists only so its
                         offsetWidth tells us how wide "00:00" actually
-                        renders in the trigger's real font. */}
+                        renders in this input's real font. */}
                     <span
                         ref={sizerRef}
                         aria-hidden
@@ -474,27 +759,48 @@ function TimePicker({
                     >
                         00:00
                     </span>
-                    <button
-                        ref={triggerRef}
-                        type="button"
+                    <Input
+                        ref={inputRef}
                         id={id}
+                        name={name}
                         aria-label={ariaLabel}
-                        // aria-invalid isn't valid on role=button, so the
-                        // invalid look keys off a data attribute instead.
-                        data-invalid={ariaInvalid || undefined}
-                        aria-haspopup="dialog"
-                        aria-expanded={open}
+                        aria-invalid={ariaInvalid}
+                        inputMode="numeric"
+                        autoComplete="off"
+                        readOnly={!allowTyping}
+                        placeholder={placeholder}
                         disabled={disabled}
                         style={{
-                            paddingLeft: icon !== null ? "1.75rem" : undefined,
-                            width: measuredWidth ?? undefined,
+                            paddingLeft:
+                                icon !== null && iconPosition === "start"
+                                    ? "1.75rem"
+                                    : undefined,
+                            paddingRight:
+                                icon !== null && iconPosition === "end"
+                                    ? "2.25rem"
+                                    : undefined,
+                            width: fullWidth
+                                ? undefined
+                                : (measuredWidth ?? undefined),
                         }}
                         className={cn(
                             timePickerTriggerVariants({ variant }),
-                            !value && "text-muted-foreground",
+                            // Read-only behaves like a button: no text cursor,
+                            // no blinking caret, no text selection.
+                            !allowTyping &&
+                                "cursor-pointer caret-transparent select-none",
                             className
                         )}
-                        onClick={() => handleOpenChange(!open)}
+                        value={draft}
+                        onFocus={() => handleOpenChange(true)}
+                        onChange={(e) => {
+                            setDraft(e.target.value);
+                            // Live-preview on the wheel as the user types,
+                            // without committing yet.
+                            const parsed = parseTypedTime(e.target.value);
+                            if (parsed !== null) seedPending(parsed);
+                        }}
+                        onBlur={(e) => commit(e.target.value)}
                         onKeyDown={(e) => {
                             if (e.key === "ArrowUp") {
                                 e.preventDefault();
@@ -502,20 +808,16 @@ function TimePicker({
                             } else if (e.key === "ArrowDown") {
                                 e.preventDefault();
                                 nudge(-1);
+                            } else if (e.key === "Enter") {
+                                e.preventDefault();
+                                commit(e.currentTarget.value);
+                                setOpen(false);
                             } else if (e.key === "Escape") {
+                                setDraft(value);
                                 setOpen(false);
                             }
                         }}
-                    >
-                        {value || placeholder}
-                    </button>
-                    {name && (
-                        <input
-                            type="hidden"
-                            name={name}
-                            value={value}
-                        />
-                    )}
+                    />
                 </div>
             </PopoverAnchor>
             <PopoverContent
@@ -531,16 +833,17 @@ function TimePicker({
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}
             >
-                <div className="relative flex items-center gap-1">
+                <div className="relative isolate flex items-center gap-1">
                     <div
                         aria-hidden
-                        className="pointer-events-none absolute inset-x-0 top-1/2 h-9 -translate-y-1/2 rounded-md border-y border-border bg-accent/40"
+                        className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 h-9 -translate-y-1/2 rounded-md border-y border-border bg-accent/40"
                     />
                     <WheelColumn
                         values={hourValues}
                         format={(v) => String(v).padStart(2, "0")}
                         selected={pendingHour}
-                        onSelect={setPendingHour}
+                        onSelect={selectHourFromWheel}
+                        loop={loop}
                         aria-label="Hodiny"
                     />
                     <span className="text-base font-medium text-muted-foreground">
@@ -550,7 +853,8 @@ function TimePicker({
                         values={minuteValues}
                         format={(v) => String(v).padStart(2, "0")}
                         selected={effectivePendingMinute}
-                        onSelect={setPendingMinute}
+                        onSelect={selectMinuteFromWheel}
+                        loop={loop}
                         aria-label="Minuty"
                     />
                 </div>

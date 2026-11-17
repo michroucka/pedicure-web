@@ -15,12 +15,18 @@ import {
     type AvailabilityFormData,
 } from "@/app/(admin)/(dashboard)/dostupnost/schema";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { TimePicker } from "@/components/ui/time-picker";
-import { Spinner } from "@/components/ui/spinner";
+import { TIME_PICKER_COMMIT_DELAY_MS } from "@/lib/time-picker-commit-delay";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils";
-import { AlertCircle, Plus, Trash2, Save } from "lucide-react";
+import { AlertCircle, Plus, Trash2 } from "lucide-react";
+import {
+    UnsavedChangesBar,
+    useConfirmLeaveWhenDirty,
+    useSavedNotice,
+} from "@/components/admin/unsaved-changes-bar";
 
 const DAY_LABELS: Record<number, string> = {
     0: "Neděle",
@@ -84,8 +90,8 @@ function BlockField({
     }
 
     return (
-        <div className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-            <div className="flex-1">
+        <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-2xl border p-3">
                 <Slider
                     value={[start, end]}
                     onValueChange={handleChange}
@@ -96,6 +102,7 @@ function BlockField({
                 />
                 <div className="mt-3 flex justify-between gap-2">
                     <TimePicker
+                        commitDelay={TIME_PICKER_COMMIT_DELAY_MS}
                         step={SLIDER_STEP}
                         icon={null}
                         variant="ghost"
@@ -104,6 +111,7 @@ function BlockField({
                         onChange={typeStart}
                     />
                     <TimePicker
+                        commitDelay={TIME_PICKER_COMMIT_DELAY_MS}
                         step={SLIDER_STEP}
                         icon={null}
                         variant="ghost"
@@ -164,11 +172,12 @@ function DayField({
         // full width, and the whole week fits on a landscape tablet.
         <div className="flex flex-col gap-2 py-3 lg:grid lg:grid-cols-[9rem_1fr] lg:gap-4">
             <div className="flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:justify-start">
-                <span className="font-medium">{DAY_LABELS[dayOfWeek]}</span>
+                <span className="text-sm font-semibold">
+                    {DAY_LABELS[dayOfWeek]}
+                </span>
                 <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
                     onClick={addBlock}
                 >
                     <Plus className="size-4" />
@@ -231,11 +240,14 @@ export function AvailabilityForm({
         defaultValues: { days },
     });
     const [isSaving, startTransition] = useTransition();
+    const { isSavedNoticeShown, showSavedNotice } = useSavedNotice();
+    useConfirmLeaveWhenDirty(isDirty);
 
     function onSubmit(data: AvailabilityFormData) {
         startTransition(async () => {
             await saveAction(data);
             reset(data);
+            showSavedNotice();
         });
     }
 
@@ -244,39 +256,28 @@ export function AvailabilityForm({
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-2"
         >
-            <div className="divide-y rounded-2xl border px-4">
-                {days.map((day, index) => (
-                    <DayField
-                        key={day.dayOfWeek}
-                        control={control}
-                        setValue={setValue}
-                        dayIndex={index}
-                        dayOfWeek={day.dayOfWeek}
-                    />
-                ))}
-            </div>
+            <Card>
+                <CardContent className="divide-y">
+                    {days.map((day, index) => (
+                        <DayField
+                            key={day.dayOfWeek}
+                            control={control}
+                            setValue={setValue}
+                            dayIndex={index}
+                            dayOfWeek={day.dayOfWeek}
+                        />
+                    ))}
+                </CardContent>
+            </Card>
 
-            {/* Sticky above the bottom nav, so saving doesn't need a scroll
-                past all seven days; only while there is something to save. */}
-            {(isDirty || isSaving) && (
-                <div className="sticky bottom-[calc(var(--admin-nav-height)+env(safe-area-inset-bottom))] -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur transition-[translate,opacity] duration-200 starting:translate-y-4 starting:opacity-0">
-                    <span className="text-sm text-muted-foreground">
-                        Neuložené změny
-                    </span>
-                    <Button
-                        type="submit"
-                        disabled={isSaving}
-                        size="lg"
-                    >
-                        {isSaving ? (
-                            <Spinner className="size-4" />
-                        ) : (
-                            <Save className="size-4" />
-                        )}
-                        {isSaving ? "Ukládám…" : "Uložit"}
-                    </Button>
-                </div>
-            )}
+            <UnsavedChangesBar
+                isDirty={isDirty}
+                isSaving={isSaving}
+                isSavedNoticeShown={isSavedNoticeShown}
+                // No arguments: back to the last saved values (reset(data)
+                // after a save makes those the new defaults).
+                onDiscard={() => reset()}
+            />
         </form>
     );
 }

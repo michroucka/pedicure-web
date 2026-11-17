@@ -6,16 +6,16 @@ import { cs } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { ExceptionDayButton } from "@/components/admin/exception-day-button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { TimePicker } from "@/components/ui/time-picker";
+import { TIME_PICKER_COMMIT_DELAY_MS } from "@/lib/time-picker-commit-delay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
     AlertCircle,
     Plus,
     Trash2,
-    Check,
     CalendarX,
     CalendarDays,
 } from "lucide-react";
@@ -43,6 +43,12 @@ import type {
     RecurringAvailability,
 } from "@/lib/generated/prisma/client";
 import { Spinner } from "@/components/ui/spinner";
+import {
+    LEAVE_WITH_UNSAVED_CHANGES_MESSAGE,
+    UnsavedChangesBar,
+    useConfirmLeaveWhenDirty,
+    useSavedNotice,
+} from "@/components/admin/unsaved-changes-bar";
 
 const SLIDER_STEP = 15;
 // Fallback track bounds when a day has no blocks yet to derive a range
@@ -93,6 +99,27 @@ function newBlockId() {
     return Math.random().toString(36).slice(2);
 }
 
+function toBlocks(slots: TimeSlot[]): Block[] {
+    return slots.map((slot) => ({
+        id: newBlockId(),
+        start: slot.start,
+        end: slot.end,
+    }));
+}
+
+function toSortedSlots(blocks: Block[]): TimeSlot[] {
+    return [...blocks]
+        .sort((a, b) => a.start - b.start)
+        .map((b) => ({ start: b.start, end: b.end }));
+}
+
+function haveSameSlots(a: TimeSlot[], b: TimeSlot[]) {
+    return (
+        a.length === b.length &&
+        a.every((slot, i) => slot.start === b[i].start && slot.end === b[i].end)
+    );
+}
+
 export function ExceptionForm({
     exceptions,
     recurring,
@@ -102,6 +129,8 @@ export function ExceptionForm({
 }) {
     const [date, setDate] = useState<Date>();
     const [blocks, setBlocks] = useState<Block[]>([]);
+    // The day as it is saved, to tell unsaved edits apart and to go back to.
+    const [savedSlots, setSavedSlots] = useState<TimeSlot[]>([]);
     const [rangeMode, setRangeMode] = useState(false);
     const [range, setRange] = useState<DateRange>();
     const [error, setError] = useState<string>();
@@ -109,6 +138,17 @@ export function ExceptionForm({
         null
     );
     const [isPending, startTransition] = useTransition();
+    const { isSavedNoticeShown, showSavedNotice } = useSavedNotice();
+
+    const isDirty =
+        !rangeMode &&
+        !!date &&
+        !haveSameSlots(toSortedSlots(blocks), savedSlots);
+    useConfirmLeaveWhenDirty(isDirty);
+
+    function confirmDiscardChanges() {
+        return !isDirty || window.confirm(LEAVE_WITH_UNSAVED_CHANGES_MESSAGE);
+    }
 
     const minDate = addDays(localDateToUtcMidnight(new Date()), 1);
 
@@ -144,12 +184,14 @@ export function ExceptionForm({
     }
 
     function updateDate(d: Date | undefined) {
+        if (!confirmDiscardChanges()) return;
         setDate(d);
         setConflicts(null);
         setError(undefined);
 
         if (!d) {
             setBlocks([]);
+            setSavedSlots([]);
             return;
         }
 
@@ -163,19 +205,22 @@ export function ExceptionForm({
                 end: e.endTime,
             }))
         );
-        setBlocks(
-            resolved.map((slot) => ({
-                id: newBlockId(),
-                start: slot.start,
-                end: slot.end,
-            }))
-        );
+        setBlocks(toBlocks(resolved));
+        setSavedSlots(resolved);
+    }
+
+    function discardChanges() {
+        setBlocks(toBlocks(savedSlots));
+        setError(undefined);
+        setConflicts(null);
     }
 
     function toggleRangeMode() {
+        if (!confirmDiscardChanges()) return;
         setRangeMode((prev) => !prev);
         setDate(undefined);
         setBlocks([]);
+        setSavedSlots([]);
         setRange(undefined);
         setError(undefined);
         setConflicts(null);
@@ -277,9 +322,7 @@ export function ExceptionForm({
         }
         setError(undefined);
 
-        const target: TimeSlot[] = [...blocks]
-            .sort((a, b) => a.start - b.start)
-            .map((b) => ({ start: b.start, end: b.end }));
+        const target = toSortedSlots(blocks);
 
         for (let i = 1; i < target.length; i++) {
             if (target[i].start < target[i - 1].end) {
@@ -313,9 +356,9 @@ export function ExceptionForm({
                 setError(result.error);
                 return;
             }
-            setDate(undefined);
-            setBlocks([]);
+            setSavedSlots(target);
             setConflicts(null);
+            showSavedNotice();
         });
     }
 
@@ -326,111 +369,290 @@ export function ExceptionForm({
         differenceInCalendarDays(range.to, range.from) === 0;
 
     return (
-        <Card>
-            <CardContent className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:gap-6">
-                <div className="flex flex-col gap-2">
-                    {rangeMode ? (
-                        <Calendar
-                            mode="range"
-                            locale={cs}
-                            selected={range}
-                            onSelect={updateRange}
-                            // Same muted-pink band as the calendar picker's
-                            // highlighted week, instead of the default grey.
-                            // A one-day range has nothing to span, so no band.
-                            classNames={{
-                                range_start: isSingleDayRange
-                                    ? ""
-                                    : "relative isolate z-0 rounded-l-(--cell-radius) bg-primary/10 after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-primary/10 last:rounded-r-(--cell-radius) last:after:hidden",
-                                range_middle:
-                                    "rounded-none bg-primary/10 first:rounded-l-(--cell-radius) last:rounded-r-(--cell-radius)",
-                                range_end: isSingleDayRange
-                                    ? ""
-                                    : "relative isolate z-0 rounded-r-(--cell-radius) bg-primary/10 after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-primary/10 first:rounded-l-(--cell-radius) first:after:hidden",
-                                day_button:
-                                    "data-[range-middle=true]:bg-transparent",
-                            }}
-                            disabled={(day) =>
-                                localDateToUtcMidnight(day).getTime() <
-                                minDate.getTime()
-                            }
-                            modifiers={modifiers}
-                            components={{ DayButton: ExceptionDayButton }}
-                            className="w-full bg-transparent"
-                            fixedWeeks
-                        />
-                    ) : (
-                        <Calendar
-                            mode="single"
-                            locale={cs}
-                            selected={date}
-                            onSelect={updateDate}
-                            disabled={(day) =>
-                                localDateToUtcMidnight(day).getTime() <
-                                minDate.getTime()
-                            }
-                            modifiers={modifiers}
-                            components={{ DayButton: ExceptionDayButton }}
-                            className="w-full bg-transparent"
-                            fixedWeeks
-                        />
-                    )}
-                    <ExceptionLegend />
-                </div>
-
-                <div className="flex h-full flex-col gap-3">
-                    {/* Always shows which mode is on - the old single
-                        toggle button's label named the other one. */}
-                    <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
-                        {[
-                            { range: false, label: "Jeden den" },
-                            { range: true, label: "Zavřít rozsah" },
-                        ].map((option) => (
-                            <Button
-                                key={option.label}
-                                type="button"
-                                variant="ghost"
-                                aria-pressed={rangeMode === option.range}
-                                className={
-                                    rangeMode === option.range
-                                        ? "bg-background shadow-sm hover:bg-background"
-                                        : "text-muted-foreground"
+        <div className="flex flex-col gap-2">
+            <Card>
+                <CardContent className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:gap-6">
+                    <div className="flex flex-col gap-2">
+                        {rangeMode ? (
+                            <Calendar
+                                mode="range"
+                                locale={cs}
+                                selected={range}
+                                onSelect={updateRange}
+                                // Same muted-pink band as the calendar picker's
+                                // highlighted week, instead of the default grey.
+                                // A one-day range has nothing to span, so no band.
+                                classNames={{
+                                    range_start: isSingleDayRange
+                                        ? ""
+                                        : "relative isolate z-0 rounded-l-(--cell-radius) bg-primary/10 after:absolute after:inset-y-0 after:right-0 after:w-4 after:bg-primary/10 last:rounded-r-(--cell-radius) last:after:hidden",
+                                    range_middle:
+                                        "rounded-none bg-primary/10 first:rounded-l-(--cell-radius) last:rounded-r-(--cell-radius)",
+                                    range_end: isSingleDayRange
+                                        ? ""
+                                        : "relative isolate z-0 rounded-r-(--cell-radius) bg-primary/10 after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-primary/10 first:rounded-l-(--cell-radius) first:after:hidden",
+                                    day_button:
+                                        "data-[range-middle=true]:bg-transparent",
+                                }}
+                                disabled={(day) =>
+                                    localDateToUtcMidnight(day).getTime() <
+                                    minDate.getTime()
                                 }
-                                onClick={() =>
-                                    rangeMode !== option.range &&
-                                    toggleRangeMode()
+                                modifiers={modifiers}
+                                components={{ DayButton: ExceptionDayButton }}
+                                className="w-full bg-transparent"
+                                fixedWeeks
+                            />
+                        ) : (
+                            <Calendar
+                                mode="single"
+                                locale={cs}
+                                selected={date}
+                                onSelect={updateDate}
+                                disabled={(day) =>
+                                    localDateToUtcMidnight(day).getTime() <
+                                    minDate.getTime()
                                 }
-                            >
-                                {option.label}
-                            </Button>
-                        ))}
+                                modifiers={modifiers}
+                                components={{ DayButton: ExceptionDayButton }}
+                                className="w-full bg-transparent"
+                                fixedWeeks
+                            />
+                        )}
+                        <ExceptionLegend />
                     </div>
-                    {(rangeMode ? !range?.from || !range?.to : !date) && (
-                        <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center text-sm text-muted-foreground">
-                            <CalendarDays className="size-8" />
-                            {rangeMode
-                                ? "Vyber rozsah v kalendáři."
-                                : "Vyber datum v kalendáři."}
-                        </div>
-                    )}
 
-                    {rangeMode ? (
-                        !range?.from || !range?.to ? null : (
+                    <div className="flex h-full flex-col gap-3">
+                        {/* Always shows which mode is on - the old single
+                        toggle button's label named the other one. */}
+                        <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
+                            {[
+                                { range: false, label: "Jeden den" },
+                                { range: true, label: "Zavřít rozsah" },
+                            ].map((option) => (
+                                <Button
+                                    key={option.label}
+                                    type="button"
+                                    variant="ghost"
+                                    aria-pressed={rangeMode === option.range}
+                                    className={
+                                        rangeMode === option.range
+                                            ? "bg-background shadow-sm hover:bg-background"
+                                            : "text-muted-foreground"
+                                    }
+                                    onClick={() =>
+                                        rangeMode !== option.range &&
+                                        toggleRangeMode()
+                                    }
+                                >
+                                    {option.label}
+                                </Button>
+                            ))}
+                        </div>
+                        {(rangeMode ? !range?.from || !range?.to : !date) && (
+                            <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center text-sm text-muted-foreground">
+                                <CalendarDays className="size-8" />
+                                {rangeMode
+                                    ? "Vyber rozsah v kalendáři."
+                                    : "Vyber datum v kalendáři."}
+                            </div>
+                        )}
+
+                        {rangeMode ? (
+                            !range?.from || !range?.to ? null : (
+                                <>
+                                    <div>
+                                        <p className="text-base font-medium">
+                                            {formatDateRange(
+                                                range.from,
+                                                range.to
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Zavřeno bude{" "}
+                                            {formatDayCount(
+                                                differenceInCalendarDays(
+                                                    range.to,
+                                                    range.from
+                                                ) + 1
+                                            )}
+                                        </p>
+                                    </div>
+
+                                    {error && (
+                                        <Alert variant="destructive">
+                                            <AlertCircle />
+                                            <AlertTitle>{error}</AlertTitle>
+                                        </Alert>
+                                    )}
+
+                                    {conflicts && conflicts.length > 0 && (
+                                        <Alert variant="warning">
+                                            <AlertCircle />
+                                            <AlertTitle>
+                                                V tomto rozsahu{" "}
+                                                {conflicts.length > 1
+                                                    ? "jsou"
+                                                    : "je"}{" "}
+                                                rezervace
+                                            </AlertTitle>
+                                            <AlertDescription>
+                                                {conflicts.map((c, i) => (
+                                                    <div key={i}>
+                                                        {c.clientName} •{" "}
+                                                        {formatTime(
+                                                            c.startTime
+                                                        )}
+                                                        –{formatTime(c.endTime)}
+                                                    </div>
+                                                ))}
+                                                Rezervace je potřeba zrušit nebo
+                                                přesunout ručně.
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+
+                                    <Button
+                                        type="button"
+                                        disabled={isPending}
+                                        onClick={submitRange}
+                                    >
+                                        {isPending ? (
+                                            <Spinner className="size-4" />
+                                        ) : (
+                                            <CalendarX className="size-4" />
+                                        )}
+                                        {isPending
+                                            ? "Zavírám…"
+                                            : `Zavřít ${formatDayCount(
+                                                  differenceInCalendarDays(
+                                                      range.to,
+                                                      range.from
+                                                  ) + 1
+                                              )}`}
+                                    </Button>
+                                </>
+                            )
+                        ) : !date ? null : (
                             <>
                                 <div>
-                                    <p className="text-base font-medium">
-                                        {formatDateRange(range.from, range.to)}
+                                    <p className="text-base font-medium first-letter:uppercase">
+                                        {format(date, "EEEE d. MMMM", {
+                                            locale: cs,
+                                        })}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Zavřeno bude{" "}
-                                        {formatDayCount(
-                                            differenceInCalendarDays(
-                                                range.to,
-                                                range.from
-                                            ) + 1
-                                        )}
+                                        {exceptionsByDate.has(
+                                            localDateToUtcMidnight(
+                                                date
+                                            ).getTime()
+                                        )
+                                            ? "Upraveno pro tento den"
+                                            : "Podle stálé dostupnosti"}
                                     </p>
                                 </div>
+
+                                {blocks.length === 0 && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Tento den je zavřeno.
+                                    </p>
+                                )}
+
+                                <div className="flex flex-col gap-3">
+                                    {blocks.map((block) => (
+                                        <div
+                                            key={block.id}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <div className="flex-1 rounded-2xl border p-3">
+                                                <Slider
+                                                    value={[
+                                                        block.start,
+                                                        block.end,
+                                                    ]}
+                                                    onValueChange={([
+                                                        start,
+                                                        end,
+                                                    ]) =>
+                                                        updateBlock(
+                                                            block.id,
+                                                            start,
+                                                            end
+                                                        )
+                                                    }
+                                                    min={bounds.min}
+                                                    max={bounds.max}
+                                                    step={SLIDER_STEP}
+                                                    minStepsBetweenThumbs={1}
+                                                />
+                                                <div className="mt-3 flex justify-between gap-2">
+                                                    <TimePicker
+                                                        commitDelay={
+                                                            TIME_PICKER_COMMIT_DELAY_MS
+                                                        }
+                                                        step={SLIDER_STEP}
+                                                        icon={null}
+                                                        variant="ghost"
+                                                        max={formatTime(
+                                                            block.end -
+                                                                SLIDER_STEP
+                                                        )}
+                                                        value={formatTime(
+                                                            block.start
+                                                        )}
+                                                        onChange={(value) =>
+                                                            typeStart(
+                                                                block,
+                                                                value
+                                                            )
+                                                        }
+                                                    />
+                                                    <TimePicker
+                                                        commitDelay={
+                                                            TIME_PICKER_COMMIT_DELAY_MS
+                                                        }
+                                                        step={SLIDER_STEP}
+                                                        icon={null}
+                                                        variant="ghost"
+                                                        className="text-right"
+                                                        min={formatTime(
+                                                            block.start +
+                                                                SLIDER_STEP
+                                                        )}
+                                                        value={formatTime(
+                                                            block.end
+                                                        )}
+                                                        onChange={(value) =>
+                                                            typeEnd(
+                                                                block,
+                                                                value
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                onClick={() =>
+                                                    removeBlock(block.id)
+                                                }
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={addBlock}
+                                >
+                                    <Plus className="size-4" />
+                                    Přidat časový blok
+                                </Button>
 
                                 {error && (
                                     <Alert variant="destructive">
@@ -443,7 +665,7 @@ export function ExceptionForm({
                                     <Alert variant="warning">
                                         <AlertCircle />
                                         <AlertTitle>
-                                            V tomto rozsahu{" "}
+                                            V tomto termínu{" "}
                                             {conflicts.length > 1
                                                 ? "jsou"
                                                 : "je"}{" "}
@@ -457,178 +679,25 @@ export function ExceptionForm({
                                                     {formatTime(c.endTime)}
                                                 </div>
                                             ))}
-                                            Rezervace je potřeba zrušit nebo
+                                            Rezervaci je potřeba zrušit nebo
                                             přesunout ručně.
                                         </AlertDescription>
                                     </Alert>
                                 )}
-
-                                <Button
-                                    type="button"
-                                    disabled={isPending}
-                                    onClick={submitRange}
-                                >
-                                    {isPending ? (
-                                        <Spinner className="size-4" />
-                                    ) : (
-                                        <CalendarX className="size-4" />
-                                    )}
-                                    {isPending
-                                        ? "Zavírám…"
-                                        : `Zavřít ${formatDayCount(
-                                              differenceInCalendarDays(
-                                                  range.to,
-                                                  range.from
-                                              ) + 1
-                                          )}`}
-                                </Button>
                             </>
-                        )
-                    ) : !date ? null : (
-                        <>
-                            <div>
-                                <p className="text-base font-medium first-letter:uppercase">
-                                    {format(date, "EEEE d. MMMM", {
-                                        locale: cs,
-                                    })}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    {exceptionsByDate.has(
-                                        localDateToUtcMidnight(date).getTime()
-                                    )
-                                        ? "Upraveno pro tento den"
-                                        : "Podle stálé dostupnosti"}
-                                </p>
-                            </div>
-
-                            {blocks.length === 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                    Tento den je zavřeno.
-                                </p>
-                            )}
-
-                            <div className="flex flex-col gap-3">
-                                {blocks.map((block) => (
-                                    <div
-                                        key={block.id}
-                                        className="flex items-center gap-3 rounded-2xl border p-3"
-                                    >
-                                        <div className="flex-1">
-                                            <Slider
-                                                value={[block.start, block.end]}
-                                                onValueChange={([start, end]) =>
-                                                    updateBlock(
-                                                        block.id,
-                                                        start,
-                                                        end
-                                                    )
-                                                }
-                                                min={bounds.min}
-                                                max={bounds.max}
-                                                step={SLIDER_STEP}
-                                                minStepsBetweenThumbs={1}
-                                            />
-                                            <div className="mt-3 flex justify-between gap-2">
-                                                <TimePicker
-                                                    step={SLIDER_STEP}
-                                                    icon={null}
-                                                    variant="ghost"
-                                                    max={formatTime(
-                                                        block.end - SLIDER_STEP
-                                                    )}
-                                                    value={formatTime(
-                                                        block.start
-                                                    )}
-                                                    onChange={(value) =>
-                                                        typeStart(block, value)
-                                                    }
-                                                />
-                                                <TimePicker
-                                                    step={SLIDER_STEP}
-                                                    icon={null}
-                                                    variant="ghost"
-                                                    className="text-right"
-                                                    min={formatTime(
-                                                        block.start +
-                                                            SLIDER_STEP
-                                                    )}
-                                                    value={formatTime(
-                                                        block.end
-                                                    )}
-                                                    onChange={(value) =>
-                                                        typeEnd(block, value)
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={() =>
-                                                removeBlock(block.id)
-                                            }
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={addBlock}
-                            >
-                                <Plus className="size-4" />
-                                Přidat časový blok
-                            </Button>
-
-                            {error && (
-                                <Alert variant="destructive">
-                                    <AlertCircle />
-                                    <AlertTitle>{error}</AlertTitle>
-                                </Alert>
-                            )}
-
-                            {conflicts && conflicts.length > 0 && (
-                                <Alert variant="warning">
-                                    <AlertCircle />
-                                    <AlertTitle>
-                                        V tomto termínu{" "}
-                                        {conflicts.length > 1 ? "jsou" : "je"}{" "}
-                                        rezervace
-                                    </AlertTitle>
-                                    <AlertDescription>
-                                        {conflicts.map((c, i) => (
-                                            <div key={i}>
-                                                {c.clientName} •{" "}
-                                                {formatTime(c.startTime)}–
-                                                {formatTime(c.endTime)}
-                                            </div>
-                                        ))}
-                                        Rezervaci je potřeba zrušit nebo
-                                        přesunout ručně.
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            <Button
-                                type="button"
-                                disabled={isPending}
-                                onClick={submit}
-                            >
-                                {isPending ? (
-                                    <Spinner className="size-4" />
-                                ) : (
-                                    <Check className="size-4" />
-                                )}
-                                {isPending ? "Ukládám…" : "Uložit"}
-                            </Button>
-                        </>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+            {!rangeMode && (
+                <UnsavedChangesBar
+                    isDirty={isDirty}
+                    isSaving={isPending}
+                    isSavedNoticeShown={isSavedNoticeShown}
+                    onDiscard={discardChanges}
+                    onSave={submit}
+                />
+            )}
+        </div>
     );
 }

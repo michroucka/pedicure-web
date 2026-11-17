@@ -40,7 +40,9 @@ export async function sendBookingConfirmationEmail(
         return;
     }
 
-    const dateLabel = format(bookings[0].date, "d. MMMM yyyy", { locale: cs });
+    const dateLabel = format(bookings[0].date, "EEEE d. MMMM yyyy", {
+        locale: cs,
+    });
     const timeLabel = `${formatTime(bookings[0].startTime)} – ${formatTime(bookings.at(-1)!.endTime)}`;
     const manageUrl = `${BUSINESS_INFO.siteUrl}/rezervace/sprava/${bookings[0].cancelToken}`;
 

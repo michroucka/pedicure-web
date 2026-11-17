@@ -28,6 +28,37 @@ const REVIEW_LINKS = [
     },
 ];
 
+const CONTACT_ACTIONS = [
+    {
+        href: `tel:${BUSINESS_INFO.phone}`,
+        label: "Zavolat",
+        value: BUSINESS_INFO.phoneDisplay,
+        icon: Phone,
+        external: false,
+    },
+    {
+        href: `mailto:${BUSINESS_INFO.email}`,
+        label: "Napsat e-mail",
+        // Too long for a phone line: break after the "@", not mid-word.
+        value: (
+            <>
+                {BUSINESS_INFO.email.split("@")[0]}@
+                <wbr />
+                {BUSINESS_INFO.email.split("@")[1]}
+            </>
+        ),
+        icon: Mail,
+        external: false,
+    },
+    {
+        href: BUSINESS_INFO.mapsUrl,
+        label: "Navigovat",
+        value: `${BUSINESS_INFO.address.street}, ${BUSINESS_INFO.address.city}`,
+        icon: MapPin,
+        external: true,
+    },
+];
+
 export default function KontaktPage() {
     return (
         <CzechText>
@@ -51,52 +82,35 @@ export default function KontaktPage() {
 
                     <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-12">
                         <div
-                            className="enter"
+                            className="enter min-w-0"
                             style={stagger(2)}
                         >
-                            <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-4 text-sm">
-                                <dt className="flex items-center gap-1 text-muted-foreground">
-                                    <Phone className="size-4" />
-                                    Telefon:
-                                </dt>
-                                <dd>
-                                    <a
-                                        href={`tel:${BUSINESS_INFO.phone}`}
-                                        className="transition-colors hover:text-primary"
-                                    >
-                                        {BUSINESS_INFO.phoneDisplay}
-                                    </a>
-                                </dd>
-
-                                <dt className="flex items-center gap-1 text-muted-foreground">
-                                    <Mail className="size-4" />
-                                    E-mail:
-                                </dt>
-                                <dd>
-                                    <a
-                                        href={`mailto:${BUSINESS_INFO.email}`}
-                                        className="transition-colors hover:text-primary"
-                                    >
-                                        {BUSINESS_INFO.email}
-                                    </a>
-                                </dd>
-
-                                <dt className="flex items-center gap-1 text-muted-foreground">
-                                    <MapPin className="size-4" />
-                                    Adresa:
-                                </dt>
-                                <dd>
-                                    <a
-                                        href={BUSINESS_INFO.mapsUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="transition-colors hover:text-primary"
-                                    >
-                                        {BUSINESS_INFO.address.street},{" "}
-                                        {BUSINESS_INFO.address.city}
-                                    </a>
-                                </dd>
-                            </dl>
+                            <ul className="flex flex-col gap-3">
+                                {CONTACT_ACTIONS.map((action) => (
+                                    <li key={action.href}>
+                                        <a
+                                            href={action.href}
+                                            {...(action.external && {
+                                                target: "_blank",
+                                                rel: "noopener noreferrer",
+                                            })}
+                                            className="group flex min-h-16 items-center gap-4 rounded-2xl border border-border px-4 py-3 transition-colors hover:border-primary/60"
+                                        >
+                                            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                                                <action.icon className="size-5" />
+                                            </span>
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block text-sm text-muted-foreground">
+                                                    {action.label}
+                                                </span>
+                                                <span className="block text-base font-medium wrap-anywhere transition-colors group-hover:text-primary">
+                                                    {action.value}
+                                                </span>
+                                            </span>
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
 
                             {BOOKING_ENABLED && (
                                 <Button

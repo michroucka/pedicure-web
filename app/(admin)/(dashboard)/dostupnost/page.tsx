@@ -36,32 +36,42 @@ export default async function AvailabilityPage() {
 
     return (
         <div className="mx-auto max-w-lg p-4 lg:max-w-3xl">
+            {/* Both tabs stay mounted, so unsaved changes survive switching
+                to the other tab and back. */}
             <Tabs defaultValue="exceptions">
                 <TabsList className="mb-4 h-auto! w-full max-w-md gap-1 self-center rounded-full p-1">
                     <TabsTrigger
                         value="exceptions"
-                        className="h-10 rounded-full py-2 text-base text-muted-foreground hover:text-foreground data-active:text-foreground data-active:shadow-sm"
+                        className="h-10 rounded-full py-2 text-base text-muted-foreground hover:text-foreground active:translate-y-px active:scale-[0.97] data-active:text-foreground data-active:shadow-sm"
                     >
                         <CalendarClock className="size-4" />
                         Úprava dne
                     </TabsTrigger>
                     <TabsTrigger
                         value="recurring"
-                        className="h-10 rounded-full py-2 text-base text-muted-foreground hover:text-foreground data-active:text-foreground data-active:shadow-sm"
+                        className="h-10 rounded-full py-2 text-base text-muted-foreground hover:text-foreground active:translate-y-px active:scale-[0.97] data-active:text-foreground data-active:shadow-sm"
                     >
                         <Repeat className="size-4" />
                         Stálá dostupnost
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="exceptions">
+                <TabsContent
+                    value="exceptions"
+                    forceMount
+                    className="data-[state=inactive]:hidden"
+                >
                     <ExceptionForm
                         exceptions={exceptions}
                         recurring={recurring}
                     />
                 </TabsContent>
 
-                <TabsContent value="recurring">
+                <TabsContent
+                    value="recurring"
+                    forceMount
+                    className="data-[state=inactive]:hidden"
+                >
                     <AvailabilityForm
                         days={days}
                         saveAction={saveRecurringAvailability}

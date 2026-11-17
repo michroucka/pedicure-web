@@ -24,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TimePicker } from "@/components/ui/time-picker";
+import { TIME_PICKER_COMMIT_DELAY_MS } from "@/lib/time-picker-commit-delay";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
@@ -612,6 +613,9 @@ export function BookingDetailDialog({
                                                 Vlastní čas:
                                             </span>
                                             <TimePicker
+                                                commitDelay={
+                                                    TIME_PICKER_COMMIT_DELAY_MS
+                                                }
                                                 value={customTimeValue}
                                                 onChange={pickCustomTime}
                                                 defaultValue="15:00"
