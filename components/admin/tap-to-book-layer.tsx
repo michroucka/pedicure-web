@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Plus } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import { useOpenAddBooking } from "@/components/admin/add-booking-launcher";
+import { resolveTapToBookStart } from "@/lib/tap-to-book-start";
 
 const TAP_STEP_MINUTES = 15;
 // An untouched mark goes away on its own – the way out of a stray tap.
@@ -17,21 +18,29 @@ const MARK_TIMEOUT_MS = 3000;
 // time). A touch is two-step: the first tap only marks the quarter hour,
 // tapping the mark opens the dialog – a stray tap opens nothing and shows
 // which time was hit before committing to it.
+//
+// Gaps too short for the shortest service offer nothing, and a tap late in
+// a gap moves back to where that service still fits (resolveTapToBookStart).
 export function TapToBookLayer({
     date,
     gridStart,
     gridEnd,
     pxPerMinute,
+    bookings,
+    minDurationMinutes,
 }: {
     date: Date;
     gridStart: number;
     gridEnd: number;
     pxPerMinute: number;
+    bookings: { startTime: number; endTime: number }[];
+    minDurationMinutes: number;
 }) {
     const openAddBooking = useOpenAddBooking();
     const layerRef = useRef<HTMLDivElement>(null);
     const lastPointerTypeRef = useRef<string>("mouse");
-    const [hoveredStart, setHoveredStart] = useState<number | null>(null);
+    // "blocked": the mouse is over a gap with nothing to offer.
+    const [hovered, setHovered] = useState<number | "blocked" | null>(null);
     const [markedStart, setMarkedStart] = useState<number | null>(null);
 
     // A tap anywhere outside this day, or a few seconds without one, drops
@@ -57,14 +66,19 @@ export function TapToBookLayer({
             gridStart +
             Math.floor(offsetY / pxPerMinute / TAP_STEP_MINUTES) *
                 TAP_STEP_MINUTES;
-        return Math.min(
+        const tapped = Math.min(
             Math.max(minutes, gridStart),
             gridEnd - TAP_STEP_MINUTES
         );
+        return resolveTapToBookStart({ tapped, bookings, minDurationMinutes });
     }
 
     function handleClick(event: MouseEvent<HTMLDivElement>) {
         const start = startAt(event);
+        if (start === null) {
+            setMarkedStart(null);
+            return;
+        }
         const isTouch = lastPointerTypeRef.current !== "mouse";
         if (isTouch && markedStart !== start) {
             setMarkedStart(start);
@@ -74,22 +88,28 @@ export function TapToBookLayer({
         openAddBooking({ date, startMinutes: start });
     }
 
-    const shownStart = markedStart ?? hoveredStart;
+    const shownStart =
+        markedStart ?? (typeof hovered === "number" ? hovered : null);
 
     return (
         <div
             ref={layerRef}
-            className="absolute inset-0 cursor-pointer"
+            className={cn(
+                "absolute inset-0",
+                hovered === "blocked" ? "cursor-default" : "cursor-pointer"
+            )}
             onPointerDown={(event) => {
                 lastPointerTypeRef.current = event.pointerType;
             }}
             onClick={handleClick}
             onPointerMove={(event) =>
-                setHoveredStart(
-                    event.pointerType === "mouse" ? startAt(event) : null
+                setHovered(
+                    event.pointerType === "mouse"
+                        ? (startAt(event) ?? "blocked")
+                        : null
                 )
             }
-            onPointerLeave={() => setHoveredStart(null)}
+            onPointerLeave={() => setHovered(null)}
         >
             {shownStart !== null && (
                 <div

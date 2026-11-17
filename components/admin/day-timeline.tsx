@@ -7,6 +7,7 @@ import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
 import {
     BookingCard,
     serviceColorMap,
+    shortestActiveServiceMinutes,
     isBookingPast,
     type BookingItem,
 } from "@/components/admin/booking-card";
@@ -63,6 +64,7 @@ export function DayTimeline({
     const closedRanges = computeClosedRanges(windows, gridStart, gridEnd);
 
     const colorByService = serviceColorMap(services);
+    const minDurationMinutes = shortestActiveServiceMinutes(services);
 
     const today = getCzechToday();
     const isToday = date.getTime() === today.getTime();
@@ -114,6 +116,8 @@ export function DayTimeline({
                             gridStart={gridStart}
                             gridEnd={gridEnd}
                             pxPerMinute={PX_PER_MIN}
+                            bookings={bookings}
+                            minDurationMinutes={minDurationMinutes}
                         />
                     )}
 

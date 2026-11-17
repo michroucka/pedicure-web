@@ -15,6 +15,7 @@ import { TapToBookLayer } from "@/components/admin/tap-to-book-layer";
 import {
     BookingCard,
     serviceColorMap,
+    shortestActiveServiceMinutes,
     isBookingPast,
     type BookingItem,
 } from "@/components/admin/booking-card";
@@ -80,6 +81,7 @@ export function WeekTimeline({
     for (let h = gridStart; h <= gridEnd; h += 60) hours.push(h);
 
     const colorByService = serviceColorMap(services);
+    const minDurationMinutes = shortestActiveServiceMinutes(services);
 
     const gridHeight = (gridEnd - gridStart) * PX_PER_MIN;
     const today = localDateToUtcMidnight(new Date());
@@ -189,6 +191,10 @@ export function WeekTimeline({
                                             gridStart={gridStart}
                                             gridEnd={gridEnd}
                                             pxPerMinute={PX_PER_MIN}
+                                            bookings={bookingsByDay[dayIndex]}
+                                            minDurationMinutes={
+                                                minDurationMinutes
+                                            }
                                         />
                                     )}
 

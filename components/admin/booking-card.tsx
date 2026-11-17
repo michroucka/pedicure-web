@@ -55,6 +55,14 @@ export function serviceColorMap(services: Service[]) {
     );
 }
 
+// The tap-to-book layer won't offer a gap this one doesn't fit into.
+export function shortestActiveServiceMinutes(services: Service[]) {
+    const durations = services
+        .filter((s) => s.active)
+        .map((s) => s.durationMinutes);
+    return durations.length > 0 ? Math.min(...durations) : 0;
+}
+
 export function ServiceLegend({ services }: { services: Service[] }) {
     const colorByService = serviceColorMap(services);
     return (
