@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { TimePicker } from "@/components/ui/time-picker";
+import { TIME_PICKER_COMMIT_DELAY_MS } from "@/lib/time-picker-commit-delay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
     AlertCircle,
@@ -586,6 +587,9 @@ export function ExceptionForm({
                                                 />
                                                 <div className="mt-3 flex justify-between gap-2">
                                                     <TimePicker
+                                                        commitDelay={
+                                                            TIME_PICKER_COMMIT_DELAY_MS
+                                                        }
                                                         step={SLIDER_STEP}
                                                         icon={null}
                                                         variant="ghost"
@@ -604,6 +608,9 @@ export function ExceptionForm({
                                                         }
                                                     />
                                                     <TimePicker
+                                                        commitDelay={
+                                                            TIME_PICKER_COMMIT_DELAY_MS
+                                                        }
                                                         step={SLIDER_STEP}
                                                         icon={null}
                                                         variant="ghost"

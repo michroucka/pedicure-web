@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { TimePicker } from "@/components/ui/time-picker";
+import { TIME_PICKER_COMMIT_DELAY_MS } from "@/lib/time-picker-commit-delay";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils";
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
@@ -100,6 +101,7 @@ function BlockField({
                 />
                 <div className="mt-3 flex justify-between gap-2">
                     <TimePicker
+                        commitDelay={TIME_PICKER_COMMIT_DELAY_MS}
                         step={SLIDER_STEP}
                         icon={null}
                         variant="ghost"
@@ -108,6 +110,7 @@ function BlockField({
                         onChange={typeStart}
                     />
                     <TimePicker
+                        commitDelay={TIME_PICKER_COMMIT_DELAY_MS}
                         step={SLIDER_STEP}
                         icon={null}
                         variant="ghost"
