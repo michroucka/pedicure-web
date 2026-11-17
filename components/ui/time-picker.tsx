@@ -785,6 +785,10 @@ function TimePicker({
                         }}
                         className={cn(
                             timePickerTriggerVariants({ variant }),
+                            // Read-only behaves like a button: no text cursor,
+                            // no blinking caret, no text selection.
+                            !allowTyping &&
+                                "cursor-pointer caret-transparent select-none",
                             className
                         )}
                         value={draft}
