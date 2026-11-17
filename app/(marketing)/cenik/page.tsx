@@ -71,7 +71,7 @@ export default async function CenikPage() {
                                             <Link
                                                 href={`/rezervace?services=${service.id}`}
                                                 aria-label={`Objednat – ${service.name}`}
-                                                className="flex min-h-11 items-center gap-1.5 text-sm font-medium outline-none group-hover/service:underline group-hover/service:underline-offset-4 after:absolute after:inset-0"
+                                                className="flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors outline-none group-hover/service:text-foreground group-hover/service:underline group-hover/service:underline-offset-4 group-has-focus-visible/service:text-foreground after:absolute after:inset-0"
                                             >
                                                 Objednat
                                                 <ArrowRight className="size-4 transition-transform group-hover/service:translate-x-0.5" />
