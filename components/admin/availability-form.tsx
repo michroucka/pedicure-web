@@ -175,7 +175,7 @@ function DayField({
                 <span className="font-medium">{DAY_LABELS[dayOfWeek]}</span>
                 <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={addBlock}
                 >
