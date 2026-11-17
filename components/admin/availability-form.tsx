@@ -20,7 +20,7 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils";
-import { AlertCircle, Check, Plus, Trash2, Save } from "lucide-react";
+import { AlertCircle, Check, Plus, Trash2, Save, Undo2 } from "lucide-react";
 
 const DAY_LABELS: Record<number, string> = {
     0: "Neděle",
@@ -316,23 +316,39 @@ export function AvailabilityForm({
                             Uloženo
                         </span>
                     ) : (
-                        <span className="text-sm text-muted-foreground">
+                        // Hidden on phones, where both buttons need the room.
+                        <span className="text-sm text-muted-foreground max-sm:sr-only">
                             Neuložené změny
                         </span>
                     )}
                     {!isNoticeOnly && (
-                        <Button
-                            type="submit"
-                            disabled={isSaving}
-                            size="lg"
-                        >
-                            {isSaving ? (
-                                <Spinner className="size-4" />
-                            ) : (
-                                <Save className="size-4" />
-                            )}
-                            {isSaving ? "Ukládám…" : "Uložit"}
-                        </Button>
+                        <div className="flex gap-2 max-sm:w-full max-sm:justify-end">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="lg"
+                                disabled={isSaving}
+                                // No arguments: back to the last saved values
+                                // (reset(data) after a save makes those the new
+                                // defaults).
+                                onClick={() => reset()}
+                            >
+                                <Undo2 className="size-4" />
+                                Zrušit změny
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isSaving}
+                                size="lg"
+                            >
+                                {isSaving ? (
+                                    <Spinner className="size-4" />
+                                ) : (
+                                    <Save className="size-4" />
+                                )}
+                                {isSaving ? "Ukládám…" : "Uložit"}
+                            </Button>
+                        </div>
                     )}
                 </div>
             )}
