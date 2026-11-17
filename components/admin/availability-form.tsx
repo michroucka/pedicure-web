@@ -89,8 +89,8 @@ function BlockField({
     }
 
     return (
-        <div className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-            <div className="flex-1">
+        <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-2xl border p-3">
                 <Slider
                     value={[start, end]}
                     onValueChange={handleChange}
@@ -254,7 +254,7 @@ export function AvailabilityForm({
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-2"
         >
-            <div className="divide-y rounded-2xl border px-4">
+            <div className="divide-y">
                 {days.map((day, index) => (
                     <DayField
                         key={day.dayOfWeek}

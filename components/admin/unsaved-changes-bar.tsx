@@ -58,6 +58,7 @@ export function useSavedNotice() {
 
 // Sticky above the bottom nav, so saving doesn't need a scroll past a long
 // form; only shown while there is something to save (or just was saved).
+// Meant for inside a Card: bleeds to its edges via --card-spacing.
 export function UnsavedChangesBar({
     isDirty,
     isSaving,
@@ -76,7 +77,7 @@ export function UnsavedChangesBar({
     const isNoticeOnly = isSavedNoticeShown && !isDirty && !isSaving;
 
     return (
-        <div className="sticky bottom-[calc(var(--admin-nav-height)+env(safe-area-inset-bottom))] -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur transition-[translate,opacity] duration-200 starting:translate-y-4 starting:opacity-0">
+        <div className="sticky bottom-[calc(var(--admin-nav-height)+env(safe-area-inset-bottom))] -mx-(--card-spacing) flex items-center justify-between gap-3 border-t bg-card/95 px-(--card-spacing) py-3 backdrop-blur transition-[translate,opacity] duration-200 starting:translate-y-4 starting:opacity-0">
             {isNoticeOnly ? (
                 <span
                     role="status"
