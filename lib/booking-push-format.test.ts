@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { adminCalendarUrl, formatPushDateTime } from "./booking-push-format";
 
 describe("formatPushDateTime", () => {
-    it("formats a Czech date with the genitive month name and the time", () => {
+    it("formats a Czech date with the weekday, genitive month name and time", () => {
         expect(formatPushDateTime(new Date(2026, 10, 16), 9 * 60 + 30)).toBe(
-            "16. listopadu 2026 09:30"
+            "pondělí 16. listopadu 2026 09:30"
         );
         expect(formatPushDateTime(new Date(2027, 0, 1), 0)).toBe(
-            "1. ledna 2027 00:00"
+            "pátek 1. ledna 2027 00:00"
         );
     });
 });
