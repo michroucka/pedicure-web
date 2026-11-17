@@ -71,6 +71,10 @@ import {
     type ExtraTime,
 } from "@/components/admin/extra-time-field";
 import { NoteHealthHint } from "@/components/admin/note-health-hint";
+import {
+    useRegisterAddBookingOpener,
+    type AddBookingPrefill,
+} from "@/components/admin/add-booking-launcher";
 
 type PersonInput = {
     // Stable React key: with index keys, removing a middle person would
@@ -138,6 +142,9 @@ export function AddBookingDialog({
     const [customTime, setCustomTime] = useState(false);
     const [customTimeValue, setCustomTimeValue] = useState("");
     const [error, setError] = useState<string>();
+    // A time tapped in the calendar: picked as soon as the slots load, or
+    // as a custom time when no free slot starts then.
+    const [preferredStart, setPreferredStart] = useState<number>();
     const [isPending, startTransition] = useTransition();
     const [isLoadingSlots, startSlotsTransition] = useTransition();
 
@@ -155,6 +162,12 @@ export function AddBookingDialog({
                 totalExtraMinutes(ppl)
             );
             setSlots(result);
+            if (preferredStart === undefined) return;
+            setSelectedSlot(preferredStart);
+            if (!result.includes(preferredStart)) {
+                setCustomTime(true);
+                setCustomTimeValue(formatTime(preferredStart));
+            }
         });
     }
 
@@ -288,7 +301,15 @@ export function AddBookingDialog({
         setCustomTime(false);
         setCustomTimeValue("");
         setError(undefined);
+        setPreferredStart(undefined);
     }
+
+    useRegisterAddBookingOpener((prefill: AddBookingPrefill) => {
+        reset();
+        setDate(prefill.date);
+        setPreferredStart(prefill.startMinutes);
+        setOpen(true);
+    });
 
     function pickCustomTime(value: string) {
         setCustomTimeValue(value);
@@ -666,6 +687,7 @@ export function AddBookingDialog({
                                                 setCustomTime(false);
                                                 setCustomTimeValue("");
                                                 setSelectedSlot(undefined);
+                                                setPreferredStart(undefined);
                                             }}
                                         >
                                             <X className="size-4" />
@@ -693,9 +715,12 @@ export function AddBookingDialog({
                                                         ? "default"
                                                         : "outline"
                                                 }
-                                                onClick={() =>
-                                                    setSelectedSlot(s)
-                                                }
+                                                onClick={() => {
+                                                    setSelectedSlot(s);
+                                                    setPreferredStart(
+                                                        undefined
+                                                    );
+                                                }}
                                             >
                                                 {formatTime(s)}
                                             </Button>
@@ -708,6 +733,7 @@ export function AddBookingDialog({
                                             onClick={() => {
                                                 setCustomTime(true);
                                                 setSelectedSlot(undefined);
+                                                setPreferredStart(undefined);
                                             }}
                                         >
                                             <Plus className="size-4 text-primary" />
@@ -717,7 +743,9 @@ export function AddBookingDialog({
                                 )
                             ) : (
                                 <p className="col-span-4 text-center text-sm text-muted-foreground">
-                                    Vyplňte službu a datum.
+                                    {preferredStart === undefined
+                                        ? "Vyplňte službu a datum."
+                                        : `Vyplňte službu, čas ${formatTime(preferredStart)} se pak vybere sám.`}
                                 </p>
                             )}
 

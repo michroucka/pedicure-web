@@ -14,6 +14,7 @@ import { WeekTimeline } from "@/components/admin/week-timeline";
 import { AddBookingDialog } from "@/components/admin/add-booking-dialog";
 import { QuickQrDialog } from "@/components/admin/quick-qr-dialog";
 import { FloatingActions } from "@/components/admin/floating-actions";
+import { AddBookingLauncherProvider } from "@/components/admin/add-booking-launcher";
 import {
     CalendarBody,
     CalendarNavigationProvider,
@@ -155,55 +156,57 @@ export default async function AdminHomePage({
 
     return (
         <CalendarNavigationProvider serverDate={date}>
-            <div
-                data-fills-viewport
-                className="flex h-full w-full flex-col"
-            >
-                <div className="sticky top-2 z-10 bg-background">
-                    <div className="mx-auto w-full max-w-lg">
-                        <DayNav
-                            weekStart={weekStart}
-                            weekEnd={weekEnd}
-                            exceptions={dayExceptions}
-                            allExceptions={exceptions}
-                        />
+            <AddBookingLauncherProvider>
+                <div
+                    data-fills-viewport
+                    className="flex h-full w-full flex-col"
+                >
+                    <div className="sticky top-2 z-10 bg-background">
+                        <div className="mx-auto w-full max-w-lg">
+                            <DayNav
+                                weekStart={weekStart}
+                                weekEnd={weekEnd}
+                                exceptions={dayExceptions}
+                                allExceptions={exceptions}
+                            />
+                        </div>
                     </div>
+
+                    <CalendarBody>
+                        <div className="mx-auto w-full max-w-lg md:hidden">
+                            <DayTimeline
+                                windows={windows}
+                                bookings={dayBookings}
+                                services={services}
+                                date={date}
+                            />
+                        </div>
+
+                        <div className="hidden min-h-0 flex-1 md:block">
+                            <WeekTimeline
+                                weekDays={visibleWeekDays}
+                                windowsByDay={visibleWindowsByDay}
+                                bookingsByDay={visibleBookingsByDay}
+                                exceptionsByDay={visibleExceptionsByDay}
+                                services={services}
+                            />
+                        </div>
+                    </CalendarBody>
+
+                    <FloatingActions>
+                        <QuickQrDialog
+                            prices={[
+                                ...new Set(services.map((s) => s.price)),
+                            ].sort((a, b) => a - b)}
+                        />
+                        <AddBookingDialog
+                            services={services}
+                            clients={clients}
+                            defaultDate={date}
+                        />
+                    </FloatingActions>
                 </div>
-
-                <CalendarBody>
-                    <div className="mx-auto w-full max-w-lg md:hidden">
-                        <DayTimeline
-                            windows={windows}
-                            bookings={dayBookings}
-                            services={services}
-                            date={date}
-                        />
-                    </div>
-
-                    <div className="hidden min-h-0 flex-1 md:block">
-                        <WeekTimeline
-                            weekDays={visibleWeekDays}
-                            windowsByDay={visibleWindowsByDay}
-                            bookingsByDay={visibleBookingsByDay}
-                            exceptionsByDay={visibleExceptionsByDay}
-                            services={services}
-                        />
-                    </div>
-                </CalendarBody>
-
-                <FloatingActions>
-                    <QuickQrDialog
-                        prices={[...new Set(services.map((s) => s.price))].sort(
-                            (a, b) => a - b
-                        )}
-                    />
-                    <AddBookingDialog
-                        services={services}
-                        clients={clients}
-                        defaultDate={date}
-                    />
-                </FloatingActions>
-            </div>
+            </AddBookingLauncherProvider>
         </CalendarNavigationProvider>
     );
 }
