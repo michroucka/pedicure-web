@@ -16,7 +16,7 @@ export function HeroSection({ fromPrice }: { fromPrice: number | null }) {
                 <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-4 pt-8 pb-16 sm:px-6 md:grid-cols-2 md:pb-20">
                     <div>
                         <h1
-                            className="enter text-pretty italic"
+                            className="enter text-pretty italic md:text-5xl lg:text-6xl"
                             style={stagger(0)}
                         >
                             Vaše nohy vás nosí celý život.
