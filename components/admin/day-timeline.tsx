@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { CalendarOff, CalendarPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { formatTime, getCzechToday, getCzechNowMinutes } from "@/lib/utils";
 import { computeClosedRanges } from "@/lib/availability";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
@@ -39,9 +42,35 @@ export function DayTimeline({
     }, []);
 
     if (windows.length === 0 && bookings.length === 0) {
+        // Availability can only be changed from tomorrow on (Úprava dne).
+        const canOpen = date.getTime() > getCzechToday().getTime();
         return (
-            <div className="flex flex-col items-center gap-1 p-6 text-center text-sm text-muted-foreground">
-                Zavřeno
+            <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+                <span className="grid size-14 place-items-center rounded-full bg-muted text-muted-foreground">
+                    <CalendarOff className="size-6" />
+                </span>
+                <div>
+                    <p className="font-medium">Zavřeno</p>
+                    {canOpen && (
+                        <p className="mt-1 text-sm text-pretty text-muted-foreground">
+                            Na tento den nemáte žádnou pracovní dobu.
+                        </p>
+                    )}
+                </div>
+                {canOpen && (
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="mt-1"
+                    >
+                        <Link
+                            href={`/dostupnost?date=${date.toISOString().slice(0, 10)}`}
+                        >
+                            <CalendarPlus className="size-4" />
+                            Otevřít den
+                        </Link>
+                    </Button>
+                )}
             </div>
         );
     }

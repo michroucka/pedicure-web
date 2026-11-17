@@ -136,7 +136,10 @@ function NavBar({
                                 }),
                             }}
                             modifiersClassNames={{
-                                shownWeek: "bg-primary/10 rounded-none!",
+                                // Important: the "today" class clears the
+                                // background of a selected today, which cut
+                                // a hole in the band.
+                                shownWeek: "bg-primary/10! rounded-none!",
                                 shownWeekStart: "rounded-l-(--cell-radius)!",
                                 shownWeekEnd: "rounded-r-(--cell-radius)!",
                             }}

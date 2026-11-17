@@ -6,6 +6,7 @@ import { ExceptionForm } from "@/components/admin/exception-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarClock, Repeat } from "lucide-react";
 import { saveRecurringAvailability } from "./actions";
+import { dateStrSchema } from "@/lib/validation";
 
 export const metadata: Metadata = {
     title: "Dostupnost",
@@ -13,7 +14,14 @@ export const metadata: Metadata = {
 
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-export default async function AvailabilityPage() {
+export default async function AvailabilityPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ date?: string }>;
+}) {
+    // ?date= from the calendar's "Otevřít den" on a closed day.
+    const parsedDate = dateStrSchema.safeParse((await searchParams).date);
+
     const [recurring, exceptions] = await Promise.all([
         prisma.recurringAvailability.findMany({
             orderBy: { startTime: "asc" },
@@ -64,6 +72,9 @@ export default async function AvailabilityPage() {
                     <ExceptionForm
                         exceptions={exceptions}
                         recurring={recurring}
+                        initialDate={
+                            parsedDate.success ? parsedDate.data : undefined
+                        }
                     />
                 </TabsContent>
 
