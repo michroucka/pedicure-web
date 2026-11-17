@@ -36,6 +36,8 @@ export default async function AvailabilityPage() {
 
     return (
         <div className="mx-auto max-w-lg p-4 lg:max-w-3xl">
+            {/* Both tabs stay mounted, so unsaved changes survive switching
+                to the other tab and back. */}
             <Tabs defaultValue="exceptions">
                 <TabsList className="mb-4 h-auto! w-full max-w-md gap-1 self-center rounded-full p-1">
                     <TabsTrigger
@@ -54,15 +56,17 @@ export default async function AvailabilityPage() {
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="exceptions">
+                <TabsContent
+                    value="exceptions"
+                    forceMount
+                    className="data-[state=inactive]:hidden"
+                >
                     <ExceptionForm
                         exceptions={exceptions}
                         recurring={recurring}
                     />
                 </TabsContent>
 
-                {/* Kept mounted, so unsaved changes survive switching to
-                    the other tab and back. */}
                 <TabsContent
                     value="recurring"
                     forceMount
