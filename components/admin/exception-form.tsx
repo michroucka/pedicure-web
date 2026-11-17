@@ -120,17 +120,62 @@ function haveSameSlots(a: TimeSlot[], b: TimeSlot[]) {
     );
 }
 
+// The day's saved opening: its recurring blocks with that day's exceptions
+// applied. `d` is a local-midnight date from the date picker.
+function savedSlotsForDay(
+    d: Date,
+    exceptions: AvailabilityException[],
+    recurring: RecurringAvailability[]
+): TimeSlot[] {
+    // Read the weekday and compare dates on UTC midnight - getUTCDay() on a
+    // local midnight shifts back a day in any timezone ahead of UTC (Czech
+    // local time included).
+    const day = localDateToUtcMidnight(d);
+    const dayOfWeek = day.getUTCDay();
+    return resolveDayTimeSlots(
+        recurring
+            .filter((r) => r.dayOfWeek === dayOfWeek)
+            .map((r) => ({ start: r.startTime, end: r.endTime })),
+        exceptions
+            .filter(
+                (e) =>
+                    localDateToUtcMidnight(e.date).getTime() === day.getTime()
+            )
+            .map((e) => ({ type: e.type, start: e.startTime, end: e.endTime }))
+    );
+}
+
+function tomorrow() {
+    return addDays(localDateToUtcMidnight(new Date()), 1);
+}
+
+// "YYYY-MM-DD" from the URL (the calendar's "Otevřít den") as a local-midnight
+// date, like the date picker gives - only from tomorrow on, which is all the
+// form can edit.
+function parseInitialDate(value: string | undefined) {
+    if (!value) return undefined;
+    const [year, month, day] = value.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+    return localDateToUtcMidnight(d).getTime() < tomorrow().getTime()
+        ? undefined
+        : d;
+}
+
 export function ExceptionForm({
     exceptions,
     recurring,
+    initialDate,
 }: {
     exceptions: AvailabilityException[];
     recurring: RecurringAvailability[];
+    initialDate?: string;
 }) {
-    const [date, setDate] = useState<Date>();
-    const [blocks, setBlocks] = useState<Block[]>([]);
+    const [date, setDate] = useState(() => parseInitialDate(initialDate));
     // The day as it is saved, to tell unsaved edits apart and to go back to.
-    const [savedSlots, setSavedSlots] = useState<TimeSlot[]>([]);
+    const [savedSlots, setSavedSlots] = useState<TimeSlot[]>(() =>
+        date ? savedSlotsForDay(date, exceptions, recurring) : []
+    );
+    const [blocks, setBlocks] = useState<Block[]>(() => toBlocks(savedSlots));
     const [rangeMode, setRangeMode] = useState(false);
     const [range, setRange] = useState<DateRange>();
     const [error, setError] = useState<string>();
@@ -150,7 +195,7 @@ export function ExceptionForm({
         return !isDirty || window.confirm(LEAVE_WITH_UNSAVED_CHANGES_MESSAGE);
     }
 
-    const minDate = addDays(localDateToUtcMidnight(new Date()), 1);
+    const minDate = tomorrow();
 
     const exceptionsByDate = new Map<number, AvailabilityException[]>();
     for (const exception of exceptions) {
@@ -195,16 +240,7 @@ export function ExceptionForm({
             return;
         }
 
-        const existing =
-            exceptionsByDate.get(localDateToUtcMidnight(d).getTime()) ?? [];
-        const resolved = resolveDayTimeSlots(
-            recurringFor(d),
-            existing.map((e) => ({
-                type: e.type,
-                start: e.startTime,
-                end: e.endTime,
-            }))
-        );
+        const resolved = savedSlotsForDay(d, exceptions, recurring);
         setBlocks(toBlocks(resolved));
         setSavedSlots(resolved);
     }
@@ -408,6 +444,7 @@ export function ExceptionForm({
                                 mode="single"
                                 locale={cs}
                                 selected={date}
+                                defaultMonth={date}
                                 onSelect={updateDate}
                                 disabled={(day) =>
                                     localDateToUtcMidnight(day).getTime() <
