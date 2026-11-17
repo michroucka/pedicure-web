@@ -299,12 +299,11 @@ body:has(.storefront) {
     background-color: color-mix(in oklch, var(--primary), white 14%);
 }
 
-/* Contact page map (components/marketing/map-embed.tsx): dark OSM tiles
-   (only the tiles - the brand pin keeps its colour) and Leaflet's
-   controls restyled to match the storefront. */
-.map-tiles-dark {
-    filter: invert(0.9) hue-rotate(180deg) sepia(0.35) saturate(1.2)
-        brightness(0.95);
+/* Contact page map (components/marketing/map-embed.tsx): muted warm-grey
+   OSM tiles (only the tiles - the brand pin keeps its colour) and
+   Leaflet's controls restyled to match the storefront. */
+.map-tiles {
+    filter: grayscale(1) sepia(0.25) brightness(0.92) contrast(0.9);
 }
 .map-embed.leaflet-container {
     font-family: inherit;

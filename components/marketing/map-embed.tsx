@@ -44,7 +44,7 @@ export function MapEmbed({
             });
             L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 maxZoom: 19,
-                className: "map-tiles-dark",
+                className: "map-tiles",
             }).addTo(map);
             L.control
                 .attribution({ prefix: false })
