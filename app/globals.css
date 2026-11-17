@@ -261,6 +261,18 @@ body:has(.storefront) {
     }
 }
 
+/* Calendar tap-to-book mark: holds, then fades out over its last 10 %
+   (0.3 s of the 3 s timeout in tap-to-book-layer.tsx). */
+@keyframes tap-mark-expire {
+    0%,
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
 @keyframes enter-scale {
     from {
         opacity: 0;

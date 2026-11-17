@@ -6,6 +6,8 @@ import { cn, formatTime } from "@/lib/utils";
 import { useOpenAddBooking } from "@/components/admin/add-booking-launcher";
 
 const TAP_STEP_MINUTES = 15;
+// An untouched mark goes away on its own – the way out of a stray tap.
+const MARK_TIMEOUT_MS = 3000;
 
 // Fills a day column under its booking cards: tapping empty space opens
 // "Přidat rezervaci" for that day and the tapped quarter hour. Cards sit
@@ -32,7 +34,8 @@ export function TapToBookLayer({
     const [hoveredStart, setHoveredStart] = useState<number | null>(null);
     const [markedStart, setMarkedStart] = useState<number | null>(null);
 
-    // A tap anywhere outside this day drops its mark.
+    // A tap anywhere outside this day, or a few seconds without one, drops
+    // the mark. Moving the mark starts the countdown again.
     useEffect(() => {
         if (markedStart === null) return;
         function handlePointerDown(event: PointerEvent) {
@@ -40,8 +43,11 @@ export function TapToBookLayer({
             setMarkedStart(null);
         }
         document.addEventListener("pointerdown", handlePointerDown);
-        return () =>
+        const timeout = setTimeout(() => setMarkedStart(null), MARK_TIMEOUT_MS);
+        return () => {
             document.removeEventListener("pointerdown", handlePointerDown);
+            clearTimeout(timeout);
+        };
     }, [markedStart]);
 
     function startAt(event: MouseEvent<HTMLDivElement>) {
@@ -87,6 +93,9 @@ export function TapToBookLayer({
         >
             {shownStart !== null && (
                 <div
+                    // Keyed by the marked time, so moving the mark restarts
+                    // its fade-out along with the timeout.
+                    key={markedStart ?? "hover"}
                     className={cn(
                         "pointer-events-none absolute inset-x-1 flex items-center gap-1 rounded-sm border px-1.5 text-xs text-primary tabular-nums",
                         markedStart !== null
@@ -96,6 +105,10 @@ export function TapToBookLayer({
                     style={{
                         top: (shownStart - gridStart) * pxPerMinute,
                         height: TAP_STEP_MINUTES * pxPerMinute,
+                        animation:
+                            markedStart !== null
+                                ? `tap-mark-expire ${MARK_TIMEOUT_MS}ms forwards`
+                                : undefined,
                     }}
                 >
                     <Plus className="size-3" />
