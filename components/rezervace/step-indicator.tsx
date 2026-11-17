@@ -6,7 +6,7 @@ const steps = ["Termín", "Údaje", "Potvrzení"];
 export function StepIndicator({ currentStep }: { currentStep: 1 | 2 | 3 }) {
     return (
         <CzechText>
-            <div className="mx-auto my-3 max-w-md py-3">
+            <div className="mx-auto max-w-md py-3 md:my-3">
                 <div className="flex gap-2">
                     {steps.map((_, i) => (
                         <div
