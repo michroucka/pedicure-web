@@ -1,6 +1,6 @@
 "use client";
 
-import { StickyNote, Users } from "lucide-react";
+import { Plus, StickyNote, Users } from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import { getBookingPersonName } from "@/lib/get-booking-person-name";
 import type { Booking, Client, Service } from "@/lib/generated/prisma/client";
@@ -122,27 +122,31 @@ export function BookingCard({
             style={{ top, height }}
         >
             <div className="min-w-0">
-                <div className="flex items-center gap-1 font-medium max-2xl:text-xs">
-                    <span className="truncate">
-                        {getBookingPersonName(booking)}
-                    </span>
+                {/* Icons inline in the text, so a wrapped name carries
+                    them after its last word, not on the first line. */}
+                <div className="line-clamp-2 font-medium break-words max-2xl:text-xs">
+                    {getBookingPersonName(booking)}
                     {booking.groupId && (
                         <Users
-                            className="size-3 shrink-0 text-muted-foreground"
+                            className="ml-1 inline size-3 align-[-0.125em] text-muted-foreground"
                             aria-label="Skupina"
                         />
                     )}
                     {booking.client.note && (
                         <StickyNote
-                            className="size-3 shrink-0 text-muted-foreground"
+                            className="ml-1 inline size-3 align-[-0.125em] text-muted-foreground"
                             aria-label="Má poznámku"
                         />
                     )}
                 </div>
-                <div className="truncate text-xs text-muted-foreground">
-                    {booking.service.name}
-                    {booking.extraTimeMinutes > 0 &&
-                        ` +${booking.extraTimeMinutes} min`}
+                <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                    <span className="truncate">{booking.service.name}</span>
+                    {booking.extraTimeMinutes > 0 && (
+                        <Plus
+                            className="size-3 shrink-0"
+                            aria-label="Prodloužený čas"
+                        />
+                    )}
                 </div>
             </div>
             <div className="shrink-0 text-right text-xs">
