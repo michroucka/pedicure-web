@@ -142,8 +142,11 @@ function NavBar({
                             }}
                             classNames={{
                                 // The default muted text alone barely sets
-                                // other months apart from this one.
-                                outside: "text-muted-foreground opacity-50",
+                                // other months apart from this one. Faded
+                                // on the day button only - on the whole cell
+                                // it also faded the shown-week band.
+                                outside:
+                                    "text-muted-foreground [&_button]:opacity-50",
                             }}
                             components={{ DayButton: ExceptionDayButton }}
                             // ~44 px days: tapped with a finger on the tablet.
