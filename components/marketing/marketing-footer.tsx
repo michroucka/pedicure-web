@@ -9,7 +9,7 @@ const SITE_LAUNCH_YEAR = 2026;
 // py-3 -my-3: >= 44 px touch target without changing the line spacing.
 const LINK_CLASSES = "-my-3 py-3 transition-colors hover:text-foreground";
 const COLUMN_HEADING_CLASSES =
-    "font-sans text-sm font-medium tracking-wide text-foreground/70 uppercase";
+    "font-sans text-sm font-medium tracking-wide whitespace-nowrap text-foreground/70 uppercase";
 
 const PROFILES = [
     {
@@ -34,7 +34,7 @@ export function MarketingFooter() {
                     {/* Phone: everything stacked. sm: brand on top, the two
                         columns side by side. lg: the wrapper dissolves so brand
                         and both columns share one grid row. */}
-                    <div className="grid gap-10 lg:grid-cols-[2fr_1fr_1fr] lg:gap-16">
+                    <div className="grid gap-10 lg:grid-cols-[1fr_auto_auto_auto] lg:gap-16">
                         <div>
                             <Link
                                 href="/"
@@ -93,6 +93,18 @@ export function MarketingFooter() {
                                         </a>
                                     </li>
                                 </ul>
+                            </section>
+
+                            <section aria-labelledby="footer-hours">
+                                <h2
+                                    id="footer-hours"
+                                    className={COLUMN_HEADING_CLASSES}
+                                >
+                                    Provozní doba
+                                </h2>
+                                <p className="mt-4 text-sm text-muted-foreground">
+                                    Dle objednávek
+                                </p>
                             </section>
 
                             <section aria-labelledby="footer-profiles">

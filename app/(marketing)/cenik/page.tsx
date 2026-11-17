@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 import { CzechText } from "@/components/czech-text";
@@ -43,8 +43,10 @@ export default async function CenikPage() {
                             <Card
                                 key={service.id}
                                 // Hover lift: the cards are the page's content
-                                // people point at, so they feel tangible.
-                                className="enter transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/30"
+                                // people point at, so they feel tangible. The
+                                // whole card is the "Objednat" link (stretched
+                                // over it), so the focus ring goes on the card.
+                                className="group/service enter relative transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/30 has-focus-visible:ring-2 has-focus-visible:ring-ring"
                                 style={stagger(2 + i)}
                             >
                                 <CardContent className="flex h-full flex-col">
@@ -61,28 +63,25 @@ export default async function CenikPage() {
                                             {service.description}
                                         </p>
                                     )}
-                                    <p className="mt-auto pt-4 text-right font-heading text-2xl text-primary">
-                                        {service.price} Kč
-                                    </p>
+                                    <div className="mt-auto flex items-center justify-between gap-4 pt-4">
+                                        <p className="font-heading text-2xl text-primary">
+                                            {service.price} Kč
+                                        </p>
+                                        {BOOKING_ENABLED && (
+                                            <Link
+                                                href={`/rezervace?services=${service.id}`}
+                                                aria-label={`Objednat – ${service.name}`}
+                                                className="flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors outline-none group-hover/service:text-foreground group-hover/service:underline group-hover/service:underline-offset-4 group-has-focus-visible/service:text-foreground after:absolute after:inset-0"
+                                            >
+                                                Objednat
+                                                <ArrowRight className="size-4 transition-transform group-hover/service:translate-x-0.5" />
+                                            </Link>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         ))}
                     </div>
-
-                    {BOOKING_ENABLED && (
-                        <div
-                            className="enter mt-10"
-                            style={stagger(2 + services.length)}
-                        >
-                            <Button
-                                asChild
-                                size="lg"
-                                className="w-full sm:w-auto"
-                            >
-                                <Link href="/rezervace">Objednat se</Link>
-                            </Button>
-                        </div>
-                    )}
                 </div>
             </section>
         </CzechText>
