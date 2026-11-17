@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Plus } from "lucide-react";
-import { formatTime } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 import { useOpenAddBooking } from "@/components/admin/add-booking-launcher";
 
 const TAP_STEP_MINUTES = 15;
@@ -10,6 +10,11 @@ const TAP_STEP_MINUTES = 15;
 // Fills a day column under its booking cards: tapping empty space opens
 // "Přidat rezervaci" for that day and the tapped quarter hour. Cards sit
 // on top, so tapping one still opens its detail instead.
+//
+// A mouse click opens the dialog straight away (hover already shows the
+// time). A touch is two-step: the first tap only marks the quarter hour,
+// tapping the mark opens the dialog – a stray tap opens nothing and shows
+// which time was hit before committing to it.
 export function TapToBookLayer({
     date,
     gridStart,
@@ -22,8 +27,22 @@ export function TapToBookLayer({
     pxPerMinute: number;
 }) {
     const openAddBooking = useOpenAddBooking();
-    // Mouse only – on touch a tap opens the dialog straight away.
+    const layerRef = useRef<HTMLDivElement>(null);
+    const lastPointerTypeRef = useRef<string>("mouse");
     const [hoveredStart, setHoveredStart] = useState<number | null>(null);
+    const [markedStart, setMarkedStart] = useState<number | null>(null);
+
+    // A tap anywhere outside this day drops its mark.
+    useEffect(() => {
+        if (markedStart === null) return;
+        function handlePointerDown(event: PointerEvent) {
+            if (layerRef.current?.contains(event.target as Node)) return;
+            setMarkedStart(null);
+        }
+        document.addEventListener("pointerdown", handlePointerDown);
+        return () =>
+            document.removeEventListener("pointerdown", handlePointerDown);
+    }, [markedStart]);
 
     function startAt(event: MouseEvent<HTMLDivElement>) {
         const offsetY =
@@ -38,12 +57,27 @@ export function TapToBookLayer({
         );
     }
 
+    function handleClick(event: MouseEvent<HTMLDivElement>) {
+        const start = startAt(event);
+        const isTouch = lastPointerTypeRef.current !== "mouse";
+        if (isTouch && markedStart !== start) {
+            setMarkedStart(start);
+            return;
+        }
+        setMarkedStart(null);
+        openAddBooking({ date, startMinutes: start });
+    }
+
+    const shownStart = markedStart ?? hoveredStart;
+
     return (
         <div
+            ref={layerRef}
             className="absolute inset-0 cursor-pointer"
-            onClick={(event) =>
-                openAddBooking({ date, startMinutes: startAt(event) })
-            }
+            onPointerDown={(event) => {
+                lastPointerTypeRef.current = event.pointerType;
+            }}
+            onClick={handleClick}
             onPointerMove={(event) =>
                 setHoveredStart(
                     event.pointerType === "mouse" ? startAt(event) : null
@@ -51,16 +85,21 @@ export function TapToBookLayer({
             }
             onPointerLeave={() => setHoveredStart(null)}
         >
-            {hoveredStart !== null && (
+            {shownStart !== null && (
                 <div
-                    className="pointer-events-none absolute inset-x-1 flex items-center gap-1 rounded-sm border border-dashed border-primary/50 bg-primary/5 px-1.5 text-xs text-primary tabular-nums"
+                    className={cn(
+                        "pointer-events-none absolute inset-x-1 flex items-center gap-1 rounded-sm border px-1.5 text-xs text-primary tabular-nums",
+                        markedStart !== null
+                            ? "border-primary bg-primary/10 font-medium"
+                            : "border-dashed border-primary/50 bg-primary/5"
+                    )}
                     style={{
-                        top: (hoveredStart - gridStart) * pxPerMinute,
+                        top: (shownStart - gridStart) * pxPerMinute,
                         height: TAP_STEP_MINUTES * pxPerMinute,
                     }}
                 >
                     <Plus className="size-3" />
-                    {formatTime(hoveredStart)}
+                    {formatTime(shownStart)}
                 </div>
             )}
         </div>
