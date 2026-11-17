@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRightIcon, MenuIcon, PhoneIcon } from "lucide-react";
+import { ChevronRightIcon, MenuIcon, PhoneIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
@@ -192,6 +192,7 @@ function MobileMenu({ pathname }: { pathname: string }) {
             </SheetTrigger>
             <SheetContent
                 side="right"
+                showCloseButton={false}
                 onCloseAutoFocus={(event) => {
                     const href = pendingSectionHref.current;
                     pendingSectionHref.current = null;
@@ -206,6 +207,18 @@ function MobileMenu({ pathname }: { pathname: string }) {
                 }}
                 className="w-4/5 gap-0 border-border/60 bg-background px-6 pt-[calc(env(safe-area-inset-top)+4.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
             >
+                {/* Exactly where the menu button sits in the header, so the
+                    icon just turns from ☰ into ✕. */}
+                <SheetClose asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon-lg"
+                        className="absolute top-[calc(env(safe-area-inset-top)+--spacing(3))] right-4 sm:right-6"
+                        aria-label="Zavřít menu"
+                    >
+                        <XIcon className="size-6" />
+                    </Button>
+                </SheetClose>
                 <SheetTitle className="sr-only">Menu</SheetTitle>
                 <SheetDescription className="sr-only">
                     Navigace webu
