@@ -953,10 +953,12 @@ function EditScheduleSummary({
             edited.end !== current.end);
     return (
         <div className="text-sm text-muted-foreground">
-            <div>Teď: {formatSchedule(current)}</div>
+            <div className={cn(isChanged && "line-through")}>
+                {formatSchedule(current)}
+            </div>
             {isChanged && (
                 <div className="font-medium text-foreground">
-                    Nově: {formatSchedule(edited)}
+                    {formatSchedule(edited)}
                 </div>
             )}
         </div>
