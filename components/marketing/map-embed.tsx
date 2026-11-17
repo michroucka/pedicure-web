@@ -36,9 +36,8 @@ export function MapEmbed({
             map = L.map(containerRef.current, {
                 center: [latitude, longitude],
                 zoom: ZOOM,
-                // A page scroll over the map must not zoom it, and on a phone
-                // one finger must scroll the page, not pan the map.
-                scrollWheelZoom: false,
+                // On a phone one finger must scroll the page, not pan the
+                // map (zoom stays on pinch and the +/- buttons).
                 dragging: !L.Browser.mobile,
                 attributionControl: false,
             });
