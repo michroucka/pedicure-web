@@ -6,7 +6,8 @@ import { computeClosedRanges } from "@/lib/availability";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
 import {
     BookingCard,
-    SERVICE_COLORS,
+    serviceColorMap,
+    shortestActiveServiceMinutes,
     isBookingPast,
     type BookingItem,
 } from "@/components/admin/booking-card";
@@ -62,12 +63,8 @@ export function DayTimeline({
 
     const closedRanges = computeClosedRanges(windows, gridStart, gridEnd);
 
-    const colorByService = new Map(
-        services.map((s, i) => [
-            s.id,
-            SERVICE_COLORS[i % SERVICE_COLORS.length],
-        ])
-    );
+    const colorByService = serviceColorMap(services);
+    const minDurationMinutes = shortestActiveServiceMinutes(services);
 
     const today = getCzechToday();
     const isToday = date.getTime() === today.getTime();
@@ -119,6 +116,8 @@ export function DayTimeline({
                             gridStart={gridStart}
                             gridEnd={gridEnd}
                             pxPerMinute={PX_PER_MIN}
+                            bookings={bookings}
+                            minDurationMinutes={minDurationMinutes}
                         />
                     )}
 
@@ -131,7 +130,7 @@ export function DayTimeline({
                                 (b.endTime - b.startTime) * PX_PER_MIN,
                                 24
                             )}
-                            colorClass={colorByService.get(b.serviceId)}
+                            colorClass={colorByService.get(b.serviceId)?.card}
                             past={isBookingPast(b, today, nowMinutes)}
                             onSelectAction={() => setSelected(b)}
                         />

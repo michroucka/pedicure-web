@@ -14,7 +14,8 @@ import { ExceptionDot } from "@/components/admin/exception-dot";
 import { TapToBookLayer } from "@/components/admin/tap-to-book-layer";
 import {
     BookingCard,
-    SERVICE_COLORS,
+    serviceColorMap,
+    shortestActiveServiceMinutes,
     isBookingPast,
     type BookingItem,
 } from "@/components/admin/booking-card";
@@ -79,12 +80,8 @@ export function WeekTimeline({
     const hours: number[] = [];
     for (let h = gridStart; h <= gridEnd; h += 60) hours.push(h);
 
-    const colorByService = new Map(
-        services.map((s, i) => [
-            s.id,
-            SERVICE_COLORS[i % SERVICE_COLORS.length],
-        ])
-    );
+    const colorByService = serviceColorMap(services);
+    const minDurationMinutes = shortestActiveServiceMinutes(services);
 
     const gridHeight = (gridEnd - gridStart) * PX_PER_MIN;
     const today = localDateToUtcMidnight(new Date());
@@ -194,6 +191,10 @@ export function WeekTimeline({
                                             gridStart={gridStart}
                                             gridEnd={gridEnd}
                                             pxPerMinute={PX_PER_MIN}
+                                            bookings={bookingsByDay[dayIndex]}
+                                            minDurationMinutes={
+                                                minDurationMinutes
+                                            }
                                         />
                                     )}
 
@@ -210,9 +211,10 @@ export function WeekTimeline({
                                                     PX_PER_MIN,
                                                 24
                                             )}
-                                            colorClass={colorByService.get(
-                                                b.serviceId
-                                            )}
+                                            colorClass={
+                                                colorByService.get(b.serviceId)
+                                                    ?.card
+                                            }
                                             past={isBookingPast(
                                                 b,
                                                 todayCzech,

@@ -36,9 +36,9 @@ export function QuickQrDialog({ prices }: { prices: number[] }) {
                 <TooltipTrigger asChild>
                     <Button
                         type="button"
-                        variant="secondary"
+                        variant="outline"
                         size="icon-xl"
-                        className="rounded-full shadow-lg"
+                        className="rounded-full bg-background shadow-lg"
                         aria-label="QR platba"
                         onClick={() => setOpen(true)}
                     >

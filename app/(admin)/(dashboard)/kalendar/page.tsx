@@ -14,6 +14,7 @@ import { WeekTimeline } from "@/components/admin/week-timeline";
 import { AddBookingDialog } from "@/components/admin/add-booking-dialog";
 import { QuickQrDialog } from "@/components/admin/quick-qr-dialog";
 import { FloatingActions } from "@/components/admin/floating-actions";
+import { ServiceLegend } from "@/components/admin/booking-card";
 import { AddBookingLauncherProvider } from "@/components/admin/add-booking-launcher";
 import {
     CalendarBody,
@@ -169,6 +170,7 @@ export default async function AdminHomePage({
                                 exceptions={dayExceptions}
                                 allExceptions={exceptions}
                             />
+                            <ServiceLegend services={services} />
                         </div>
                     </div>
 
