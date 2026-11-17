@@ -684,73 +684,45 @@ export function BookingDetailDialog({
                                             Načítám dostupné termíny…
                                         </div>
                                     ) : (
-                                        (() => {
-                                            const sameDate =
-                                                editDate?.getTime() ===
-                                                groupStart.date.getTime();
-                                            const displaySlots =
-                                                sameDate &&
-                                                editSlots &&
-                                                !editSlots.includes(
-                                                    groupStart.startTime
-                                                )
-                                                    ? [
-                                                          ...editSlots,
-                                                          groupStart.startTime,
-                                                      ].sort((a, b) => a - b)
-                                                    : editSlots;
-                                            return (
-                                                <div className="grid grid-cols-4 gap-2">
-                                                    {displaySlots?.length ===
-                                                        0 && (
-                                                        <p className="col-span-4 text-center text-sm text-muted-foreground">
-                                                            Žádné volné termíny.
-                                                        </p>
-                                                    )}
-                                                    {displaySlots?.map((s) => (
-                                                        <Button
-                                                            key={s}
-                                                            type="button"
-                                                            size="lg"
-                                                            variant={
-                                                                s ===
-                                                                selectedSlot
-                                                                    ? "default"
-                                                                    : "outline"
-                                                            }
-                                                            onClick={() => {
-                                                                setSelectedSlot(
-                                                                    s
-                                                                );
-                                                                setLostSlot(
-                                                                    undefined
-                                                                );
-                                                            }}
-                                                        >
-                                                            {formatTime(s)}
-                                                        </Button>
-                                                    ))}
-                                                    <Button
-                                                        type="button"
-                                                        size="lg"
-                                                        variant="outline"
-                                                        className="hover:bg-accent"
-                                                        onClick={() => {
-                                                            setCustomTime(true);
-                                                            setSelectedSlot(
-                                                                undefined
-                                                            );
-                                                            setLostSlot(
-                                                                undefined
-                                                            );
-                                                        }}
-                                                    >
-                                                        <Plus className="size-4 text-primary" />
-                                                        Jiný
-                                                    </Button>
-                                                </div>
-                                            );
-                                        })()
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {editSlots?.length === 0 && (
+                                                <p className="col-span-4 text-center text-sm text-muted-foreground">
+                                                    Žádné volné termíny.
+                                                </p>
+                                            )}
+                                            {editSlots?.map((s) => (
+                                                <Button
+                                                    key={s}
+                                                    type="button"
+                                                    size="lg"
+                                                    variant={
+                                                        s === selectedSlot
+                                                            ? "default"
+                                                            : "outline"
+                                                    }
+                                                    onClick={() => {
+                                                        setSelectedSlot(s);
+                                                        setLostSlot(undefined);
+                                                    }}
+                                                >
+                                                    {formatTime(s)}
+                                                </Button>
+                                            ))}
+                                            <Button
+                                                type="button"
+                                                size="lg"
+                                                variant="outline"
+                                                className="hover:bg-accent"
+                                                onClick={() => {
+                                                    setCustomTime(true);
+                                                    setSelectedSlot(undefined);
+                                                    setLostSlot(undefined);
+                                                }}
+                                            >
+                                                <Plus className="size-4 text-primary" />
+                                                Jiný
+                                            </Button>
+                                        </div>
                                     ))}
 
                                 {lostSlot !== undefined && (

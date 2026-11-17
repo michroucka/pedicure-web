@@ -12,10 +12,15 @@ async function hasOverlappingBooking(
     db: Prisma.TransactionClient,
     date: Date,
     start: number,
-    end: number
+    end: number,
+    excludeBookingIds: string[]
 ): Promise<boolean> {
     const bookings = await db.booking.findMany({
-        where: { date, status: "CONFIRMED" },
+        where: {
+            date,
+            status: "CONFIRMED",
+            id: { notIn: excludeBookingIds },
+        },
         select: { startTime: true, endTime: true },
     });
 
@@ -32,7 +37,12 @@ export async function checkOutsideHoursSlot(
     startTime: number,
     serviceIds: number[],
     extraMinutes: number,
-    options: { db?: Prisma.TransactionClient } = {}
+    options: {
+        db?: Prisma.TransactionClient;
+        // The edit dialog's preview: the edited bookings don't collide
+        // with themselves (the real move cancels them first instead).
+        excludeBookingIds?: string[];
+    } = {}
 ): Promise<OutsideHoursSlotProblem | null> {
     const db = options.db ?? prisma;
 
@@ -48,7 +58,13 @@ export async function checkOutsideHoursSlot(
     if (endsAfterMidnight(startTime, duration)) return "pastMidnight";
 
     if (
-        await hasOverlappingBooking(db, date, startTime, startTime + duration)
+        await hasOverlappingBooking(
+            db,
+            date,
+            startTime,
+            startTime + duration,
+            options.excludeBookingIds ?? []
+        )
     ) {
         return "overlap";
     }
