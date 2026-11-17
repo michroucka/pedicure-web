@@ -103,7 +103,7 @@ export function MarketingFooter() {
                                     Provozní doba
                                 </h2>
                                 <p className="mt-4 text-sm text-muted-foreground">
-                                    dle objednávek
+                                    Dle objednávek
                                 </p>
                             </section>
 
