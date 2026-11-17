@@ -127,8 +127,7 @@ export default function KontaktPage() {
                                 </h2>
                                 <p className="mt-4 text-base">dle objednávek</p>
                                 <p className="mt-1 text-sm text-pretty text-muted-foreground">
-                                    Volné termíny najdete v online rezervaci,
-                                    jinak po telefonické domluvě.
+                                    Volné termíny najdete v online rezervaci.
                                 </p>
                             </section>
 
