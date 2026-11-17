@@ -66,10 +66,7 @@ export default async function CenikPage() {
                                             {service.price} Kč
                                         </p>
                                         {BOOKING_ENABLED && (
-                                            <Button
-                                                asChild
-                                                variant="outline"
-                                            >
+                                            <Button asChild>
                                                 <Link
                                                     href={`/rezervace?services=${service.id}`}
                                                     aria-label={`Objednat – ${service.name}`}
@@ -83,21 +80,6 @@ export default async function CenikPage() {
                             </Card>
                         ))}
                     </div>
-
-                    {BOOKING_ENABLED && (
-                        <div
-                            className="enter mt-10"
-                            style={stagger(2 + services.length)}
-                        >
-                            <Button
-                                asChild
-                                size="lg"
-                                className="w-full sm:w-auto"
-                            >
-                                <Link href="/rezervace">Objednat se</Link>
-                            </Button>
-                        </div>
-                    )}
                 </div>
             </section>
         </CzechText>
