@@ -298,3 +298,44 @@ body:has(.storefront) {
 .storefront [data-slot="button"][data-variant="default"]:hover {
     background-color: color-mix(in oklch, var(--primary), white 14%);
 }
+
+/* Contact page map (components/marketing/map-embed.tsx): dark OSM tiles
+   (only the tiles - the brand pin keeps its colour) and Leaflet's
+   controls restyled to match the storefront. */
+.map-tiles-dark {
+    filter: invert(0.9) hue-rotate(180deg) sepia(0.35) saturate(1.2)
+        brightness(0.95);
+}
+.map-embed.leaflet-container {
+    font-family: inherit;
+    background: var(--card);
+}
+.map-embed .leaflet-bar {
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: none;
+}
+.map-embed .leaflet-bar a {
+    width: 2.25rem;
+    height: 2.25rem;
+    line-height: 2.25rem;
+    background: var(--background);
+    color: var(--foreground);
+    border-bottom-color: var(--border);
+}
+.map-embed .leaflet-bar a:hover {
+    background: var(--card);
+    color: var(--primary);
+}
+.map-embed.leaflet-container .leaflet-control-attribution {
+    background: color-mix(in oklch, var(--background), transparent 30%);
+    color: var(--muted-foreground);
+    font-size: 0.625rem;
+    /* Off the card's rounded corner, which would clip it. */
+    margin: 0 0.75rem 0.5rem 0 !important;
+    border-radius: 0.375rem;
+}
+.map-embed.leaflet-container .leaflet-control-attribution a {
+    color: inherit;
+}

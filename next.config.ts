@@ -19,12 +19,13 @@ const CONTENT_SECURITY_POLICY = [
     // loads from its own origin outside production.
     `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://challenges.cloudflare.com https://va.vercel-scripts.com${vercelToolbar}`,
     `style-src 'self' 'unsafe-inline'${vercelToolbar}`,
-    // QR payment image in the admin (api.paylibo.com)
-    `img-src 'self' data: blob: https://api.paylibo.com${vercelToolbar}${vercelToolbar && " https://vercel.com"}`,
+    // QR payment image in the admin (api.paylibo.com), map tiles on the
+    // contact page (tile.openstreetmap.org)
+    `img-src 'self' data: blob: https://api.paylibo.com https://tile.openstreetmap.org${vercelToolbar}${vercelToolbar && " https://vercel.com"}`,
     `font-src 'self' data:${vercelToolbar}${vercelToolbar && " https://assets.vercel.com"}`,
     `connect-src 'self' https://challenges.cloudflare.com https://va.vercel-scripts.com${vercelToolbar}${vercelToolbar && " wss://ws-us3.pusher.com"}`,
-    // OpenStreetMap embed on the contact page; Turnstile challenge.
-    `frame-src https://www.openstreetmap.org https://challenges.cloudflare.com${vercelToolbar}`,
+    // Turnstile challenge.
+    `frame-src https://challenges.cloudflare.com${vercelToolbar}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "object-src 'none'",
