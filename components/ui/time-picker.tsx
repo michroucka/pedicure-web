@@ -343,19 +343,31 @@ function TimePicker({
         const sizer = sizerRef.current;
         const trigger = triggerRef.current;
         if (!sizer || !trigger) return;
-        const inputStyles = window.getComputedStyle(trigger);
-        sizer.style.fontSize = inputStyles.fontSize;
-        sizer.style.fontFamily = inputStyles.fontFamily;
-        sizer.style.fontWeight = inputStyles.fontWeight;
-        sizer.style.fontStyle = inputStyles.fontStyle;
-        sizer.style.letterSpacing = inputStyles.letterSpacing;
-        sizer.style.fontVariantNumeric = inputStyles.fontVariantNumeric;
-        const horizontalExtra =
-            parseFloat(inputStyles.paddingLeft) +
-            parseFloat(inputStyles.paddingRight) +
-            parseFloat(inputStyles.borderLeftWidth) +
-            parseFloat(inputStyles.borderRightWidth);
-        setMeasuredWidth(Math.ceil(sizer.offsetWidth + horizontalExtra) + 2);
+
+        function measure(sizer: HTMLSpanElement, trigger: HTMLButtonElement) {
+            const inputStyles = window.getComputedStyle(trigger);
+            sizer.style.fontSize = inputStyles.fontSize;
+            sizer.style.fontFamily = inputStyles.fontFamily;
+            sizer.style.fontWeight = inputStyles.fontWeight;
+            sizer.style.fontStyle = inputStyles.fontStyle;
+            sizer.style.letterSpacing = inputStyles.letterSpacing;
+            sizer.style.fontVariantNumeric = inputStyles.fontVariantNumeric;
+            const horizontalExtra =
+                parseFloat(inputStyles.paddingLeft) +
+                parseFloat(inputStyles.paddingRight) +
+                parseFloat(inputStyles.borderLeftWidth) +
+                parseFloat(inputStyles.borderRightWidth);
+            setMeasuredWidth(
+                Math.ceil(sizer.offsetWidth + horizontalExtra) + 2
+            );
+        }
+
+        measure(sizer, trigger);
+        // Inside a hidden parent (e.g. an inactive tab kept mounted) the
+        // first measurement is 0 – measure again once it becomes visible.
+        const observer = new ResizeObserver(() => measure(sizer, trigger));
+        observer.observe(sizer);
+        return () => observer.disconnect();
     }, [icon, variant, className]);
 
     // Radix's own outside-click dismissal (DismissableLayer) shares one
