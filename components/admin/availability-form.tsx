@@ -178,9 +178,6 @@ function DayField({
                 <Button
                     type="button"
                     variant="ghost"
-                    // Under the day name (tablet), its icon lines up with
-                    // the name: shifted by the button's padding and border.
-                    className="lg:-ms-[calc(--spacing(3)+1px)]"
                     onClick={addBlock}
                 >
                     <Plus className="size-4" />
