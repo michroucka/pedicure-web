@@ -8,6 +8,8 @@ import { MonochromeLogo } from "@/components/marketing/monochrome-logo";
 import { MapEmbed } from "@/components/marketing/map-embed";
 import { CzechText } from "@/components/czech-text";
 import { stagger } from "@/lib/stagger";
+import { getOpeningHours } from "@/lib/opening-hours";
+import { OpeningHoursList } from "@/components/marketing/opening-hours-list";
 
 export const metadata: Metadata = {
     title: "Kontakt",
@@ -59,7 +61,9 @@ const CONTACT_ACTIONS = [
     },
 ];
 
-export default function KontaktPage() {
+export default async function KontaktPage() {
+    const openingHours = await getOpeningHours();
+
     return (
         <CzechText>
             <section>
@@ -111,6 +115,28 @@ export default function KontaktPage() {
                                     </li>
                                 ))}
                             </ul>
+
+                            {openingHours.length > 0 && (
+                                <section
+                                    aria-labelledby="kontakt-hours"
+                                    className="mt-10"
+                                >
+                                    <h2
+                                        id="kontakt-hours"
+                                        className="font-sans text-sm font-medium tracking-wide text-foreground/70 uppercase"
+                                    >
+                                        Obvyklá provozní doba
+                                    </h2>
+                                    <OpeningHoursList
+                                        rows={openingHours}
+                                        className="mt-4 text-base"
+                                    />
+                                    <p className="mt-3 text-sm text-pretty text-muted-foreground">
+                                        Přesné volné termíny najdete v online
+                                        rezervaci, jinak po telefonické domluvě.
+                                    </p>
+                                </section>
+                            )}
 
                             {BOOKING_ENABLED && (
                                 <Button
