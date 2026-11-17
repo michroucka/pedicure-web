@@ -48,7 +48,9 @@ export default async function SpravaPage({
     if (!bookings) notFound();
 
     const booking = bookings[0];
-    const dateSummary = format(booking.date, "d. MMMM yyyy", { locale: cs });
+    const dateSummary = format(booking.date, "EEEE d. MMMM yyyy", {
+        locale: cs,
+    });
     const timeSummary = `${formatTime(booking.startTime)} – ${formatTime(bookings.at(-1)!.endTime)}`;
 
     if (booking.status === "CANCELLED") {
@@ -65,7 +67,7 @@ export default async function SpravaPage({
                         <p className="text-sm text-muted-foreground">
                             Nový termín je{" "}
                             <span className="text-foreground">
-                                {format(moved.date, "d. MMMM yyyy", {
+                                {format(moved.date, "EEEE d. MMMM yyyy", {
                                     locale: cs,
                                 })}{" "}
                                 v {formatTime(moved.startTime)} –{" "}

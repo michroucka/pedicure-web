@@ -48,7 +48,7 @@ export function ReservationWizard({ services }: { services: Service[] }) {
 
     const dateParam = searchParams.get("date");
     const dateSummary = dateParam
-        ? format(new Date(dateParam), "d. MMMM yyyy", { locale: cs })
+        ? format(new Date(dateParam), "EEEE d. MMMM yyyy", { locale: cs })
         : "";
 
     const slotParam = searchParams.get("slot");

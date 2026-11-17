@@ -297,7 +297,7 @@ BookingConfirmationEmail.PreviewProps = {
         { name: "Jana Nováková", serviceName: "Pedikúra klasik" },
         { name: "Petra Nováková", serviceName: "Pedikúra s lakem" },
     ],
-    dateLabel: "29. srpna 2026",
+    dateLabel: "sobota 29. srpna 2026",
     timeLabel: "09:00 – 10:15",
     totalPrice: 1050,
     manageUrl:

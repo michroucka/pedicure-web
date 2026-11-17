@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRightIcon, MenuIcon } from "lucide-react";
+import { ChevronRightIcon, MenuIcon, PhoneIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
@@ -15,6 +15,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
+import { BUSINESS_INFO } from "@/lib/business-info";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -248,6 +249,17 @@ function MobileMenu({ pathname }: { pathname: string }) {
                         </Button>
                     </SheetClose>
                 )}
+                <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="mt-3 w-full"
+                >
+                    <a href={`tel:${BUSINESS_INFO.phone}`}>
+                        <PhoneIcon data-icon="inline-start" />
+                        Zavolat {BUSINESS_INFO.phoneDisplay}
+                    </a>
+                </Button>
             </SheetContent>
         </Sheet>
     );

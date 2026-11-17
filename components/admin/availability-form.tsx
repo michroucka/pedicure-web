@@ -9,7 +9,7 @@ import {
     type Control,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
     availabilitySchema,
     type AvailabilityFormData,
@@ -20,7 +20,7 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { Spinner } from "@/components/ui/spinner";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { formatTime, parseTime, roundToQuarterHour } from "@/lib/utils";
-import { AlertCircle, Plus, Trash2, Save } from "lucide-react";
+import { AlertCircle, Check, Plus, Trash2, Save } from "lucide-react";
 
 const DAY_LABELS: Record<number, string> = {
     0: "Neděle",
@@ -31,6 +31,39 @@ const DAY_LABELS: Record<number, string> = {
     5: "Pátek",
     6: "Sobota",
 };
+
+const SAVED_NOTICE_MS = 2500;
+
+// Warns before leaving with unsaved changes - both a reload/closed tab
+// (beforeunload) and an in-app link like the bottom nav. Next.js Link
+// navigates on its own click handler, so the click is caught in the capture
+// phase on document, before it reaches React.
+function useConfirmLeaveWhenDirty(isDirty: boolean) {
+    useEffect(() => {
+        if (!isDirty) return;
+        const message = "Máte neuložené změny dostupnosti. Opravdu odejít?";
+
+        function handleBeforeUnload(event: BeforeUnloadEvent) {
+            event.preventDefault();
+        }
+
+        function handleLinkClick(event: MouseEvent) {
+            const link = (event.target as Element | null)?.closest("a[href]");
+            if (!(link instanceof HTMLAnchorElement)) return;
+            if (link.target === "_blank") return;
+            if (window.confirm(message)) return;
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        document.addEventListener("click", handleLinkClick, true);
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+            document.removeEventListener("click", handleLinkClick, true);
+        };
+    }, [isDirty]);
+}
 
 const TRACK_MIN = 13 * 60; // 13:00
 const TRACK_MAX = 20 * 60; // 20:00
@@ -231,13 +264,27 @@ export function AvailabilityForm({
         defaultValues: { days },
     });
     const [isSaving, startTransition] = useTransition();
+    const [showSavedNotice, setShowSavedNotice] = useState(false);
+    useConfirmLeaveWhenDirty(isDirty);
+
+    useEffect(() => {
+        if (!showSavedNotice) return;
+        const timeout = setTimeout(
+            () => setShowSavedNotice(false),
+            SAVED_NOTICE_MS
+        );
+        return () => clearTimeout(timeout);
+    }, [showSavedNotice]);
 
     function onSubmit(data: AvailabilityFormData) {
         startTransition(async () => {
             await saveAction(data);
             reset(data);
+            setShowSavedNotice(true);
         });
     }
+
+    const isNoticeOnly = showSavedNotice && !isDirty && !isSaving;
 
     return (
         <form
@@ -258,23 +305,35 @@ export function AvailabilityForm({
 
             {/* Sticky above the bottom nav, so saving doesn't need a scroll
                 past all seven days; only while there is something to save. */}
-            {(isDirty || isSaving) && (
+            {(isDirty || isSaving || showSavedNotice) && (
                 <div className="sticky bottom-[calc(var(--admin-nav-height)+env(safe-area-inset-bottom))] -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur transition-[translate,opacity] duration-200 starting:translate-y-4 starting:opacity-0">
-                    <span className="text-sm text-muted-foreground">
-                        Neuložené změny
-                    </span>
-                    <Button
-                        type="submit"
-                        disabled={isSaving}
-                        size="lg"
-                    >
-                        {isSaving ? (
-                            <Spinner className="size-4" />
-                        ) : (
-                            <Save className="size-4" />
-                        )}
-                        {isSaving ? "Ukládám…" : "Uložit"}
-                    </Button>
+                    {isNoticeOnly ? (
+                        <span
+                            role="status"
+                            className="flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary"
+                        >
+                            <Check className="size-4" />
+                            Uloženo
+                        </span>
+                    ) : (
+                        <span className="text-sm text-muted-foreground">
+                            Neuložené změny
+                        </span>
+                    )}
+                    {!isNoticeOnly && (
+                        <Button
+                            type="submit"
+                            disabled={isSaving}
+                            size="lg"
+                        >
+                            {isSaving ? (
+                                <Spinner className="size-4" />
+                            ) : (
+                                <Save className="size-4" />
+                            )}
+                            {isSaving ? "Ukládám…" : "Uložit"}
+                        </Button>
+                    )}
                 </div>
             )}
         </form>

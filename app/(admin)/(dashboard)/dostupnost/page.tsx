@@ -61,7 +61,13 @@ export default async function AvailabilityPage() {
                     />
                 </TabsContent>
 
-                <TabsContent value="recurring">
+                {/* Kept mounted, so unsaved changes survive switching to
+                    the other tab and back. */}
+                <TabsContent
+                    value="recurring"
+                    forceMount
+                    className="data-[state=inactive]:hidden"
+                >
                     <AvailabilityForm
                         days={days}
                         saveAction={saveRecurringAvailability}

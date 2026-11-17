@@ -108,7 +108,9 @@ export default async function DetailsPage({
     const backHref = `/rezervace?date=${date}&services=${services}&slot=${slot}`;
 
     const totalDuration = sumServiceDurations(serviceIds, availableServices);
-    const dateSummary = format(bookingDate, "d. MMMM yyyy", { locale: cs });
+    const dateSummary = format(bookingDate, "EEEE d. MMMM yyyy", {
+        locale: cs,
+    });
     const timeSummary = `${formatTime(startTime)} – ${formatTime(startTime + totalDuration + knownExtraMinutes)}`;
 
     return (
