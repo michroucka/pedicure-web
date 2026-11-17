@@ -62,6 +62,9 @@ export default async function CenikPage() {
                                         </p>
                                     )}
                                     <div className="mt-auto flex items-center justify-between gap-4 pt-4">
+                                        <p className="font-heading text-2xl text-primary">
+                                            {service.price} Kč
+                                        </p>
                                         {BOOKING_ENABLED && (
                                             <Button
                                                 asChild
@@ -75,9 +78,6 @@ export default async function CenikPage() {
                                                 </Link>
                                             </Button>
                                         )}
-                                        <p className="ml-auto font-heading text-2xl text-primary">
-                                            {service.price} Kč
-                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
