@@ -39,7 +39,14 @@ const CONTACT_ACTIONS = [
     {
         href: `mailto:${BUSINESS_INFO.email}`,
         label: "Napsat e-mail",
-        value: BUSINESS_INFO.email,
+        // Too long for a phone line: break after the "@", not mid-word.
+        value: (
+            <>
+                {BUSINESS_INFO.email.split("@")[0]}@
+                <wbr />
+                {BUSINESS_INFO.email.split("@")[1]}
+            </>
+        ),
         icon: Mail,
         external: false,
     },
@@ -75,7 +82,7 @@ export default function KontaktPage() {
 
                     <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-12">
                         <div
-                            className="enter"
+                            className="enter min-w-0"
                             style={stagger(2)}
                         >
                             <ul className="flex flex-col gap-3">
@@ -92,11 +99,11 @@ export default function KontaktPage() {
                                             <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
                                                 <action.icon className="size-5" />
                                             </span>
-                                            <span className="min-w-0">
+                                            <span className="min-w-0 flex-1">
                                                 <span className="block text-sm text-muted-foreground">
                                                     {action.label}
                                                 </span>
-                                                <span className="block text-base font-medium break-words transition-colors group-hover:text-primary">
+                                                <span className="block text-base font-medium wrap-anywhere transition-colors group-hover:text-primary">
                                                     {action.value}
                                                 </span>
                                             </span>
