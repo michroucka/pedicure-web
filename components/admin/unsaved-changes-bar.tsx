@@ -5,7 +5,7 @@ import { Check, Save, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
-const SAVED_NOTICE_MS = 2500;
+const SAVED_NOTICE_MS = 1500;
 
 export const LEAVE_WITH_UNSAVED_CHANGES_MESSAGE =
     "Máte neuložené změny dostupnosti. Opravdu odejít?";
