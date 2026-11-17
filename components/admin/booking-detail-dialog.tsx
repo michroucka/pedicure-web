@@ -55,6 +55,7 @@ import {
     PhoneCall,
     Handshake,
     Mail,
+    ArrowRight,
     type LucideIcon,
 } from "lucide-react";
 import {
@@ -959,8 +960,9 @@ function EditScheduleSummary({
                 {formatSchedule(current)}
             </span>
             {isChanged && (
-                <span className="font-medium text-foreground">
-                    → {formatSchedule(edited)}
+                <span className="flex items-center gap-2 font-medium text-foreground">
+                    <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+                    {formatSchedule(edited)}
                 </span>
             )}
         </div>
