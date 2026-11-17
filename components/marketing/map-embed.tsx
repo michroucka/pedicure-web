@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties } from "react";
-import { ExternalLink } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { cn } from "@/lib/utils";
 import { BUSINESS_INFO } from "@/lib/business-info";
@@ -71,24 +70,14 @@ export function MapEmbed({
 
     return (
         <div
-            className={cn("flex flex-col gap-2", className)}
+            ref={containerRef}
+            role="region"
+            aria-label="Mapa provozovny"
+            className={cn(
+                "map-embed isolate z-0 min-h-70 w-full overflow-hidden rounded-2xl border border-border bg-card",
+                className
+            )}
             style={style}
-        >
-            <div
-                ref={containerRef}
-                role="region"
-                aria-label="Mapa provozovny"
-                className="map-embed isolate z-0 min-h-70 w-full flex-1 overflow-hidden rounded-2xl border border-border bg-card"
-            />
-            <a
-                href={BUSINESS_INFO.mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center gap-1.5 self-end text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-                Otevřít v Mapy.com
-                <ExternalLink className="size-4" />
-            </a>
-        </div>
+        />
     );
 }
