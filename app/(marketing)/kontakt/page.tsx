@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowRight, CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 import { BUSINESS_INFO } from "@/lib/business-info";
 import { MonochromeLogo } from "@/components/marketing/monochrome-logo";
@@ -64,9 +63,10 @@ const CONTACT_ACTIONS = [
               {
                   href: "/rezervace",
                   label: "Provozní doba",
-                  value: "Pouze na objednávku",
+                  value: "Dle objednávek",
                   icon: CalendarClock,
                   external: false,
+                  cta: "Objednat se",
               },
           ]
         : []),
@@ -113,7 +113,7 @@ export default function KontaktPage() {
                                                     target: "_blank",
                                                     rel: "noopener noreferrer",
                                                 })}
-                                                className="group flex min-h-16 items-center gap-4 rounded-2xl border border-border px-4 py-3 transition-colors hover:border-primary/60"
+                                                className="group flex min-h-16 flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-border px-4 py-3 transition-colors hover:border-primary/60"
                                             >
                                                 <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
                                                     <action.icon className="size-5" />
@@ -126,21 +126,19 @@ export default function KontaktPage() {
                                                         {action.value}
                                                     </span>
                                                 </span>
+                                                {"cta" in action && (
+                                                    // On a phone it goes under the text (lined
+                                                    // up past the icon: size-11 + gap-x-4).
+                                                    <span className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground max-sm:basis-full max-sm:pl-15">
+                                                        {action.cta}
+                                                        <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                                                    </span>
+                                                )}
                                             </Anchor>
                                         </li>
                                     );
                                 })}
                             </ul>
-
-                            {BOOKING_ENABLED && (
-                                <Button
-                                    asChild
-                                    size="lg"
-                                    className="mt-8 w-full sm:w-auto"
-                                >
-                                    <Link href="/rezervace">Objednat se</Link>
-                                </Button>
-                            )}
 
                             <section
                                 aria-labelledby="kontakt-rating"

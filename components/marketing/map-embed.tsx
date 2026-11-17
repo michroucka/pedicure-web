@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import Image from "next/image";
-import { MapPin } from "lucide-react";
+import { Map as MapIcon, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
@@ -66,8 +66,11 @@ export function MapEmbed({
                         <MapPin className="size-8 text-primary" />
                         <Button
                             variant="outline"
+                            size="lg"
                             onClick={() => setMapState("loading")}
+                            className="bg-background shadow-lg hover:bg-background"
                         >
+                            <MapIcon className="size-4" />
                             Zobrazit mapu
                         </Button>
                         <p className="max-w-xs text-xs leading-relaxed text-pretty text-muted-foreground">
