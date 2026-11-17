@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarPlus, Moon } from "lucide-react";
+import { CalendarOff, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTime, getCzechToday, getCzechNowMinutes } from "@/lib/utils";
 import { computeClosedRanges } from "@/lib/availability";
@@ -47,7 +47,7 @@ export function DayTimeline({
         return (
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
                 <span className="grid size-14 place-items-center rounded-full bg-muted text-muted-foreground">
-                    <Moon className="size-6" />
+                    <CalendarOff className="size-6" />
                 </span>
                 <div>
                     <p className="font-medium">Zavřeno</p>
