@@ -55,6 +55,7 @@ import {
     PhoneCall,
     Handshake,
     Mail,
+    ArrowRight,
     type LucideIcon,
 } from "lucide-react";
 import {
@@ -122,6 +123,10 @@ export function BookingDetailDialog({
     const [selectedSlot, setSelectedSlot] = useState<number>();
     const [customTime, setCustomTime] = useState(false);
     const [customTimeValue, setCustomTimeValue] = useState("");
+    // The time that was picked before a change of service / extra time /
+    // date, when it no longer fits – said out loud instead of silently
+    // dropping it.
+    const [lostSlot, setLostSlot] = useState<number>();
     const [qrTarget, setQrTarget] = useState(QR_TOTAL);
     const [qrAmount, setQrAmount] = useState("");
     const [error, setError] = useState<string>();
@@ -141,6 +146,7 @@ export function BookingDetailDialog({
         setSelectedSlot(undefined);
         setCustomTime(false);
         setCustomTimeValue("");
+        setLostSlot(undefined);
         setQrTarget(QR_TOTAL);
         setQrAmount("");
         setError(undefined);
@@ -189,8 +195,16 @@ export function BookingDetailDialog({
         setQrAmount(String(amount));
     }
 
-    function refreshEditSlots(d: Date | undefined, people: EditPerson[]) {
+    // `keepSlot`: the time picked so far – stays picked if it's still free
+    // with the new date/length (the edited bookings don't block their own
+    // time), otherwise it's reported as lost.
+    function refreshEditSlots(
+        d: Date | undefined,
+        people: EditPerson[],
+        keepSlot?: number
+    ) {
         setEditSlots(undefined);
+        setLostSlot(undefined);
         if (!d || !booking) return;
         startSlotsTransition(async () => {
             const result = await getMoveSlotsAction(
@@ -201,7 +215,24 @@ export function BookingDetailDialog({
                 people.map((p) => extraTimeToMinutes(p.extraTime))
             );
             setEditSlots(result);
+            if (keepSlot === undefined) return;
+            if (result.includes(keepSlot)) {
+                setSelectedSlot(keepSlot);
+            } else {
+                setSelectedSlot(undefined);
+                setLostSlot(keepSlot);
+            }
         });
+    }
+
+    // A custom ("Jiný") time is kept as it is – it's meant to be outside
+    // the offered slots. Otherwise the picked slot is re-checked.
+    function refreshKeepingTime(d: Date | undefined, people: EditPerson[]) {
+        if (customTime) {
+            refreshEditSlots(d, people);
+        } else {
+            refreshEditSlots(d, people, selectedSlot);
+        }
     }
 
     function openEdit() {
@@ -230,10 +261,7 @@ export function BookingDetailDialog({
             idx === i ? { ...p, serviceId } : p
         );
         setEditPeople(next);
-        setSelectedSlot(undefined);
-        setCustomTime(false);
-        setCustomTimeValue("");
-        refreshEditSlots(editDate, next);
+        refreshKeepingTime(editDate, next);
     }
 
     function updateEditPersonExtraTime(i: number, extraTime: ExtraTime) {
@@ -241,10 +269,7 @@ export function BookingDetailDialog({
             idx === i ? { ...p, extraTime } : p
         );
         setEditPeople(next);
-        setSelectedSlot(undefined);
-        setCustomTime(false);
-        setCustomTimeValue("");
-        refreshEditSlots(editDate, next);
+        refreshKeepingTime(editDate, next);
     }
 
     function updateEditPersonName(i: number, name: string) {
@@ -255,10 +280,7 @@ export function BookingDetailDialog({
 
     function pickEditDate(d: Date | undefined) {
         setEditDate(d);
-        setSelectedSlot(undefined);
-        setCustomTime(false);
-        setCustomTimeValue("");
-        refreshEditSlots(d, editPeople);
+        refreshKeepingTime(d, editPeople);
     }
 
     function submitEdit() {
@@ -353,6 +375,29 @@ export function BookingDetailDialog({
                                   ? "Upravit rezervaci"
                                   : "QR platba"}
                         </DialogTitle>
+                        {mode === "edit" && (
+                            <EditScheduleSummary
+                                current={{
+                                    date: groupStart.date,
+                                    start: groupStart.startTime,
+                                    end: groupBookings.at(-1)!.endTime,
+                                }}
+                                edited={
+                                    editDate && selectedSlot !== undefined
+                                        ? {
+                                              date: editDate,
+                                              start: selectedSlot,
+                                              end:
+                                                  selectedSlot +
+                                                  editedDurationMinutes(
+                                                      editPeople,
+                                                      services
+                                                  ),
+                                          }
+                                        : undefined
+                                }
+                            />
+                        )}
                     </DialogHeader>
 
                     {mode === "detail" ? (
@@ -673,11 +718,14 @@ export function BookingDetailDialog({
                                                                     ? "default"
                                                                     : "outline"
                                                             }
-                                                            onClick={() =>
+                                                            onClick={() => {
                                                                 setSelectedSlot(
                                                                     s
-                                                                )
-                                                            }
+                                                                );
+                                                                setLostSlot(
+                                                                    undefined
+                                                                );
+                                                            }}
                                                         >
                                                             {formatTime(s)}
                                                         </Button>
@@ -692,6 +740,9 @@ export function BookingDetailDialog({
                                                             setSelectedSlot(
                                                                 undefined
                                                             );
+                                                            setLostSlot(
+                                                                undefined
+                                                            );
                                                         }}
                                                     >
                                                         <Plus className="size-4 text-primary" />
@@ -701,6 +752,15 @@ export function BookingDetailDialog({
                                             );
                                         })()
                                     ))}
+
+                                {lostSlot !== undefined && (
+                                    <Alert variant="warning">
+                                        <AlertCircle />
+                                        <AlertTitle>
+                                            {`Čas ${formatTime(lostSlot)} už není volný, vyberte jiný.`}
+                                        </AlertTitle>
+                                    </Alert>
+                                )}
 
                                 {error && (
                                     <Alert variant="destructive">
@@ -772,7 +832,9 @@ export function BookingDetailDialog({
                                 <Button
                                     type="button"
                                     disabled={
-                                        selectedSlot === undefined || isPending
+                                        selectedSlot === undefined ||
+                                        isPending ||
+                                        isLoadingSlots
                                     }
                                     onClick={submitEdit}
                                 >
@@ -859,6 +921,56 @@ export function BookingDetailDialog({
 // Read-only summary (the client's name is the dialog title): contact in
 // small print, the term as the main line - with the date, as the dialog
 // opens from any week - then the client's note, and how it was booked last.
+function editedDurationMinutes(people: EditPerson[], services: Service[]) {
+    return people.reduce(
+        (sum, p) =>
+            sum +
+            (services.find((s) => s.id === p.serviceId)?.durationMinutes ?? 0) +
+            extraTimeToMinutes(p.extraTime),
+        0
+    );
+}
+
+type Schedule = { date: Date; start: number; end: number };
+
+function formatSchedule({ date, start, end }: Schedule) {
+    return `${format(date, "EEEE d. MMMM", { locale: cs })}, ${formatTime(start)}–${formatTime(end)}`;
+}
+
+// Always in view while editing, so changing the length or the day never
+// leaves the admin guessing what the booking was.
+function EditScheduleSummary({
+    current,
+    edited,
+}: {
+    current: Schedule;
+    edited: Schedule | undefined;
+}) {
+    const isChanged =
+        edited !== undefined &&
+        (format(edited.date, "yyyy-MM-dd") !==
+            format(current.date, "yyyy-MM-dd") ||
+            edited.start !== current.start ||
+            edited.end !== current.end);
+    return (
+        // Side by side, so a change doesn't push the dialog body down (it
+        // only wraps where there's no room, i.e. on a phone).
+        <div className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+            <span className={cn(isChanged && "line-through")}>
+                {formatSchedule(current)}
+            </span>
+            {isChanged && (
+                <span className="flex items-center gap-2 font-medium text-foreground">
+                    {/* On a phone the new date wraps under the old one, where
+                        an arrow at the line start looks out of place. */}
+                    <ArrowRight className="size-4 shrink-0 text-muted-foreground max-md:hidden" />
+                    {formatSchedule(edited)}
+                </span>
+            )}
+        </div>
+    );
+}
+
 function BookingDetailInfo({ booking }: { booking: BookingItem }) {
     const source = SOURCE_LABELS[booking.source];
     const SourceIcon = source.icon;
