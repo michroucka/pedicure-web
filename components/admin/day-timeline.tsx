@@ -11,6 +11,7 @@ import {
     type BookingItem,
 } from "@/components/admin/booking-card";
 import type { Service } from "@/lib/generated/prisma/client";
+import { TapToBookLayer } from "@/components/admin/tap-to-book-layer";
 
 const PX_PER_MIN = 2.25;
 
@@ -111,6 +112,15 @@ export function DayTimeline({
                             style={{ top: (h - gridStart) * PX_PER_MIN }}
                         />
                     ))}
+
+                    {date.getTime() >= today.getTime() && (
+                        <TapToBookLayer
+                            date={date}
+                            gridStart={gridStart}
+                            gridEnd={gridEnd}
+                            pxPerMinute={PX_PER_MIN}
+                        />
+                    )}
 
                     {bookings.map((b) => (
                         <BookingCard

@@ -11,6 +11,7 @@ import {
 import { categorizeExceptions, computeClosedRanges } from "@/lib/availability";
 import { BookingDetailDialog } from "@/components/admin/booking-detail-dialog";
 import { ExceptionDot } from "@/components/admin/exception-dot";
+import { TapToBookLayer } from "@/components/admin/tap-to-book-layer";
 import {
     BookingCard,
     SERVICE_COLORS,
@@ -186,6 +187,15 @@ export function WeekTimeline({
                                             }}
                                         />
                                     ))}
+
+                                    {day.getTime() >= today.getTime() && (
+                                        <TapToBookLayer
+                                            date={day}
+                                            gridStart={gridStart}
+                                            gridEnd={gridEnd}
+                                            pxPerMinute={PX_PER_MIN}
+                                        />
+                                    )}
 
                                     {bookingsByDay[dayIndex].map((b) => (
                                         <BookingCard
