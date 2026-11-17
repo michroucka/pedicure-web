@@ -172,7 +172,9 @@ function DayField({
         // full width, and the whole week fits on a landscape tablet.
         <div className="flex flex-col gap-2 py-3 lg:grid lg:grid-cols-[9rem_1fr] lg:gap-4">
             <div className="flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:justify-start">
-                <span className="font-medium">{DAY_LABELS[dayOfWeek]}</span>
+                <span className="text-base font-semibold">
+                    {DAY_LABELS[dayOfWeek]}
+                </span>
                 <Button
                     type="button"
                     variant="ghost"
