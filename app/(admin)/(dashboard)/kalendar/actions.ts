@@ -79,40 +79,41 @@ export async function getMoveSlotsAction(
 
     const date = toDateOnly(new Date(dateStr));
 
-    if (groupId) {
-        const bookings = await prisma.booking.findMany({
-            where: { groupId, status: "CONFIRMED" },
-            orderBy: { startTime: "asc" },
-        });
-        const serviceIds =
-            overrideServiceIds ?? bookings.map((b) => b.serviceId);
-        const extraMinutes = (
-            overrideExtraMinutes?.map(normalizeExtraMinutes) ??
-            bookings.map((b) => b.extraTimeMinutes)
-        ).reduce((sum, m) => sum + m, 0);
-        return getAvailableSlots(date, serviceIds, extraMinutes, {
-            allowToday: true,
-            excludeBookingIds: bookings.map((b) => b.id),
-            allowUnfillableGaps: true,
-        });
-    }
-
-    const booking = await prisma.booking.findUnique({
-        where: { id },
+    const bookings = await prisma.booking.findMany({
+        where: groupId
+            ? { groupId, status: "CONFIRMED" }
+            : { id, status: "CONFIRMED" },
+        orderBy: { startTime: "asc" },
     });
-    if (!booking) return [];
-    return getAvailableSlots(
-        date,
-        [overrideServiceIds?.[0] ?? booking.serviceId],
-        overrideExtraMinutes
-            ? normalizeExtraMinutes(overrideExtraMinutes[0])
-            : booking.extraTimeMinutes,
-        {
-            allowToday: true,
-            excludeBookingIds: [booking.id],
-            allowUnfillableGaps: true,
-        }
-    );
+    if (bookings.length === 0) return [];
+
+    const serviceIds = overrideServiceIds ?? bookings.map((b) => b.serviceId);
+    const extraMinutes = (
+        overrideExtraMinutes?.map(normalizeExtraMinutes) ??
+        bookings.map((b) => b.extraTimeMinutes)
+    ).reduce((sum, m) => sum + m, 0);
+    const bookingIds = bookings.map((b) => b.id);
+
+    const slots = await getAvailableSlots(date, serviceIds, extraMinutes, {
+        allowToday: true,
+        excludeBookingIds: bookingIds,
+        allowUnfillableGaps: true,
+    });
+
+    // The booking's own time stays on offer outside opening hours too
+    // (closed day, lengthened past closing) – as long as it doesn't run
+    // into another booking. updateBookingAction checks it the same way.
+    const ownStart = bookings[0].startTime;
+    if (
+        bookings[0].date.getTime() === date.getTime() &&
+        !slots.includes(ownStart) &&
+        (await checkOutsideHoursSlot(date, ownStart, serviceIds, extraMinutes, {
+            excludeBookingIds: bookingIds,
+        })) === null
+    ) {
+        return [...slots, ownStart].sort((a, b) => a - b);
+    }
+    return slots;
 }
 
 export async function cancelBookingAction(id: string) {
@@ -258,9 +259,11 @@ export async function updateBookingAction(input: {
               ]),
     ]);
 
+    const keepsOwnTime =
+        existing[0].date.getTime() === date.getTime() &&
+        existing[0].startTime === input.startTime;
     const scheduleChanged =
-        existing[0].date.getTime() !== date.getTime() ||
-        existing[0].startTime !== input.startTime ||
+        !keepsOwnTime ||
         people.some(
             (person) =>
                 person.booking.serviceId !== person.serviceId ||
@@ -280,7 +283,9 @@ export async function updateBookingAction(input: {
                 date,
                 input.startTime,
                 {
-                    outsideHours: input.outsideHours,
+                    // Same rule as getMoveSlotsAction: the own time only needs to
+                    // stay clear of other bookings, opening hours aside.
+                    outsideHours: input.outsideHours || keepsOwnTime,
                     serviceOverrides: Object.fromEntries(
                         people.map((p) => [p.booking.id, p.serviceId])
                     ),
@@ -297,7 +302,7 @@ export async function updateBookingAction(input: {
                 date,
                 input.startTime,
                 {
-                    outsideHours: input.outsideHours,
+                    outsideHours: input.outsideHours || keepsOwnTime,
                     serviceId: people[0].serviceId,
                     extraTimeMinutes: people[0].extraTimeMinutes,
                     allowUnfillableGaps: true,
@@ -310,6 +315,23 @@ export async function updateBookingAction(input: {
             return { ok: false, error: error.message };
         }
         throw error;
+    }
+
+    // Same as on create: the main contact's extra time doubles as their
+    // Client setting. Only an actual change is written back, so saving an
+    // old booking doesn't revert a value set later on the Klienti page.
+    const mainContact = people.find(
+        ({ booking }) =>
+            booking.guestName === null && booking.clientId === contactClientId
+    );
+    if (
+        mainContact &&
+        mainContact.extraTimeMinutes !== mainContact.booking.extraTimeMinutes
+    ) {
+        await prisma.client.update({
+            where: { id: contactClientId },
+            data: { extraTimeMinutes: mainContact.extraTimeMinutes },
+        });
     }
 
     // A move cancels + recreates, so the client's magic link from the
