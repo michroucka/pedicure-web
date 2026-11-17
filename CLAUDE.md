@@ -340,7 +340,9 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - Preferuji stručná vysvětlení, detail jen na vyžádání.
 - Komunikace v češtině.
 - Chci rozumět každé části architektury, ne jen "ať to funguje".
-- Dev server nikdy nespouštěj sám (pouštím si ho ručně v IDE). Když
-  běží na `localhost:3000`, můžeš UI změny ověřit přes Playwright – rozměry,
+- Dev server si pouštím ručně v IDE. Než ho budeš potřebovat, vždy nejdřív
+  ověř, jestli na `localhost:3000` běží – když ano, druhý nespouštěj. Když
+  neběží a potřebuješ něco ověřit, smíš ho pustit sám (na pozadí tak, aby
+  šel zastavit, a po ověření ho vypni). Přes Playwright pak ověř UI změny – rozměry,
   jestli se něco vejde, poskakování, fokus, chování – než napíšeš „hotovo“.
   Konečný vizuální dojem (vkus, iPad/Safari) posuzuju já ze screenshotů.
