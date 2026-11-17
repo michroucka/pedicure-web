@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { CalendarClock, Mail, MapPin, Phone } from "lucide-react";
 import { BOOKING_ENABLED } from "@/lib/booking-enabled";
 import { BUSINESS_INFO } from "@/lib/business-info";
 import { MonochromeLogo } from "@/components/marketing/monochrome-logo";
@@ -57,6 +57,19 @@ const CONTACT_ACTIONS = [
         icon: MapPin,
         external: true,
     },
+    // No hours on purpose: published hours are binding (an inspection can
+    // come any time within them), and she works by appointment only.
+    ...(BOOKING_ENABLED
+        ? [
+              {
+                  href: "/rezervace",
+                  label: "Provozní doba",
+                  value: "Pouze na objednávku",
+                  icon: CalendarClock,
+                  external: false,
+              },
+          ]
+        : []),
 ];
 
 export default function KontaktPage() {
@@ -86,50 +99,38 @@ export default function KontaktPage() {
                             style={stagger(2)}
                         >
                             <ul className="flex flex-col gap-3">
-                                {CONTACT_ACTIONS.map((action) => (
-                                    <li key={action.href}>
-                                        <a
-                                            href={action.href}
-                                            {...(action.external && {
-                                                target: "_blank",
-                                                rel: "noopener noreferrer",
-                                            })}
-                                            className="group flex min-h-16 items-center gap-4 rounded-2xl border border-border px-4 py-3 transition-colors hover:border-primary/60"
-                                        >
-                                            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                                                <action.icon className="size-5" />
-                                            </span>
-                                            <span className="min-w-0 flex-1">
-                                                <span className="block text-sm text-muted-foreground">
-                                                    {action.label}
+                                {CONTACT_ACTIONS.map((action) => {
+                                    // tel:/mailto:/external stay plain links,
+                                    // the booking page goes through Next.
+                                    const Anchor = action.href.startsWith("/")
+                                        ? Link
+                                        : "a";
+                                    return (
+                                        <li key={action.href}>
+                                            <Anchor
+                                                href={action.href}
+                                                {...(action.external && {
+                                                    target: "_blank",
+                                                    rel: "noopener noreferrer",
+                                                })}
+                                                className="group flex min-h-16 items-center gap-4 rounded-2xl border border-border px-4 py-3 transition-colors hover:border-primary/60"
+                                            >
+                                                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                                                    <action.icon className="size-5" />
                                                 </span>
-                                                <span className="block text-base font-medium wrap-anywhere transition-colors group-hover:text-primary">
-                                                    {action.value}
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block text-sm text-muted-foreground">
+                                                        {action.label}
+                                                    </span>
+                                                    <span className="block text-base font-medium wrap-anywhere transition-colors group-hover:text-primary">
+                                                        {action.value}
+                                                    </span>
                                                 </span>
-                                            </span>
-                                        </a>
-                                    </li>
-                                ))}
+                                            </Anchor>
+                                        </li>
+                                    );
+                                })}
                             </ul>
-
-                            {/* No hours on purpose: published hours are binding
-                                (an inspection can come any time within them),
-                                and she works by appointment only. */}
-                            <section
-                                aria-labelledby="kontakt-hours"
-                                className="mt-10"
-                            >
-                                <h2
-                                    id="kontakt-hours"
-                                    className="font-sans text-sm font-medium tracking-wide text-foreground/70 uppercase"
-                                >
-                                    Provozní doba
-                                </h2>
-                                <p className="mt-4 text-base">dle objednávek</p>
-                                <p className="mt-1 text-sm text-pretty text-muted-foreground">
-                                    Volné termíny najdete v online rezervaci.
-                                </p>
-                            </section>
 
                             {BOOKING_ENABLED && (
                                 <Button
