@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 // Bump on every substantive change to the text below.
-const EFFECTIVE_DATE = "23. 10. 2026";
+const EFFECTIVE_DATE = "17. 11. 2026";
 
 // `data` only where Art. 13 GDPR isn't enough: guest names come from the main
 // contact (Art. 14), and the client never types the web technical data.
@@ -35,7 +35,8 @@ const PURPOSES: {
         retention: `${CLIENT_RETENTION_YEARS} roky od poslední návštěvy`,
     },
     {
-        purpose: "Provoz a zabezpečení webu, anonymní statistika návštěvnosti",
+        purpose:
+            "Provoz a zabezpečení webu, zobrazení mapy, anonymní statistika návštěvnosti",
         data: "IP adresa, údaje o prohlížeči a zařízení",
         basis: "oprávněný zájem na bezpečném a funkčním webu (čl. 6 odst. 1 písm. f GDPR)",
         retention: "dle nastavení poskytovatele hostingu, řádově dny až týdny",
@@ -146,7 +147,7 @@ export default function OchranaOsobnichUdajuPage() {
                         <p className={P}>
                             K údajům má kromě správce přístup jen správce webu a
                             poskytovatelé technických služeb (hosting, databáze
-                            a zálohy, e-mail, SMS, kalendář).
+                            a zálohy, e-mail, SMS, kalendář, mapové podklady).
                         </p>
                         <p className={P}>
                             Někteří poskytovatelé sídlí v USA. Předání je
