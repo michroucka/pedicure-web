@@ -327,6 +327,13 @@ body:has(.storefront) {
     background: var(--card);
     color: var(--primary);
 }
+/* Max/min zoom reached - Leaflet's default is a light grey button. */
+.map-embed .leaflet-bar a.leaflet-disabled,
+.map-embed .leaflet-bar a.leaflet-disabled:hover {
+    background: var(--background);
+    color: color-mix(in oklch, var(--muted-foreground), transparent 55%);
+    cursor: default;
+}
 .map-embed.leaflet-container .leaflet-control-attribution {
     background: color-mix(in oklch, var(--background), transparent 30%);
     color: var(--muted-foreground);
