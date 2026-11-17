@@ -24,7 +24,7 @@ export default function ReservationLayout({
             {/* Bottom padding for every step's action buttons, plus the iOS
                 home indicator area (the page draws under it, viewportFit
                 "cover"). */}
-            <div className="mt-8 pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] max-lg:mx-4">
+            <div className="mt-3 pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] max-lg:mx-4 md:mt-8">
                 {children}
             </div>
             <Analytics />

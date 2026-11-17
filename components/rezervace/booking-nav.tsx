@@ -37,7 +37,7 @@ export function BookingNav() {
         // screen while picking a slot or filling the form.
         <header className="z-10 bg-background pt-[env(safe-area-inset-top)] md:sticky md:top-0">
             <div className="mx-auto max-w-5xl px-4 sm:px-6">
-                <div className="flex items-center justify-center pt-4 md:pt-8">
+                <div className="flex items-center justify-center pt-4 pb-3 md:pt-8 md:pb-0">
                     <Link href="/">
                         <Image
                             src="/logo-banner-light.svg"
