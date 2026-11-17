@@ -160,9 +160,9 @@ export default function OchranaOsobnichUdajuPage() {
                             statistika návštěvnosti funguje bez nich.
                         </p>
                         <p className={P}>
-                            Mapa na stránce Kontakt se načte až po kliknutí.
-                            Poté může služba Mapy.com ukládat vlastní cookies
-                            podle svých zásad.
+                            Mapa na stránce Kontakt se načítá ze služby
+                            OpenStreetMap. Ta neukládá cookies, při zobrazení
+                            mapy jí ale prohlížeč předá vaši IP adresu.
                         </p>
 
                         <h2 className={H2}>Vaše práva</h2>
