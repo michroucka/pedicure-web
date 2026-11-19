@@ -54,8 +54,8 @@ actually looks like (sample data, tablet width unless noted):
 
 - **Group booking with race-condition-safe slots.** Solo or group (2-4
   people) bookings, no account needed. Concurrent attempts at the same slot
-  are resolved by a database-level uniqueness constraint, so two people
-  can't ever double-book the same time.
+  are resolved by a database-level exclusion constraint on overlapping time
+  ranges, so two people can't ever double-book the same time.
 - **Self-service via magic link.** Clients can cancel or reschedule their
   own booking from a link in their confirmation email – no login, no app.
 - **Push notifications.** The practitioner gets notified on her phone/tablet

@@ -311,7 +311,8 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 - **`app/robots.ts`** – host-aware (čte `Host` hlavičku): na hlavní doméně
   povolí indexaci (kromě `/api/` a `/rezervace/`) a odkáže na sitemapu; na
   `admin.pedikurakralovice.cz` má `Disallow: /` úplně na všechno.
-- **`app/sitemap.ts`** – homepage, `/cenik`, `/kontakt`. Všechny URL musí
+- **`app/sitemap.ts`** – homepage, `/cenik`, `/kontakt`,
+  `/ochrana-osobnich-udaju`. Všechny URL musí
   mířit na `www.` (viz apex→www redirect výše).
 - **LocalBusiness JSON-LD** (`app/(marketing)/layout.tsx`) – adresa,
   telefon, e-mail, `sameAs` s odkazem na Google Business Profile (Firmy.cz
@@ -329,11 +330,39 @@ portfolio/reálný projekt pro rodinu. Doména je koupená.
 ## Marketing web – struktura stránek
 
 - **Homepage** – základní info + fotky
-- **Ceník** – služby (30/45/60 min varianty) + produkty na prodej (krémy
-  apod., statický výpis, ne eshop)
+- **Ceník** – služby (30/45/60 min varianty). Produkty na prodej (krémy
+  apod., statický výpis, ne eshop) odložené jako budoucí rozšíření – zatím
+  bez podkladů
 - **Kontakt** – telefon, e-mail, adresa s mapou, odkaz na Google recenzi
   (žádný kontaktní formulář)
 - CTA proklik do booking appky z homepage a ceníku
+
+## Vědomě neřešeno
+
+Rozhodnutí z auditů kódu (2026-10-23) a UX (2026-10-24) – nenavrhovat znovu
+bez nového důvodu.
+
+- **Cachování dostupnosti** (`getAvailableSlots`) – při současném provozu
+  předčasná optimalizace.
+- **Sjednocení `getAvailableSlots`/`getAvailableDaysInRange`** – výpočet
+  slotů (`computeAvailableSlots`, `resolveDayTimeSlots`) už sdílený je,
+  zbývá jen načítání z DB a každá funkce má vlastní volby. Další abstrakce
+  v nejcitlivějším kódu za malý zisk.
+- **Rozdělení velkých admin komponent** (`booking-detail-dialog`,
+  `add-booking-dialog`, `exception-form`, `time-picker`) – samo nic
+  neopravuje, rozdělit až při změnách v těchto souborech.
+- **Admin zůstává světlý** s ostrým kontrastem, ne v barvách webu – celodenní
+  práce na tabletu, jasné oddělení pracovního nástroje od webu pro klienty.
+- **Bez otevírací doby na webu** – zveřejněná doba je závazná (kontrola může
+  přijít kdykoliv v ní), pedikérka pracuje jen na objednávku. Kontakt
+  i patička: „Provozní doba – Dle objednávek“, bez „po telefonické
+  domluvě“ (sváděla by k volání o termín, když už není místo).
+- **Výběr služby v rezervaci je select**, ne radio karty – karty vizuálně
+  nevyšly.
+- **`aria-current` v admin navigaci** – admin používá jen pedikérka, bez
+  čtečky obrazovky. Na webu je.
+- **Vizuální identita webu** (logo v „O mně“, „ZAKLÁDÁM SI NA“, kurzíva
+  u nadpisů) ponechaná.
 
 ## Styl práce
 
