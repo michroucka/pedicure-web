@@ -8,7 +8,7 @@ Vzor zásad je v `../web-dokumenty/sablony/web/zasady-ochrany-osobnich-udaju.md`
 Rezervace jsou zapnuté od 2026-10-23 (`lib/booking-enabled.ts`).
 
 **Stav 2026-10-22:** body 1, 2, 3, 5, 6, 7 hotové, 4 čeká na ověřovací audit. Zbývají body bez kódu.
-Práce je na větvi `feat/shared-business-info` (pushnutá na `origin`, ne v `main`).
+Kód z větve `feat/shared-business-info` je v `main` (PR #9).
 
 ## Kód
 
@@ -24,8 +24,8 @@ Práce je na větvi `feat/shared-business-info` (pushnutá na `origin`, ne v `ma
   - Plné údaje (jméno, sídlo, IČO, živnostenský rejstřík) na `/kontakt`, odkaz z patičky každé stránky („Provozovatel: …“). Zákon (§ 435 OZ, § 5 zák. 480/2004 Sb.) nevyžaduje údaje na každé stránce, stačí snadný přístup.
 - [ ] **4. Cookies – audit** – proveden 2026-10-14, **zbývá ověřit opravu**
   - Výsledek: vlastní doména bez cookies i localStorage (Auth.js cookies jen v adminu, `keep-awake` v localStorage jen v adminu – obojí nezbytné). Cookies `google.com` pocházely z vyhledávání ve stejném okně, ne z webu.
-  - Problém: mapa Mapy.com na `/kontakt` ukládala sledovací identifikátory Seznamu (`User-Id`, DOT `instance_id` v localStorage) → teď se načte až po kliknutí (`components/marketing/map-embed.tsx`, klik = souhlas), zmíněno v zásadách.
-  - **Zbývá:** na produkci v novém anonymním okně otevřít `/kontakt` (adresu napsat přímo, ne přes Google) a bez kliknutí na mapu ověřit, že v Application → Cookies / Local storage není nic od `mapy.com`/`seznam.cz`. Projít i `/rezervace`.
+  - Problém: mapa Mapy.com na `/kontakt` ukládala sledovací identifikátory Seznamu (`User-Id`, DOT `instance_id` v localStorage) → nahrazena mapou přes Leaflet s podklady z `tile.openstreetmap.org` (`components/marketing/map-embed.tsx`, PR #50), načte se hned bez kliknutí. OpenStreetMap neukládá cookies, jen dostane IP adresu – zmíněno v zásadách.
+  - **Zbývá:** na produkci v novém anonymním okně otevřít `/kontakt` (adresu napsat přímo, ne přes Google) a ověřit, že v Application → Cookies / Local storage není nic od cizích domén (`openstreetmap.org` apod.). Projít i `/rezervace`.
   - Pokud se někdy přidá Google Analytics, Meta Pixel, YouTube embed apod., je nutná cookie lišta nebo načítání na kliknutí.
 - [x] **5. Mazání klienta v administraci** – hotovo (`deleteClientAction` v `klienti/actions.ts` + test): klient bez rezervací se smaže, s rezervacemi se skryje (`active: false`).
   - Pozn.: skrytý klient zůstává v DB kvůli historii – úplně ho odstraní cron z bodu 6.
@@ -74,5 +74,5 @@ Práce je na větvi `feat/shared-business-info` (pushnutá na `origin`, ne v `ma
 
 - [ ] Podepsat dokumenty z `web-dokumenty` (`./build.ps1 pedikura`): smlouva o dílo, zpracovatelská smlouva, předávací protokol. Po zaplacení potvrzení o přijetí platby. PDF znovu vygenerována 2026-10-23 (GitHub mezi zpracovateli, Vercel placený zhotovitelem).
 - [x] Přepsat `EFFECTIVE_DATE` v zásadách na datum nasazení (23. 10. 2026).
-- [ ] Mergnout `feat/shared-business-info` do `main`.
+- [x] Mergnout `feat/shared-business-info` do `main` (PR #9).
 - [x] Zapnout rezervace (`lib/booking-enabled.ts`) – 2026-10-23.
