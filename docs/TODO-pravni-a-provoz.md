@@ -57,7 +57,8 @@ Kód z větve `feat/shared-business-info` je v `main` (PR #9).
   - [x] Ověřit v Resend dashboardu, že doména je **Verified**.
   - [ ] Ověřit v DPA Resendu právní základ předávání do USA (DPF nebo SCC).
   - [x] (ověřeno 2026-10-23, test e-mail má SPF, DKIM i DMARC PASS) Hlavní doména neměla SPF ani DKIM pro schránky na Seznam Email Profi (DNS je u Wedosu). Přidat TXT `v=spf1 include:spf.seznam.cz ~all` na hlavní doménu a CNAME `szn1`–`szn3._domainkey` → `szn1`–`szn3._domainkey.seznam.cz.`. Ověřit testovacím e-mailem na Gmail (SPF, DKIM i DMARC PASS).
-  - [ ] Za pár týdnů po ověření zpřísnit DMARC z `p=none` na `v=DMARC1; p=quarantine; adkim=r; aspf=r;` a zkontrolovat, že rezervační e-mail z Resendu pořád projde.
+  - [ ] Přejít na Resend Forge (doporučení v Resend Insights, 2026-11-19): dashboard -> doména -> Configuration -> Migrate/Activate Resend Forge. Kód ani API klíč se nemění. Případný CNAME, který dashboard ukáže, přidat ve Wedosu. Open/click tracking musí být vypnutý, jinak pošta dál chodí starou cestou. Hotovo, až štítek ukáže „Active“ (ne jen „Enabled“).
+  - [ ] Za pár týdnů po ověření (a po přechodu na Forge) zpřísnit DMARC z `p=none` na `v=DMARC1; p=quarantine; adkim=r; aspf=r;` a zkontrolovat, že rezervační e-mail z Resendu pořád projde.
 
 - [x] **11. SMSManager**: účet je na vývojáře, kredit platí provozovatel. Aby šel kredit provozovateli do účetnictví jako výdaj, musí být **doklad za kredit vystavený na jeho IČO**. Rozhodnuto 2026-10-23: účet zůstává na vývojáři, fakturační údaje jsou nastavené na provozovatele (už hotovo). Převod účtu zvážen a zamítnut.
 
