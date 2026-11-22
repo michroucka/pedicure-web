@@ -111,7 +111,7 @@ export function PersonsStep({
                                     value={currentServices[i] ?? ""}
                                     disabled={i > currentServices.length}
                                 >
-                                    <SelectTrigger className="w-full">
+                                    <SelectTrigger className="w-full cursor-pointer transition-[color,background-color,box-shadow] enabled:hover:bg-input">
                                         <SelectValue placeholder="Vyberte službu" />
                                     </SelectTrigger>
                                     <SelectContent position="popper">
@@ -121,6 +121,7 @@ export function PersonsStep({
                                                 <SelectItem
                                                     value={String(s.id)}
                                                     key={s.id}
+                                                    className="transition-colors duration-150"
                                                     hint={formatServiceMeta(s)}
                                                 >
                                                     {s.name}

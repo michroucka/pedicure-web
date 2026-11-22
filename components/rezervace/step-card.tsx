@@ -59,7 +59,17 @@ export function StepCard({
                 <AccordionItem value={thisStep?.toString()}>
                     <AccordionTrigger
                         className={cn(
-                            "hover:no-underline",
+                            "items-center hover:no-underline",
+                            // The chevron nudges the way the card will move.
+                            // An open card gets no background on hover - it
+                            // would cut a hard edge against its content.
+                            !open &&
+                                "cursor-pointer hover:bg-muted hover:[&_[data-slot=accordion-trigger-icon]]:translate-y-px hover:[&_[data-slot=accordion-trigger-icon]]:text-foreground",
+                            // An open step that can't collapse does nothing
+                            // on click, so it shouldn't look clickable.
+                            open &&
+                                collapsible &&
+                                "cursor-pointer hover:[&_[data-slot=accordion-trigger-icon]]:-translate-y-px hover:[&_[data-slot=accordion-trigger-icon]]:text-foreground",
                             !collapsible &&
                                 "[&_[data-slot=accordion-trigger-icon]]:hidden",
                             // The chevron is pushed right with ml-auto; with an
